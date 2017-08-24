@@ -1,0 +1,6 @@
+*.iml
+logs/
+app_interface_log/
+.idea/
+.svn/
+*/target/

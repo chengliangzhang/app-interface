@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="GetProjectParticipationMapper">
+
+  <select id="getResponsiblerByTaskPath" parameterType="java.util.Map" resultType="com.maoding.org.dto.CompanyUserAppDTO">
+    select b.id,b.user_name as userName,b.email,CONCAT(t.task_name,' - 任务负责人') as title,
+    CONCAT(#{fastdfsUrl,jdbcType=VARCHAR},c.file_group,'/',c.attach_path) as imgUrl,d.cellphone
+    from maoding_web_project_task_responsibler a
+    LEFT JOIN maoding_web_project_task t on a.task_id=t.id
+    LEFT JOIN maoding_web_company_user b on a.target_id = b.id
+    LEFT JOIN maoding_web_user_attach c on b.user_id = c.user_id AND c.attach_type=5
+    LEFT JOIN maoding_web_account d on b.user_id = d.id
+    where a.type=1 and t.task_status='0' and t.company_id =#{companyId,jdbcType=VARCHAR}
+    and t.task_path like '%' #{taskId,jdbcType=VARCHAR} '%'
+  </select>
+
+
+  <select id="getProcessUserByTaskPath" parameterType="java.util.Map" resultType="com.maoding.org.dto.CompanyUserAppDTO">
+    select b.id,b.user_name as userName,b.email,CONCAT(t.task_name,' - ',IF(a.process_name is null,'',CONCAT(a.process_name,' - ')),n.node_name,'人') as title,
+    CONCAT(#{fastdfsUrl,jdbcType=VARCHAR},c.file_group,'/',c.attach_path) as imgUrl,d.cellphone
+    from maoding_web_project_task t
+	LEFT JOIN maoding_web_project_process a on a.task_manage_id=t.id
+    LEFT JOIN maoding_web_project_process_node n on a.id=n.process_id
+    LEFT JOIN maoding_web_company_user b on n.company_user_id = b.id
+    LEFT JOIN maoding_web_user_attach c on b.user_id = c.user_id AND c.attach_type=5
+    LEFT JOIN maoding_web_account d on b.user_id = d.id
+    where t.task_status='0' and a.`status`='0'
+
+    <if test="companyId != null" >
+      and t.company_id =#{companyId,jdbcType=VARCHAR}
+    </if>
+    <if test="taskId != null" >
+      and t.task_path like '%' #{taskId,jdbcType=VARCHAR} '%'
+    </if>
+    <if test="withOutTaskId != null" >
+      and t.task_path != #{withOutTaskId,jdbcType=VARCHAR}
+    </if>
+    <if test="projectId != null" >
+      and t.project_id = #{projectId,jdbcType=VARCHAR}
+    </if>
+  </select>
+
+  <resultMap id="BaseResultMap" type="com.maoding.org.dto.ProjectUserDTO" >
+    <id column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="project_id" property="projectId" jdbcType="VARCHAR" />
+    <result column="company_name" property="companyName" jdbcType="VARCHAR" />
+    <collection property="userList" ofType="com.maoding.org.dto.CompanyUserAppDTO">
+      <result column="id" property="id" jdbcType="VARCHAR" />
+      <result column="user_name" property="userName" jdbcType="VARCHAR" />
+      <result column="user_id" property="userId" jdbcType="VARCHAR" />
+      <result column="account_name" property="accountName" jdbcType="VARCHAR" />
+      <result column="img_url" property="imgUrl" jdbcType="VARCHAR" />
+    </collection>
+  </resultMap>
+
+  <select id="getProjectParticipation" parameterType="java.util.Map" resultMap="BaseResultMap">
+    SELECT DISTINCT c.id,c.user_name,c.user_id,c.company_id,e.company_name,f.user_name as account_name,
+    CONCAT(#{fastdfsUrl,jdbcType=VARCHAR},d.file_group,'/',d.attach_path) as img_url,a.project_id
+    from maoding_web_project_member a
+    LEFT JOIN maoding_web_company_user c on a.company_user_id = c.id
+    LEFT JOIN maoding_web_user_attach d on a.account_id = d.user_id
+    LEFT JOIN maoding_web_company e on a.company_id =e.id
+    LEFT JOIN maoding_web_account f on c.user_id =f.id
+    where a.project_id = #{projectId,jdbcType=VARCHAR} and a.deleted=0
+  </select>
+
+
+
+</mapper>

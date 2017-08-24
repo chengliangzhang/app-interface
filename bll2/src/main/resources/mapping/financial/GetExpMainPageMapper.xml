@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetExpMainPageMapper">
+    <resultMap id="BaseResultMap" type="com.maoding.financial.dto.ExpMainDTO">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="user_id" property="userId" jdbcType="VARCHAR"/>
+        <result column="user_name" property="userName" jdbcType="VARCHAR"/>
+        <result column="exp_date" property="expDate" jdbcType="DATE"/>
+        <result column="approve_status" property="approveStatus" jdbcType="VARCHAR"/>
+        <result column="company_id" property="companyId" jdbcType="VARCHAR"/>
+        <result column="depart_id" property="departId" jdbcType="VARCHAR"/>
+        <result column="depart_name" property="departName" jdbcType="VARCHAR"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+        <result column="audit_person_name" property="auditPersonName" jdbcType="VARCHAR"/>
+        <result column="audit_person" property="auditPerson" jdbcType="VARCHAR"/>
+        <result column="expTypeName" property="expTypeName" jdbcType="VARCHAR"/>
+        <result column="approve_date" property="approveDate" jdbcType="VARCHAR"/>
+        <result column="is_new" property="isNew" jdbcType="VARCHAR"/>
+        <result column="exp_use" property="expUse" jdbcType="VARCHAR"/>
+        <result column="detail_count" property="detailCount" jdbcType="INTEGER"/>
+        <result column="exp_sum_amount" property="expSumAmount" jdbcType="DECIMAL"/>
+        <result column="version_num" property="versionNum" jdbcType="INTEGER"/>
+        <result column="exp_flag" property="expFlag" jdbcType="INTEGER"/>
+        <result column="exp_name" property="expName" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <resultMap id="V2BaseResultMap" type="com.maoding.v2.financial.dto.V2ExpMainDTO">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="user_id" property="userId" jdbcType="VARCHAR"/>
+        <result column="user_name" property="userName" jdbcType="VARCHAR"/>
+        <result column="exp_date" property="expDate" jdbcType="DATE"/>
+        <result column="approve_status" property="approveStatus" jdbcType="VARCHAR"/>
+        <result column="company_id" property="companyId" jdbcType="VARCHAR"/>
+        <result column="depart_id" property="departId" jdbcType="VARCHAR"/>
+        <result column="depart_name" property="departName" jdbcType="VARCHAR"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+        <result column="audit_person_name" property="auditPersonName" jdbcType="VARCHAR"/>
+        <result column="audit_person" property="auditPerson" jdbcType="VARCHAR"/>
+        <result column="expTypeName" property="expTypeName" jdbcType="VARCHAR"/>
+        <result column="approve_date" property="approveDate" jdbcType="VARCHAR"/>
+        <result column="is_new" property="isNew" jdbcType="VARCHAR"/>
+        <result column="exp_use" property="expUse" jdbcType="VARCHAR"/>
+        <result column="detail_count" property="detailCount" jdbcType="INTEGER"/>
+        <result column="exp_sum_amount" property="expSumAmount" jdbcType="DECIMAL"/>
+        <result column="version_num" property="versionNum" jdbcType="INTEGER"/>
+        <result column="exp_no" property="expNo" jdbcType="VARCHAR"/>
+        <result column="exp_flag" property="expFlag" jdbcType="INTEGER"/>
+
+    </resultMap>
+    <select id="getExpMainPage" resultMap="BaseResultMap" parameterType="java.util.Map">
+        SELECT a.exp_flag,a.version_num,a.id,a.company_id,a.user_id,e.user_name as user_name,a.exp_date,b.audit_person,c.user_name as
+        audit_person_name,a.approve_status,b.approve_date ,(select s.exp_use from maoding_web_exp_detail s where s.main_id=a.id ORDER BY s.seq LIMIT 1) AS  exp_use,d.exp_type as expType,
+        (select m.is_new from maoding_web_exp_audit m where m.main_id=a.id and m.audit_person=b.audit_person ORDER BY m.create_date  DESC  LIMIT 1) AS is_new,
+        (select sum(m.exp_amount) from maoding_web_exp_detail m where m.main_id=a.id) as exp_sum_amount,(select COUNT(1) from maoding_web_exp_detail m where m.main_id=a.id)  as detail_count
+        from maoding_web_exp_main a
+        LEFT JOIN maoding_web_exp_audit b on a.id = b.main_id <if test="isHave==null">and b.is_new='Y'</if>
+        LEFT JOIN maoding_web_company_user c on b.audit_person = c.id and c.company_id = a.company_id
+        LEFT JOIN maoding_web_exp_detail d on a.id = d.main_id
+        LEFT JOIN maoding_web_company_user e on a.user_id = e.id and e.company_id = a.company_id
+        WHERE 1=1 AND a.approve_status != '4'
+        <include refid="getExpMainPageCond"/>
+        GROUP BY a.id order by a.create_date DESC
+        <if test="startPage!=null">
+            LIMIT #{startPage},#{endPage}
+        </if>
+    </select>
+
+
+    <select id="getExpMainPageInterface" resultMap="BaseResultMap" parameterType="java.util.Map">
+        SELECT a.exp_flag,a.version_num,a.id,a.company_id,a.user_id,e.user_name as user_name,a.exp_date,b.audit_person,c.user_name as
+        audit_person_name,a.approve_status,b.approve_date ,(select s.exp_use from maoding_web_exp_detail s where s.main_id=a.id ORDER BY s.seq LIMIT 1) AS  exp_use,d.exp_type as expType,
+        (select m.is_new from maoding_web_exp_audit m where m.main_id=a.id and m.audit_person=b.audit_person ORDER BY m.create_date  DESC  LIMIT 1) AS is_new,
+        (select sum(m.exp_amount) from maoding_web_exp_detail m where m.main_id=a.id) as exp_sum_amount,(select COUNT(1) from maoding_web_exp_detail m where m.main_id=a.id)  as detail_count
+        from maoding_web_exp_main a
+        <if test="waitCheck!=null and waitCheck!=''">INNER JOIN </if>
+        <if test="waitCheck==null">LEFT JOIN </if>
+        maoding_web_exp_audit b on a.id = b.main_id <if test="isHave!=null and isHave!=''">and b.is_new='Y'</if>
+        <if test="waitCheck!=null and waitCheck!=''"> AND b.audit_person =#{auditPerson,jdbcType=VARCHAR}</if>
+        LEFT JOIN maoding_web_company_user c on b.audit_person = c.id and c.company_id = a.company_id
+        LEFT JOIN maoding_web_exp_detail d on a.id = d.main_id
+        LEFT JOIN maoding_web_company_user e on a.user_id = e.id and e.company_id = a.company_id
+        WHERE 1=1 AND a.approve_status != '4'
+        <include refid="getExpMainPageCond"/>
+        GROUP BY a.id order by a.create_date DESC
+        <if test="startPage!=null">
+            LIMIT #{startPage},#{endPage}
+        </if>
+    </select>
+    <select id="getExpMainPageCount" resultType="java.lang.Integer" parameterType="java.util.Map">
+        SELECT COUNT(1)
+        from maoding_web_exp_main a
+        LEFT JOIN maoding_web_exp_audit b on a.id = b.main_id <if test="isHave==null">and b.is_new='Y'</if>
+        WHERE 1=1 AND a.approve_status != '4'
+        <include refid="getExpMainPageCond"/>
+    </select>
+
+    <sql id="getExpMainPageCond">
+        <if test="_parameter.containsKey('userId') and userId!=null">
+            <if test="userId!=''.toString()">
+                AND a.user_id =#{userId,jdbcType=VARCHAR}
+            </if>
+        </if>
+        <if test="_parameter.containsKey('companyId')">
+            <if test="companyId!=''.toString()">
+                AND a.company_Id =#{companyId,jdbcType=VARCHAR}
+            </if>
+        </if>
+        <if test="_parameter.containsKey('auditPerson')">
+            <if test="auditPerson!=''.toString()">
+                AND b.audit_person =#{auditPerson,jdbcType=VARCHAR}
+            </if>
+        </if>
+        <if test="_parameter.containsKey('approveStatus')">
+            <if test="approveStatus!=null and approveStatus!=''">
+                AND a.approve_status =#{approveStatus,jdbcType=VARCHAR}
+            </if>
+        </if>
+        <if test="_parameter.containsKey('departId')">
+            <if test="departId!=null and departId!=''">
+                AND a.depart_id =#{departId,jdbcType=VARCHAR}
+            </if>
+        </if>
+        <if test="_parameter.containsKey('startDate')">
+            <if test="startDate!=null and startDate!=''">
+                AND a.exp_date &gt;= #{startDate,jdbcType=VARCHAR}
+            </if>
+        </if>
+        <if test="_parameter.containsKey('endDate')">
+            <if test="endDate!=null and endDate!=''">
+                AND a.exp_date &lt;= #{endDate,jdbcType=VARCHAR}
+            </if>
+        </if>
+        <if test="_parameter.containsKey('defaultApproveStatus')">
+            <if test="defaultApproveStatus!=null and defaultApproveStatus!=''">
+                AND a.approve_status in ${defaultApproveStatus}
+            </if>
+        </if>
+        <if test="_parameter.containsKey('expNo')">
+            <if test="expNo!=null and expNo!=''">
+                AND a.exp_no LIKE '%' #{expNo} '%'
+            </if>
+        </if>
+    </sql>
+
+    <!-- 报销汇总  start-->
+    <resultMap id="BaseResultMapForSummary" type="com.maoding.financial.dto.ExpMainDTO">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="user_id" property="userId" jdbcType="VARCHAR"/>
+        <result column="user_name" property="userName" jdbcType="VARCHAR"/>
+        <result column="exp_date" property="expDate" jdbcType="DATE"/>
+        <result column="approve_status" property="approveStatus" jdbcType="VARCHAR"/>
+        <result column="company_id" property="companyId" jdbcType="VARCHAR"/>
+        <result column="depart_id" property="departId" jdbcType="VARCHAR"/>
+        <result column="depart_name" property="departName" jdbcType="VARCHAR"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+        <result column="audit_person_name" property="auditPersonName" jdbcType="VARCHAR"/>
+        <result column="audit_person" property="auditPerson" jdbcType="VARCHAR"/>
+        <result column="approve_date" property="approveDate" jdbcType="VARCHAR"/>
+        <result column="exp_use" property="expUse" jdbcType="VARCHAR"/>
+        <result column="detail_count" property="detailCount" jdbcType="INTEGER"/>
+        <result column="exp_sum_amount" property="expSumAmount" jdbcType="DECIMAL"/>
+        <result column="exp_type_name" property="expTypeName" jdbcType="VARCHAR"/>
+        <result column="exp_type" property="expType" jdbcType="VARCHAR"/>
+        <result column="exp_pname" property="expPName" jdbcType="VARCHAR"/>
+        <result column="exp_flag" property="expFlag" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <select id="getExpMainPageForSummary" resultMap="BaseResultMapForSummary" parameterType="java.util.Map">
+        SELECT a.exp_flag,group_concat(d.exp_allname) as exp_type_name,d.exp_pname,d.exp_type,a.id,a.company_id,a.user_id,e.user_name as user_name,
+        a.exp_date,b.audit_person,c.user_name as audit_person_name,
+        a.approve_status,b.approve_date ,(select s.exp_use from maoding_web_exp_detail s where s.main_id=a.id ORDER BY s.seq LIMIT 1) AS  exp_use,
+        sum(d.exp_amount) as exp_sum_amount,COUNT(1) as detail_count,
+        case (f.org_type)
+        when 0 then (select company_name from maoding_web_company c4 where c4.id = f.id)
+        else (select depart_name from maoding_web_depart d1 where d1.id = f.id) end as depart_name
+        from maoding_web_exp_main a
+        LEFT JOIN maoding_web_exp_audit b on a.id = b.main_id and b.is_new='Y'
+        LEFT JOIN maoding_web_company_user c on b.audit_person = c.id and c.company_id = a.company_id
+        LEFT JOIN maoding_web_exp_detail d on a.id = d.main_id
+        LEFT JOIN maoding_web_company_user e on a.user_id = e.id and e.company_id = a.company_id
+        LEFT JOIN maoding_web_org f on a.depart_id = f.id
+        WHERE 1=1
+        <include refid="getExpMainPageForSummaryCond"/>
+        GROUP BY a.id order by a.create_date DESC
+        <if test="startPage!=null">
+            LIMIT #{startPage},#{endPage}
+        </if>
+    </select>
+
+    <select id="getExpMainPageForSummaryInterface" resultMap="BaseResultMapForSummary" parameterType="java.util.Map">
+        SELECT a.exp_flag,g.name as exp_type_name,d.exp_type,a.id,a.company_id,a.user_id,e.user_name as user_name,
+        a.exp_date,b.audit_person,c.user_name as audit_person_name,
+        a.approve_status,b.approve_date,(select s.exp_use from maoding_web_exp_detail s where s.main_id=a.id ORDER BY s.seq LIMIT 1) AS  exp_use,
+        sum(d.exp_amount) as exp_sum_amount,COUNT(1) as detail_count,
+        (select company_short_name from maoding_web_company c4 where c4.id = a.company_id) as depart_name
+        from maoding_web_exp_main a
+        LEFT JOIN maoding_web_exp_audit b on a.id = b.main_id and b.is_new='Y'
+        LEFT JOIN maoding_web_company_user c on b.audit_person = c.id and c.company_id = a.company_id
+        LEFT JOIN maoding_web_exp_detail d on a.id = d.main_id
+        LEFT JOIN maoding_web_company_user e on a.user_id = e.id and e.company_id = a.company_id
+        LEFT JOIN maoding_web_org f on a.depart_id = f.id
+        LEFT JOIN maoding_web_exp_category g on d.exp_type = g.id
+        WHERE 1=1
+        <include refid="getExpMainPageForSummaryCond"/>
+        GROUP BY a.id order by a.create_date DESC
+        <if test="startPage!=null">
+            LIMIT #{startPage},#{endPage}
+        </if>
+    </select>
+    <select id="getExpMainPageForSummaryCount" resultType="java.lang.Integer" parameterType="java.util.Map">
+        SELECT count(DISTINCT a.id)
+        from maoding_web_exp_main a
+        LEFT JOIN maoding_web_exp_audit b on a.id = b.main_id and b.is_new='Y'
+        LEFT JOIN maoding_web_exp_detail d on a.id = d.main_id
+        WHERE 1=1
+        <include refid="getExpMainPageForSummaryCond"/>
+    </select>
+
+    <sql id="getExpMainPageForSummaryCond">
+        AND a.approve_status = '1'
+        <if test="_parameter.containsKey('userId') and userId!=null">
+            <if test="userId!=''.toString()">
+                AND a.user_id =#{userId,jdbcType=VARCHAR}
+            </if>
+        </if>
+        <if test="_parameter.containsKey('companyId')">
+            <if test="companyId!=''.toString()">
+                AND a.company_Id =#{companyId,jdbcType=VARCHAR}
+            </if>
+        </if>
+        <if test="_parameter.containsKey('departId')">
+            <if test="departId!=null and departId!=''">
+                AND a.depart_id =#{departId,jdbcType=VARCHAR}
+            </if>
+        </if>
+        <if test="_parameter.containsKey('startDate')">
+            <if test="startDate!=null and startDate!=''">
+                AND a.exp_date &gt;= #{startDate,jdbcType=VARCHAR}
+            </if>
+        </if>
+        <if test="_parameter.containsKey('endDate')">
+            <if test="endDate!=null and endDate!=''">
+                AND a.exp_date &lt;= #{endDate,jdbcType=VARCHAR}
+            </if>
+        </if>
+        <if test="_parameter.containsKey('expType')">
+            <if test="expType!=null and expType!=''">
+                and exists (select 1 from maoding_web_exp_detail c where c.main_id = a.id and c.exp_type = d.exp_type
+                and c.exp_type = #{expType,jdbcType=VARCHAR})
+            </if>
+        </if>
+        <if test="_parameter.containsKey('expParentType')">
+            <if test="expParentType!=null and expParentType!=''">
+                and exists (select 1 from maoding_web_exp_detail c where c.main_id = a.id and c.exp_type = d.exp_type
+                and exists (select 1 from maoding_web_exp_category cc where cc.pid = #{expParentType,jdbcType=VARCHAR}
+                and cc.id = c.exp_type)
+                )
+            </if>
+        </if>
+        <if test="_parameter.containsKey('expName')">
+            <if test="expName!=null and expName!=''">
+                and d.exp_name = #{expName,jdbcType=VARCHAR}
+            </if>
+        </if>
+        <if test="_parameter.containsKey('expPName')">
+            <if test="expPName!=null and expPName!=''">
+                and d.exp_pname = #{expPName,jdbcType=VARCHAR}
+            </if>
+        </if>
+        <if test="_parameter.containsKey('expNo')">
+            <if test="expNo!=null and expNo!=''">
+                AND a.exp_no LIKE '%' #{expNo} '%'
+            </if>
+        </if>
+    </sql>
+    <!-- 报销汇总  end-->
+
+    <select id="selectExpMainDetail" resultMap="BaseResultMap" parameterType="java.lang.String">
+                SELECT
+            a.* ,(
+                SELECT
+                    SUM(aa.exp_amount)
+                FROM
+                    maoding_web_exp_detail aa
+                WHERE
+                    aa.main_id = a.id
+            ) AS exp_sum_amount,
+            IFNULL(
+                (
+                    SELECT
+                        c.company_name
+                    FROM
+                        maoding_web_company c
+                    WHERE
+                        c.id = a.depart_id
+                ),
+                (
+                    SELECT
+                        d.depart_name
+                    FROM
+                        maoding_web_depart d
+                    WHERE
+                        d.id = a.depart_id
+                )
+            ) AS depart_name,
+            (
+                SELECT
+                  GROUP_CONCAT(e.exp_name SEPARATOR '、')
+                FROM
+                    maoding_web_exp_detail e
+                WHERE
+                    e.main_id = a.id
+            ) AS exp_name
+
+        FROM
+            maoding_web_exp_main a
+        WHERE
+            a.id = #{id,jdbcType=VARCHAR}
+    </select>
+
+    <select id="getByMainIdForMyTask" parameterType="java.lang.String" resultMap="BaseResultMapForSummary">
+        SELECT a.exp_flag,group_concat(d.exp_allname) as exp_type_name,d.exp_pname,d.exp_type,a.id,a.company_id, a.exp_date,a.approve_status,c.user_name,
+        sum(d.exp_amount) as exp_sum_amount,COUNT(1) as detail_count
+        from maoding_web_exp_main a
+        LEFT JOIN maoding_web_exp_detail d on a.id = d.main_id
+         LEFT JOIN maoding_web_company_user c on a.user_id = c.id
+        WHERE
+        a.id = #{id,jdbcType=VARCHAR}
+    </select>
+
+
+
+
+
+
+
+
+
+    <!--v2-->
+    <select id="v2GetExpMainPage" resultMap="V2BaseResultMap" parameterType="java.util.Map">
+        SELECT a.exp_flag,a.exp_no,a.version_num,a.id,a.company_id,a.user_id,e.user_name as user_name,a.exp_date,b.audit_person,c.user_name as
+        audit_person_name,a.approve_status,b.approve_date ,(select s.exp_use from maoding_web_exp_detail s where s.main_id=a.id ORDER BY s.seq LIMIT 1) AS  exp_use,d.exp_type as expType,
+        (select m.is_new from maoding_web_exp_audit m where m.main_id=a.id and m.audit_person=b.audit_person ORDER BY m.create_date  DESC  LIMIT 1) AS is_new,
+        (select sum(m.exp_amount) from maoding_web_exp_detail m where m.main_id=a.id) as exp_sum_amount,(select COUNT(1) from maoding_web_exp_detail m where m.main_id=a.id)  as detail_count
+        from maoding_web_exp_main a
+        LEFT JOIN maoding_web_exp_audit b on a.id = b.main_id <if test="isHave==null">and b.is_new='Y'</if>
+        LEFT JOIN maoding_web_company_user c on b.audit_person = c.id and c.company_id = a.company_id
+        LEFT JOIN maoding_web_exp_detail d on a.id = d.main_id
+        LEFT JOIN maoding_web_company_user e on a.user_id = e.id and e.company_id = a.company_id
+        WHERE 1=1 AND a.approve_status != '4'
+            <if test="userId != null" >
+                AND a.user_id =#{userId,jdbcType=VARCHAR}
+            </if>
+            <if test="companyId != null" >
+                AND a.company_Id =#{companyId,jdbcType=VARCHAR}
+            </if>
+            <if test="auditPerson != null" >
+                AND b.audit_person =#{auditPerson,jdbcType=VARCHAR}
+            </if>
+            <if test="approveStatus != null" >
+                AND a.approve_status =#{approveStatus,jdbcType=VARCHAR}
+            </if>
+            <if test="myAuditApproveStatus != null" >
+               AND b.approve_status IN
+               <foreach collection="myAuditApproveStatus" index="index" item="id" open="(" separator="," close=")" >
+                   #{id}
+               </foreach>
+           </if>
+            <if test="defaultApproveStatus!=null">
+                AND a.approve_status in ${defaultApproveStatus}
+            </if>
+            <if test="notStatus !=null">
+               AND a.approve_status !=#{notStatus,jdbcType=VARCHAR}
+            </if>
+             <if test="expUse != null">
+               and d.exp_use LIKE  '%' #{expUse} '%'
+            </if>
+            GROUP BY a.id order by a.create_date DESC
+            <if test="startPage!=null">
+                LIMIT #{startPage},#{endPage}
+            </if>
+    </select>
+
+
+
+    <select id="getMaxExpNo" resultType="java.lang.String" parameterType="java.util.Map">
+        select IFNULL(max(m.exp_no),1000)+1 from maoding_web_exp_main m where 1=1
+        <if test="companyId!=null">
+            AND m.company_id =#{companyId,jdbcType=VARCHAR}
+        </if>
+    </select>
+</mapper>

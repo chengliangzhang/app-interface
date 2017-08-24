@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetProjectDesignContentByToCompanyMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.project.dto.ProjectTaskTreeDTO" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="project_id" property="projectId" jdbcType="VARCHAR" />
+    <result column="content_name" property="contentName" jdbcType="VARCHAR" />
+    <result column="plan_progress_starttime" property="planProgressStarttime" jdbcType="DATE" />
+    <result column="plan_progress_endtime" property="planProgressEndtime" jdbcType="DATE" />
+    <result column="contract_progress_starttime" property="contractProgressStarttime" jdbcType="DATE" />
+    <result column="contract_progress_endtime" property="contractProgressEndtime" jdbcType="DATE" />
+
+    <!-- 一对多的关系 -->
+    <collection property="projectServerContenList" ofType="com.maoding.project.dto.ProjectServerContentDTO">
+      <result column="server_content_id" property="id" jdbcType="VARCHAR" />
+      <result column="server_name" property="serverName" jdbcType="VARCHAR" />
+      <result column="actual_progress_start_time" property="actualProgressStartTime" jdbcType="DATE" />
+      <result column="actual_progress_end_time" property="actualProgressEndTime" jdbcType="DATE" />
+      <result column="plan_progress_start_time" property="planProgressStartTime" jdbcType="DATE" />
+      <result column="plan_progress_end_time" property="planProgressEndTime" jdbcType="DATE" />
+    </collection>
+  </resultMap>
+
+  <select id="getProjectDesignContentByToCompany" resultMap="BaseResultMap" parameterType="java.util.Map">
+    select
+    c.id,c.project_id,c.content_name,c.plan_progress_starttime,c.plan_progress_endtime,c.contract_progress_starttime,c.contract_progress_endtime,
+    a.id as server_content_id,a.server_name,a.actual_progress_start_time,a.actual_progress_end_time,a.plan_progress_start_time,a.plan_progress_end_time
+    from maoding_web_project p
+    left join  maoding_web_project_server_content a on p.id = a.project_id
+    left join  maoding_web_project_server_content a1 on a.parent_scontent_id = a1.id
+    left join (SELECT t.server_content_id, o.org_type,m.status,t.status as task_status,
+    case (o.org_type)
+    when 0 then (select c4.id from maoding_web_company c4 where c4.id = o.id)
+    else (select d1.company_id from maoding_web_depart d1 where d1.id = o.id)  end  as to_company
+    from maoding_web_project_task t
+    LEFT JOIN maoding_web_org o on t.to_company = o.id
+    LEFT JOIN maoding_web_project_task_manager m on t.server_content_id = m.scontent_id
+    )b on a.id=b.server_content_id
+    LEFT JOIN maoding_web_project_design_content c on a.design_content_id = c.id
+    where a.status = '0' and p.pstatus = '0' and b.status='0' and b.task_status='0' AND p.id = #{projectId,jdbcType=VARCHAR}
+    <if test="toCompany != null">
+      AND b.to_company = #{toCompany,jdbcType=VARCHAR}
+    </if>
+    ORDER BY c.design_content_seq,IFNULL(a1.create_date,a.create_date),a.create_date
+  </select>
+</mapper>

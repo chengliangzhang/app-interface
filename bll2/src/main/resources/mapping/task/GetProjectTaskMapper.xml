@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetProjectTaskMapper" >
+
+  <resultMap id="BaseResultMap" type="com.maoding.task.dto.ProjectTaskDTO" >
+      <id column="id" property="id" jdbcType="VARCHAR" />
+      <result column="project_id" property="projectId" jdbcType="VARCHAR" />
+      <result column="task_pid" property="taskPid" jdbcType="VARCHAR" />
+      <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+      <result column="task_type" property="taskType" jdbcType="INTEGER" />
+      <result column="task_name" property="taskName" jdbcType="VARCHAR" />
+      <result column="flag" property="flag" jdbcType="INTEGER" />
+      <result column="task_level" property="taskLevel" jdbcType="INTEGER" />
+      <result column="start_time" property="startTime" jdbcType="VARCHAR" />
+      <result column="end_time" property="endTime" jdbcType="VARCHAR" />
+      <result column="task_path" property="taskPath" jdbcType="LONGVARCHAR" />
+      <result column="child_count" property="childCount" jdbcType="INTEGER" />
+      <result column="is_operater_task" property="isOperaterTask" jdbcType="INTEGER" />
+      <result column="complete_date" property="completeDate" jdbcType="VARCHAR" />
+      <result column="org_id" property="orgId" jdbcType="VARCHAR" />
+      <result column="depart_name" property="departName" jdbcType="VARCHAR" />
+      <result column="notCompleteCount" property="notCompleteCount" jdbcType="INTEGER" />
+      <result column="isRootTask" property="isRootTask" jdbcType="INTEGER" />
+      <result column="task_remark" property="taskRemark" jdbcType="VARCHAR" />
+      <result column="be_modify_id" property="beModifyId" jdbcType="VARCHAR" />
+      <result column="task_status" property="taskStatus" jdbcType="VARCHAR" />
+  </resultMap>
+
+    <resultMap id="BaseResultMap2" type="com.maoding.task.dto.ProjectTaskDTO" extends="BaseResultMap">
+        <association  property="companyName" fetchType="eager" column="company_id" select="CompanyEntityMapper.getAliasName"/>
+    </resultMap>
+
+    <!-- 获取全部任务（所有根任务） -->
+  <select id="getProjectTaskRootData" parameterType="java.lang.String" resultMap="BaseResultMap2">
+    select a.id ,a.task_pid,a.company_id,a.task_level,a.task_type,a.task_name,
+     a.complete_date,a.org_id,'1' as isRootTask,a.task_remark,
+     a.start_time, a.end_time,
+     (select d.depart_name from maoding_web_depart d where d.id = a.org_id) depart_name
+    FROM maoding_web_project_task a
+    where a.project_id = #{projectId,jdbcType=VARCHAR}
+    and a.task_type=1 and a.task_status=0
+    order by a.seq
+  </select>
+
+    <!-- 我组织的任务 -->
+    <select id="getProjectTaskByCompanyId" parameterType="java.util.Map" resultMap="BaseResultMap2"><!--展示约定时间-->
+        select a.id ,a.task_pid,a.company_id,a.task_level,a.task_type,a.task_name,IF(b.id is not null,1,0) as flag,
+        a.complete_date,a.org_id,a.task_remark, a.start_time, a.end_time,
+        (select d.depart_name from maoding_web_depart d where d.id = a.org_id) depart_name
+        FROM maoding_web_project_task a
+        LEFT JOIN maoding_web_project_task_relation b on a.id = b.task_id and b.relation_status='0'
+        where a.project_id = #{projectId,jdbcType=VARCHAR}
+        and a.task_status=0  and b.to_company_id=  #{companyId,jdbcType=VARCHAR}
+        order by a.seq,a.create_date
+    </select>
+
+    <!-- 其他合作组织 -->
+    <select id="getOtherPartnerCompany" parameterType="java.util.Map" resultType="java.lang.String">
+        select  DISTINCT a.company_id as companyId
+        FROM maoding_web_project_task a
+        where a.project_id = #{projectId,jdbcType=VARCHAR}
+        and a.task_status=0  and a.company_id!=  #{companyId,jdbcType=VARCHAR}
+    </select>
+
+    <!--我的任务查询 -->
+    <select id="getProjectProcessTaskByCompanyUserId" parameterType="java.util.Map" resultMap="BaseResultMap2">
+        select a.id,a.task_pid,a.project_id,a.task_level,a.company_id,a.task_name,
+        a.complete_date,a.org_id,a.task_remark,a.start_time, a.end_time,
+        (select d.depart_name from maoding_web_depart d where d.id = a.org_id) depart_name
+        from maoding_web_project_task  a
+        LEFT JOIN maoding_web_project_process_node c on a.id = c.process_id
+        where a.project_id = #{projectId,jdbcType=VARCHAR} and a.task_status='0'
+        and c.company_user_id = #{companyUserId,jdbcType=VARCHAR} and b.status='0'
+        GROUP BY a.id
+        ORDER BY a.create_date
+    </select>
+
+    <!-- 获取项目参与的组织 -->
+    <select id="getProjectTaskCompany" parameterType="java.util.Map" resultType="java.util.Map">
+        select  DISTINCT a.company_id as companyId,b.company_name as companyName
+        FROM maoding_web_project_task a
+        LEFT JOIN maoding_web_company b on a.company_id = b.id
+        where a.project_id = #{projectId,jdbcType=VARCHAR}
+        and a.task_status=0
+    </select>
+
+    <!-- 根据id查询 -->
+    <select id="getProjectTaskById" parameterType="java.util.Map" resultMap="BaseResultMap2">
+        select a.id ,a.task_pid,a.project_id,a.task_level,a.company_id,a.task_type,a.task_name,a.task_path,
+        a.is_operater_task,a.complete_date,a.org_id,a.task_remark, a.start_time, a.end_time,
+       (select d.depart_name from maoding_web_depart d where d.id = a.org_id) depart_name,
+        IF(a.task_pid is null,1,IF(c.id is not null,1,0)) as isRootTask
+        FROM maoding_web_project_task a
+        LEFT JOIN maoding_web_project_task_relation c on a.id = c.task_id and c.relation_status='0'
+        where a.id = #{id,jdbcType=VARCHAR}
+        and a.task_status='0'
+        order by a.seq,a.create_date
+    </select>
+
+    <!-- 根据id查询 经营详情 -->
+    <select id="getProjectTaskByIdForOperator" parameterType="java.util.Map" resultMap="BaseResultMap2">
+        select a.id ,a.task_pid,a.project_id,a.task_level,a.company_id,a.task_type,a.task_name,a.task_path,
+        a.is_operater_task,a.complete_date,a.org_id,a.task_remark, a.start_time, a.end_time,
+        (select d.depart_name from maoding_web_depart d where d.id = a.org_id) depart_name,
+        IF(a.task_pid is null,1,IF(c.id is not null,1,0)) as isRootTask
+        FROM maoding_web_project_task a
+        LEFT JOIN maoding_web_project_task_relation c on a.id = c.task_id and c.relation_status='0'
+        where a.id = #{id,jdbcType=VARCHAR}
+        and a.task_status='0'
+        order by a.seq,a.create_date
+    </select>
+
+    <!-- 根据Pid查询 或许taskPath-->
+    <select id="getProjectTaskByPid" parameterType="java.util.Map" resultMap="BaseResultMap2">
+        select a.id ,a.task_pid,a.project_id,a.task_level,a.company_id,a.task_type,a.task_name,a.is_operater_task,
+        a.complete_date,a.org_id,a.task_remark,a.start_time, a.end_time,
+        (select d.depart_name from maoding_web_depart d where d.id = a.org_id) depart_name,
+        IF(a.task_pid is null,1,IF(c.id is not null,1,0)) as isRootTask
+        FROM maoding_web_project_task a
+        LEFT JOIN maoding_web_project_task_relation c on a.id = c.task_id and c.relation_status='0'
+        where  a.task_status='0'
+        <if test="taskPid != null" >
+            AND  a.task_pid=#{taskPid,jdbcType=VARCHAR}
+        </if>
+        <if test="taskPath != null" >
+            AND  a.task_path  LIKE '%' #{taskPath} '%'
+        </if>
+        order by a.seq,a.create_date
+    </select>
+
+    <!-- 根据Pid查询-->
+    <select id="getProjectTaskByPidForProduct" parameterType="java.util.Map" resultMap="BaseResultMap2">
+        select a.id ,a.task_pid,a.project_id,a.task_level,a.company_id,a.task_type,a.task_name,
+        a.complete_date,a.org_id,a.task_remark,
+        a.depart_name,task_status,a.be_modify_id,
+        IF(a.task_pid is null,1,IF(c.id is not null,1,0)) as isRootTask,
+        a.start_time,a.end_time
+        FROM (
+        <include refid="getTaskSql"></include>
+        WHERE  a1.task_pid = #{taskPid,jdbcType=VARCHAR} and ((a1.task_type = 4 and a2.id is null and a1.be_modify_id is null) or (a1.task_type != 4 and a2.id is null) or (a1.task_type=0 and a2.task_type=4) or (a1.task_type=2 and a2.task_type=4))
+        ) a
+        LEFT JOIN maoding_web_project_task_relation c on a.be_modify_id = c.task_id and c.relation_status='0'
+        where  1=1
+        <if test="taskPid != null" >
+            AND  a.task_pid=#{taskPid,jdbcType=VARCHAR}
+        </if>
+        order by a.seq,a.create_date
+    </select>
+
+    <!-- 合作方进入经营界面的时候查询任务所在的根节点 -->
+    <select id="getProjectTaskRootOfOperater"  parameterType="java.util.Map" resultMap="BaseResultMap2">
+        select  a.id ,a.task_pid,a.project_id,a.task_level,a.company_id,a.task_type,a.is_operater_task,a.task_name,
+        a.complete_date,a.org_id,a.task_remark,a.start_time, a.end_time,
+        (select d.depart_name from maoding_web_depart d where d.id = a.org_id) depart_name,
+         IF(a.task_pid is null,1,IF(c.id is not null,1,0)) as isRootTask,
+        (select COUNT(1) from maoding_web_project_task t where t.task_pid = a.id and t.task_status='0' and t.task_type >0) as child_count
+        from maoding_web_project_task a
+        LEFT JOIN maoding_web_project_task_relation c on a.id = c.task_id and c.relation_status='0'
+        where a.id in
+        (
+        SELECT DISTINCT substring(task_path,1,32)
+        from maoding_web_project_task
+        WHERE task_status='0'
+        and project_id = #{projectId,jdbcType=VARCHAR}
+        and company_id = #{companyId,jdbcType=VARCHAR}
+        ) order by seq
+    </select>
+
+    <!-- 合作方进入经营界面的时候查询任务所在的根节点 -->
+    <select id="getProjectTaskChildOfOperater" resultMap="BaseResultMap2" parameterType="java.util.Map" >
+        select a.id ,a.task_pid,a.project_id,a.task_level,a.company_id,a.task_type,a.is_operater_task,a.task_name,
+        a.complete_date,a.org_id,a.task_remark,a.start_time, a.end_time,
+        (select d.depart_name from maoding_web_depart d where d.id = a.org_id) depart_name,
+        IF(a.task_pid is null,1,IF(c.id is not null,1,0)) as isRootTask,
+        (select COUNT(1) from maoding_web_project_task t where t.task_pid = a.id and t.task_status='0' and t.task_type >0) as child_count
+        from maoding_web_project_task a
+        LEFT JOIN maoding_web_project_task_relation c on c.task_id = a.id
+        where 1=1
+        and a.task_pid = #{taskPid,jdbcType=VARCHAR}
+        and a.task_type >0
+        and a.id in
+        <foreach collection="taskIdList" index="i" item="id" open="(" separator="," close=")">
+           #{id}
+        </foreach>
+        GROUP by a.id
+        order by a.create_date
+    </select>
+
+
+    <!-- 查询与自己组织相关的所有任务 -->
+    <select id="getRelationProjectTaskByCompanyOfOperater" parameterType="java.util.Map" resultMap="BaseResultMap">
+        select a.id ,a.task_pid,a.project_id,a.task_level,a.company_id,a.task_type,a.is_operater_task,a.task_name,a.task_path,a.complete_date,a.org_id,a.task_remark,
+         (select d.depart_name from maoding_web_depart d where d.id = a.org_id) depart_name
+        FROM maoding_web_project_task a
+        LEFT JOIN maoding_web_project_task_relation c on c.task_id = a.id
+        WHERE a.project_id = #{projectId,jdbcType=VARCHAR}
+        and (a.company_id = #{companyId,jdbcType=VARCHAR} or c.to_company_id = #{companyId,jdbcType=VARCHAR} or c.from_company_id = #{companyId,jdbcType=VARCHAR})
+        and a.task_status='0'
+        order by a.seq,a.create_date
+    </select>
+
+
+    <select id="getProjectTaskPath" resultType="String" parameterType="java.util.Map">
+        select  DISTINCT a.task_path
+        from maoding_web_project_task a
+        LEFT JOIN maoding_web_project_task_relation b on a.id = b.task_id
+        where a.task_status='0'
+        and a.project_id = #{projectId,jdbcType=VARCHAR}
+        and (a.company_id = #{companyId,jdbcType=VARCHAR} or b.to_company_id = #{companyId,jdbcType=VARCHAR} or b.from_company_id = #{companyId,jdbcType=VARCHAR})
+        and a.task_type >0
+    </select>
+
+    <select id="getTaskParentName" parameterType="java.lang.String" resultType="java.lang.String">
+        select  (SELECT GROUP_CONCAT(dd.task_name
+		ORDER BY dd.create_date SEPARATOR ' — ') FROM maoding_web_project_task dd
+		WHERE a.task_path LIKE CONCAT('%',dd.id,'%'))  as taskParentName
+        FROM maoding_web_project_task a
+        where a.id = #{id,jdbcType=VARCHAR}
+    </select>
+
+
+
+    <select id="getTastRelation" resultType="java.util.Map" parameterType="java.lang.String">
+        select
+        a.id as toPath,
+        a.task_pid as fromPath
+        from maoding_web_project_task a
+        where 1=1 and  task_status='0'
+        and a.project_id = #{projectId,jdbcType=VARCHAR}
+    </select>
+
+
+    <resultMap id="BaseResultMap3" type="com.maoding.task.dto.ProejctTaskForDesignerDTO" >
+        <id column="root_id" property="rootId" jdbcType="VARCHAR" />
+        <result column="seq" property="seq" jdbcType="INTEGER" />
+        <collection property="childTaskList" ofType="com.maoding.task.dto.ProejctTaskForDesignerListDTO">
+            <result column="id" property="id" jdbcType="VARCHAR" />
+            <result column="task_name" property="taskName" jdbcType="VARCHAR" />
+        </collection>
+    </resultMap>
+
+    <!-- 获取我负责的任务 -->
+    <select id="getMyProjectTask" parameterType="java.util.Map" resultMap="BaseResultMap3">
+        select
+        (SELECT GROUP_CONCAT(dd.task_name
+        ORDER BY dd.create_date SEPARATOR ' — ') FROM maoding_web_project_task dd
+        WHERE a.task_path LIKE CONCAT('%',dd.id,'%'))  as task_name,
+        a.id,t.id as root_id,t.seq
+        FROM maoding_web_project_task a
+        LEFT JOIN maoding_web_project_task t on t.id = substring(a.task_path,1,32)
+        LEFT JOIN maoding_web_project_member b on a.id = b.target_id and b.member_type = 3 and b.deleted = 0
+        where a.project_id = #{projectId,jdbcType=VARCHAR}
+        and b.target_id = #{targetId,jdbcType=VARCHAR}
+        and a.task_status=0
+        order by t.seq,a.create_date
+    </select>
+
+    <!-- 获取不是根任务（或不是签发）的任务数量 -->
+    <select id="getNotRootProjectTask" parameterType="java.lang.String" resultType="java.lang.Integer">
+        select count(a.id)
+        FROM maoding_web_project_task a
+        LEFT JOIN maoding_web_project_member c on a.id = c.target_id and c.member_type = 3 and c.deleted=0
+        where a.task_status=0
+        AND  task_path LIKE  '%' #{taskPath} '%'
+        and c.id is NOT null
+    </select>
+
+
+    <select id="getParentTaskCompanyId" parameterType="java.util.Map" resultType="java.lang.String">
+        SELECT GROUP_CONCAT(DISTINCT a .company_id) from maoding_web_project_task a
+        where a.task_status='0'
+        and  a.id in
+        <foreach collection="taskIdList" index="index" item="taskId" open="(" separator="," close=")">
+            #{taskId}
+        </foreach>
+    </select>
+
+    <!-- 获取本团队负责的任务，经营签发给自己的任务-->
+    <select id="getResponsibleTaskForMyTask" resultMap="BaseResultMap" parameterType="java.util.Map" >
+        select a.id,a.task_name,a.project_id,a.company_id,a.start_time, a.end_time
+        from maoding_web_project_task a
+        LEFT JOIN maoding_web_project_task_relation b on a.id = b.task_id and b.relation_status='0'
+        where a.task_status='0' and  b.id is null and  a.task_pid is not null
+        and a.project_id = #{projectId,jdbcType=VARCHAR}
+        and a.company_id = #{companyId,jdbcType=VARCHAR}
+    </select>
+
+
+    <!-- 根据id查询 用于编辑 -->
+    <select id="getProjectTaskByIdForEdit" parameterType="java.util.Map" resultMap="BaseResultMap2">
+        select a.id ,a.task_pid,a.project_id,a.task_level,a.company_id,
+        a.task_type,a.task_name,a.task_path,a.is_operater_task,a.complete_date,a.org_id,a.task_remark,a.be_modify_id,
+        (select d.depart_name from maoding_web_depart d where d.id = a.org_id) depart_name
+        FROM maoding_web_project_task a
+        where a.id = #{id,jdbcType=VARCHAR}
+    </select>
+
+    <select id="getProjectTaskOfToCompany" parameterType="java.util.Map" resultType="java.lang.String">
+        select a.id
+        FROM maoding_web_project_task a
+        LEFT JOIN maoding_web_project_task_relation b on a.id = b.task_id and b.relation_status='0'
+        where a.task_status='0' and a.project_id = #{projectId,jdbcType=VARCHAR}
+        and b.to_company_id = #{companyId,jdbcType=VARCHAR}
+    </select>
+
+    <sql id="getTaskSql">
+        SELECT IFNULL(a2.id,a1.id) as id,
+        a1.id as be_modify_id,
+        a1.task_type as be_modify_task_type,
+        a1.task_pid as be_modify_task_pid,
+        IF(a2.id is null,a1.task_level,a2.task_level) as task_level,
+        IF(a2.id is null,a1.task_path,a2.task_path) as task_path,
+        IF(a2.id is null,a1.org_id,a2.org_id) as org_id,
+        IF(a2.id is null,a1.task_pid,a2.task_pid) as task_pid,
+        IF(a2.id is null,a1.task_type,a2.task_type) as task_type,
+        IF(a2.id is null,a1.project_id,a2.project_id) as project_id,
+        IF(a2.id is null,a1.task_name,a2.task_name) as task_name,
+        IF(a2.id is null,a1.task_remark,a2.task_remark) as task_remark,
+        IF(a2.id is null,a1.start_time,a2.start_time) as start_time,
+        IF(a2.id is null,a1.end_time,a2.end_time) as end_time,
+        IF(a2.id is null,a1.seq,a2.seq) as seq,
+        a1.complete_date as complete_date,
+        ifnull(a2.create_date,a1.create_date) as create_date,
+        IF(a2.id is null,a1.company_id,a2.company_id) as company_id,
+        IF(a2.id is null,a1.task_status,a2.task_status) as task_status,
+        IF(a2.id is null,a1.org_id,a2.org_id) as depart_id,
+        (select d.depart_name from maoding_web_depart d where d.id =  IF(a2.id is null,a1.org_id,a2.org_id)) as depart_name
+        from maoding_web_project_task a1
+        LEFT JOIN maoding_web_project_task a2 on a1.id = a2.be_modify_id and a2.task_type=4 and a2.task_status !='1'
+    </sql>
+
+
+    <select id="getProductTaskForEdit" parameterType="java.lang.String" resultMap="BaseResultMap2">
+        <include refid="getTaskSql"></include>
+        WHERE  a1.id =#{id,jdbcType=VARCHAR}  and ((a1.task_type = 4 and a2.id is null and a1.be_modify_id is null) or (a1.task_type != 4 and a2.id is null) or (a1.task_type=0 and a2.task_type=4) or (a1.task_type=2 and a2.task_type=4))
+    </select>
+
+
+    <select id="getIssueTaskName" parameterType="java.util.Map" resultType="java.lang.String">
+        select  GROUP_CONCAT(a.task_name  ORDER BY a.seq SEPARATOR ',')
+        FROM maoding_web_project_task a
+        LEFT JOIN maoding_web_project_task_relation b on a.id = b.task_id and b.relation_status = '0'
+        where a.project_id = #{projectId,jdbcType=VARCHAR} and a.task_status = '0'
+        <choose>
+            <when test="type==1">
+                and a.task_type = 1
+            </when>
+            <when test="type==2">
+                and a.task_type = 2 and b.to_company_id = #{companyId,jdbcType=VARCHAR}
+            </when>
+        </choose>
+    </select>
+</mapper>

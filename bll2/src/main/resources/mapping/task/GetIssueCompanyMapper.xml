@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetIssueCompanyMapper" >
+
+  <resultMap id="BaseResultMap" type="com.maoding.task.dto.ProjectIssueDataDTO" >
+    <id column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="company_name" property="companyName" jdbcType="VARCHAR" />
+    <!-- 一对多的关系 -->
+    <collection property="taskList" ofType="com.maoding.task.dto.ProjectTaskListDTO">
+      <result column="task_name" property="taskName"/>
+    </collection>
+  </resultMap>
+
+  <select id="getTaskIssueData" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select c.id as company_id,c.company_name ,
+    (SELECT GROUP_CONCAT(dd.task_name
+		ORDER BY dd.create_date SEPARATOR '-') FROM maoding_web_project_task dd
+		WHERE b.task_path LIKE CONCAT('%',dd.id,'%'))  as task_name
+        from maoding_web_project_task_relation a
+        LEFT JOIN maoding_web_project_task b on a.task_id = b.id
+        LEFT JOIN maoding_web_company c on a.to_company_id = c.id
+        where a.relation_status='0' and b.project_id = #{projectId,jdbcType=VARCHAR}
+  </select>
+
+</mapper>

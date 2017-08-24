@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ProjectProcessNodeHistoryEntityMapper">
+  <resultMap id="BaseResultMap" type="com.maoding.project.entity.ProjectProcessNodeHistoryEntity">
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="process_instance_id" jdbcType="VARCHAR" property="processInstanceId" />
+    <result column="process_node_id" jdbcType="VARCHAR" property="processNodeId" />
+    <result column="company_user_id" jdbcType="VARCHAR" property="companyUserId" />
+    <result column="node_name" jdbcType="VARCHAR" property="nodeName" />
+    <result column="node_status" jdbcType="INTEGER" property="nodeStatus" />
+    <result column="status" jdbcType="INTEGER" property="status" />
+    <result column="memo" jdbcType="VARCHAR" property="memo" />
+    <result column="seq" jdbcType="INTEGER" property="seq" />
+    <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
+    <result column="create_by" jdbcType="VARCHAR" property="createBy" />
+    <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
+    <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, process_instance_id, process_node_id, company_user_id, node_name, node_status, 
+    status, memo, seq, create_date, create_by, update_date, update_by
+  </sql>
+  <select id="selectById" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from maoding_web_project_process_node_history
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+
+  <select id="selectByNodeId" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from maoding_web_project_process_node_history
+    where id = #{id,jdbcType=VARCHAR}
+   </select>
+
+  <select id="selectByInstanceId" parameterType="java.lang.String" resultType="java.lang.Integer">
+    select
+      IFNULL(max(seq),0)+1
+    from maoding_web_project_process_node_history
+    where process_instance_id = #{processInstanceId,jdbcType=VARCHAR}
+  </select>
+
+  <select id="getLastUpdateProcessNode" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from maoding_web_project_process_node_history
+    where process_node_id = #{processNodeId,jdbcType=VARCHAR}
+    order by seq DESC
+    limit 1
+  </select>
+
+
+  <select id="getLastProjectProcessNodeHistory" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    a.*
+    from maoding_web_project_process_node_history a
+    LEFT JOIN maoding_web_project_process_instance b on a.process_instance_id = b.id
+    where b.process_id = #{processId,jdbcType=VARCHAR}
+    order by a.seq DESC
+    limit 1
+  </select>
+
+
+  <select id="getLastUpdateProcessInstanceId" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from maoding_web_project_process_node_history
+    where process_instance_id = #{processInstanceId,jdbcType=VARCHAR}
+    order by seq DESC
+    limit 1
+  </select>
+
+  <select id="getByProcessInstanceId" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from maoding_web_project_process_node_history
+    where process_instance_id = #{processInstanceId,jdbcType=VARCHAR}
+    order by seq
+  </select>
+
+
+  <delete id="deleteById" parameterType="java.lang.String">
+    delete from maoding_web_project_process_node_history
+    where id = #{id,jdbcType=VARCHAR}
+  </delete>
+
+
+  <delete id="deleteByProcessInstanceId" parameterType="java.lang.String">
+    delete from maoding_web_project_process_node_history
+    where process_instance_id = #{processInstanceId,jdbcType=VARCHAR}
+  </delete>
+
+  <insert id="insert" parameterType="com.maoding.project.entity.ProjectProcessNodeHistoryEntity">
+    insert into maoding_web_project_process_node_history (id, process_instance_id, process_node_id,
+      company_user_id, node_name, node_status, 
+      status, memo, seq, 
+      create_date, create_by, update_date, 
+      update_by)
+    values (#{id,jdbcType=VARCHAR}, #{processInstanceId,jdbcType=VARCHAR}, #{processNodeId,jdbcType=VARCHAR}, 
+      #{companyUserId,jdbcType=VARCHAR}, #{nodeName,jdbcType=VARCHAR}, #{nodeStatus,jdbcType=VARCHAR}, 
+      #{status,jdbcType=INTEGER}, #{memo,jdbcType=VARCHAR}, #{seq,jdbcType=INTEGER},
+      now(), #{createBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP},
+      #{updateBy,jdbcType=VARCHAR})
+  </insert>
+
+  <update id="updateById" parameterType="com.maoding.project.entity.ProjectProcessNodeHistoryEntity">
+    update maoding_web_project_process_node_history
+    <set>
+      <if test="processInstanceId != null">
+        process_instance_id = #{processInstanceId,jdbcType=VARCHAR},
+      </if>
+      <if test="processNodeId != null">
+        process_node_id = #{processNodeId,jdbcType=VARCHAR},
+      </if>
+      <if test="companyUserId != null">
+        company_user_id = #{companyUserId,jdbcType=VARCHAR},
+      </if>
+      <if test="nodeName != null">
+        node_name = #{nodeName,jdbcType=VARCHAR},
+      </if>
+      <if test="nodeStatus != null">
+        node_status = #{nodeStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null">
+        status = #{status,jdbcType=INTEGER},
+      </if>
+      <if test="memo != null">
+        memo = #{memo,jdbcType=VARCHAR},
+      </if>
+      <if test="seq != null">
+        seq = #{seq,jdbcType=INTEGER},
+      </if>
+      <if test="createDate != null">
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createBy != null">
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+
+        update_date = now(),
+      <if test="updateBy != null">
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+
+  <update id="update" parameterType="com.maoding.project.entity.ProjectProcessNodeHistoryEntity">
+    update maoding_web_project_process_node_history
+    set process_instance_id = #{processInstanceId,jdbcType=VARCHAR},
+      process_node_id = #{processNodeId,jdbcType=VARCHAR},
+      company_user_id = #{companyUserId,jdbcType=VARCHAR},
+      node_name = #{nodeName,jdbcType=VARCHAR},
+      node_status = #{nodeStatus,jdbcType=VARCHAR},
+      status = #{status,jdbcType=VARCHAR},
+      memo = #{memo,jdbcType=VARCHAR},
+      seq = #{seq,jdbcType=INTEGER},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+
+
+</mapper>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetProjectDynamicMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.dynamic.dto.OrgDynamicDataDTO" >
+    <id column="date_time" property="dateTime" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="DATE" />
+    <collection property="dynamicList" ofType="com.maoding.dynamic.entity.OrgDynamicEntity">
+      <id column="id" property="id" jdbcType="VARCHAR" />
+      <result column="dynamic_title" property="dynamicTitle" jdbcType="VARCHAR" />
+      <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+      <result column="dynamic_type" property="dynamicType" jdbcType="INTEGER" />
+      <result column="target_id" property="targetId" jdbcType="VARCHAR" />
+      <result column="dynamic_content" property="dynamicContent" jdbcType="LONGVARCHAR" />
+      <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+      <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+      <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+      <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+      <result column="field1" property="field1" jdbcType="VARCHAR" />
+      <result column="field2" property="field2" jdbcType="VARCHAR" />
+    </collection>
+
+  </resultMap>
+
+
+
+  <sql id="Base_Column_List" >
+    id, dynamic_title, company_id, dynamic_type, target_id, create_by, create_date, update_by, dynamic_content,
+    update_date, field1, field2
+  </sql>
+
+
+  <select id="selectByParam" resultMap="BaseResultMap" parameterType="java.util.Map" >
+    select  id, content as dynamic_content,type as dynamic_type,
+     create_date,DATE_FORMAT(create_date,'%Y-%m-%d') as date_time
+    from maoding_web_project_dynamics
+    where 1=1
+    <if test="projectId != null" >
+      and  project_id = #{projectId,jdbcType=VARCHAR}
+    </if>
+    ORDER BY  create_date DESC
+    <if test="_parameter.containsKey('startPage')">
+      limit #{startPage},#{endPage}
+    </if>
+
+  </select>
+
+</mapper>

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetProjectMemberMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.projectmember.dto.ProjectMemberDTO" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="project_id" property="projectId" jdbcType="VARCHAR" />
+    <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="account_id" property="accountId" jdbcType="VARCHAR" />
+    <result column="company_user_id" property="companyUserId" jdbcType="VARCHAR" />
+    <result column="user_name" property="companyUserName" jdbcType="VARCHAR" />
+    <result column="member_type" property="memberType" jdbcType="INTEGER" />
+    <result column="target_id" property="targetId" jdbcType="VARCHAR" />
+    <result column="seq" property="seq" jdbcType="INTEGER" />
+    <result column="head_img" property="imgUrl" jdbcType="VARCHAR" />
+    <result column="cellphone" property="cellphone" jdbcType="VARCHAR" />
+    <result column="email" property="email" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <select id="listProjectMemberByParam" parameterType="com.maoding.projectmember.entity.ProjectMemberEntity" resultMap="BaseResultMap">
+    SELECT
+    a.id,a.company_id,a.project_id,a.member_type,a.company_user_id,a.account_id,a.target_id,
+    b.user_name, b.email,c.cellphone,
+    CONCAT(d.file_group,'/',d.attach_path) as head_img
+    FROM maoding_web_project_member a
+    LEFT JOIN maoding_web_company_user b on a.company_user_id = b.id
+    LEFT JOIN maoding_web_account c on a.account_id = c.id
+    LEFT JOIN maoding_web_user_attach d on a.account_id = d.user_id and d.attach_type = '5'
+    <where >
+      deleted = 0
+    <include refid="whereExample" />
+    </where>
+    order by a.member_type,a.seq
+  </select>
+
+  <sql id="whereExample">
+    <if test="projectId != null" >
+      AND a.project_id = #{projectId,jdbcType=VARCHAR}
+    </if>
+    <if test="companyId != null" >
+      AND a.company_id = #{companyId,jdbcType=VARCHAR}
+    </if>
+    <if test="accountId != null" >
+      AND a.account_id = #{accountId,jdbcType=VARCHAR}
+    </if>
+    <if test="companyUserId != null" >
+      AND a.company_user_id = #{companyUserId,jdbcType=VARCHAR}
+    </if>
+    <if test="memberType != null" >
+      AND a.member_type = #{memberType,jdbcType=INTEGER}
+    </if>
+    <if test="targetId != null" >
+      AND (a.target_id = #{targetId,jdbcType=VARCHAR} or a.node_id = #{targetId,jdbcType=VARCHAR})
+    </if>
+    <if test="nodeId != null" >
+      AND a.node_id = #{nodeId,jdbcType=VARCHAR}
+    </if>
+    <if test="status != null" >
+      AND a.status = #{status,jdbcType=INTEGER}
+    </if>
+    <if test="deleted != null" >
+      AND a.deleted = #{deleted,jdbcType=INTEGER}
+    </if>
+    <if test="seq != null" >
+      AND a.seq = #{seq,jdbcType=INTEGER}
+    </if>
+    <if test="param1 != null" >
+      AND a.param1 = #{param1,jdbcType=VARCHAR}
+    </if>
+    <if test="param2 != null" >
+      AND a.param2 = #{param2,jdbcType=VARCHAR}
+    </if>
+  </sql>
+
+
+  <resultMap id="BaseResultMap2" type="com.maoding.project.dto.ProjectTaskProcessNodeDTO">
+    <id column="node_name" jdbcType="VARCHAR" property="nodeName" />
+    <id column="member_type" jdbcType="INTEGER" property="memberType" />
+
+    <!-- 一对多的关系 -->
+    <collection property="userList" ofType="com.maoding.org.dto.CompanyUserAppDTO">
+      <result column="company_user_id" jdbcType="VARCHAR" property="id" />
+      <result column="user_id" jdbcType="VARCHAR" property="userId" />
+      <result column="user_name" jdbcType="VARCHAR" property="userName" />
+      <result column="cellphone" jdbcType="VARCHAR" property="cellphone" />
+      <result column="email" jdbcType="VARCHAR" property="email" />
+      <result column="head_img" jdbcType="VARCHAR" property="imgUrl" />
+      <result column="target_id" jdbcType="VARCHAR" property="targetId" />
+      <result column="complete_time" jdbcType="VARCHAR" property="completeTime" />
+    </collection>
+  </resultMap>
+
+  <select id="listProjectMemberGroupByParam" parameterType="com.maoding.projectmember.entity.ProjectMemberEntity" resultMap="BaseResultMap2">
+    SELECT
+    a.member_type,a.company_user_id,a.target_id,
+    b.user_name, b.email,c.cellphone,
+    CONCAT(d.file_group,'/',d.attach_path) as head_img
+    FROM maoding_web_project_member a
+    LEFT JOIN maoding_web_company_user b on a.company_user_id = b.id
+    LEFT JOIN maoding_web_account c on a.account_id = c.id
+    LEFT JOIN maoding_web_user_attach d on a.account_id = d.user_id and d.attach_type = '5'
+    <where >
+      deleted = 0 and a.status=0
+      <include refid="whereExample" />
+    </where>
+    order by a.member_type,a.seq
+  </select>
+
+  <select id="getUserPositionForProject" parameterType="java.util.Map" resultType="com.maoding.projectmember.dto.UserPositionDTO">
+    SELECT
+    member_type as memberType,
+    (case(member_type)
+    WHEN 0 then b.project_name
+    when 1 then ''
+    when 2 then ''
+    when 3 then GROUP_CONCAT(c.task_name)
+    when 4 then GROUP_CONCAT(c.task_name)
+    when 5 then GROUP_CONCAT(c.task_name)
+    when 6 then GROUP_CONCAT(c.task_name)
+    ELSE '' end ) as content
+    from maoding_web_project_member a
+    LEFT JOIN maoding_web_project b on a.project_id = b.id
+    LEFT JOIN maoding_web_project_task c on (a.target_id = c.id or a.node_id = c.id) and c.task_status = 0
+    where a.deleted=0
+    and a.project_id = #{projectId,jdbcType=VARCHAR}
+     and a.company_id = #{companyId,jdbcType=VARCHAR}
+    and a.account_id = #{accountId,jdbcType=VARCHAR}
+    GROUP BY a.member_type
+  </select>
+
+
+  <select id="listDesignMember" parameterType="java.util.Map" resultMap="BaseResultMap2">
+    SELECT
+    a.member_type,a.company_user_id,a.target_id,
+    b.user_name,b.user_id, b.email,c.cellphone,e.complete_time,
+    CONCAT(#{fastdfsUrl,jdbcType=VARCHAR},d.file_group,'/',d.attach_path) as head_img
+    FROM maoding_web_project_member a
+    LEFT JOIN maoding_web_company_user b on a.company_user_id = b.id
+    LEFT JOIN maoding_web_account c on a.account_id = c.id
+    LEFT JOIN maoding_web_user_attach d on a.account_id = d.user_id and d.attach_type = '5'
+    LEFT JOIN maoding_web_project_process_node e on a.target_id = e.id
+    <where >
+      deleted = 0
+      and (a.target_id = #{taskId,jdbcType=VARCHAR} or a.node_id = #{taskId,jdbcType=VARCHAR})
+      and (a.member_type = 4 or a.member_type = 5 or a.member_type = 6 )
+    </where>
+    order by a.member_type,a.seq
+  </select>
+
+
+  <select id="getDesignUser" resultType="java.lang.String" parameterType="java.lang.String">
+    SELECT GROUP_CONCAT(CONCAT(node,': ', userName," ") ORDER BY member_type)
+    FROM( SELECT a.member_type,
+    (	CASE (member_type)
+    WHEN 4 THEN '设计'
+    WHEN 5 THEN	'校对'
+    WHEN 6 THEN	'审核'
+    ELSE	''
+    END) AS node,
+    GROUP_CONCAT(b.user_name ORDER BY a.seq) AS userName
+    FROM	maoding_web_project_member a
+    LEFT JOIN maoding_web_company_user b ON a.company_user_id = b.id and a.deleted=0
+    WHERE	a.node_id = #{taskId}
+    GROUP BY a.member_type) a
+  </select>
+
+  <select id="getMemberName" parameterType="java.util.Map" resultType="java.lang.String">
+    SELECT b.user_name
+    FROM maoding_web_project_member a
+    LEFT JOIN maoding_web_company_user b on a.company_user_id = b.id
+    <where >
+      deleted = 0 and a.status=0
+      <include refid="whereExample" />
+    </where>
+    GROUP by a.member_type
+  </select>
+
+</mapper>

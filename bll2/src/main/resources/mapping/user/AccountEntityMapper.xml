@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="AccountEntityMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.user.entity.AccountEntity" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <id column="cellphone" property="cellphone" jdbcType="VARCHAR" />
+    <result column="user_name" property="userName" jdbcType="VARCHAR" />
+    <result column="nick_name" property="nickName" jdbcType="VARCHAR" />
+    <result column="password" property="password" jdbcType="VARCHAR" />
+    <result column="cellphone" property="cellphone" jdbcType="VARCHAR" />
+    <result column="email" property="email" jdbcType="VARCHAR" />
+    <result column="default_company_id" property="defaultCompanyId" jdbcType="VARCHAR" />
+    <result column="signature" property="signature" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="emial_code" property="emialCode" jdbcType="VARCHAR" />
+    <result column="active_time" property="activeTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  
+  <sql id="Base_Column_List" >
+    id, cellphone, user_name, nick_name, cellphone,password, email, default_company_id, signature, emial_code,active_time,
+    status, create_date, create_by, update_date, update_by
+  </sql>
+  
+  <select id="getAccountByCellphoneOrEmail" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from maoding_web_account
+    where  cellphone = #{cellphone,jdbcType=VARCHAR} or email = #{cellphone,jdbcType=VARCHAR}
+  </select>
+  
+   <select id="selectById" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from maoding_web_account
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+
+  <select id="selectAll" resultMap="BaseResultMap"  >
+    select
+    <include refid="Base_Column_List" />
+    from maoding_web_account where status = '0'
+  </select>
+  <!-- 查询 -->
+  <select id="selectNotCreateImUsers" resultMap="BaseResultMap" parameterType="java.util.Map" >
+    select
+    <include refid="Base_Column_List" />
+    from maoding_web_account m
+    where  m.id not in (select user_id from maoding_web_im_user) and m.status = '0'
+  </select>
+  <delete id="deleteById" parameterType="com.maoding.user.entity.AccountEntity" >
+    delete from maoding_web_account
+    where id = #{id,jdbcType=VARCHAR}
+  </delete>
+  
+  <insert id="insert" parameterType="com.maoding.user.entity.AccountEntity" >
+    insert into maoding_web_account (id, cellphone, user_name, 
+      nick_name, password, email, active_time,
+      default_company_id, signature, status, 
+      create_date, create_by, update_date, 
+      update_by, emial_code)
+    values (#{id,jdbcType=VARCHAR}, #{cellphone,jdbcType=VARCHAR}, #{userName,jdbcType=VARCHAR}, 
+      #{nickName,jdbcType=VARCHAR}, #{password,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR}, #{activeTime,jdbcType=TIMESTAMP},
+      #{defaultCompanyId,jdbcType=VARCHAR}, #{signature,jdbcType=VARCHAR}, #{status,jdbcType=VARCHAR}, 
+      now(), #{createBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP},
+      #{updateBy,jdbcType=VARCHAR}, #{emialCode,jdbcType=VARCHAR})
+  </insert>
+
+  <update id="updateById" parameterType="com.maoding.user.entity.AccountEntity" >
+    update maoding_web_account
+    <set >
+      <if test="userName != null" >
+        user_name = #{userName,jdbcType=VARCHAR},
+      </if>
+      <if test="password != null" >
+        password = #{password,jdbcType=VARCHAR},
+      </if>
+      <if test="nickName != null" >
+        nick_name = #{nickName,jdbcType=VARCHAR},
+      </if>
+      <if test="cellphone != null" >
+        cellphone = #{cellphone,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null" >
+        email = #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="defaultCompanyId != null" >
+        default_company_id = #{defaultCompanyId,jdbcType=VARCHAR},
+      </if>
+      <if test="signature != null" >
+        signature = #{signature,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=VARCHAR},
+      </if>
+      <if test="activeTime != null" >
+        active_time = #{activeTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createDate != null" >
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createBy != null" >
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+        update_date = now(),
+      <if test="updateBy != null" >
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="emialCode != null" >
+        emial_code = #{emialCode,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+  
+  <update id="update" parameterType="com.maoding.user.entity.AccountEntity" >
+    update maoding_web_account
+    set user_name = #{userName,jdbcType=VARCHAR},
+      nick_name = #{nickName,jdbcType=VARCHAR},
+      password = #{password,jdbcType=VARCHAR},
+      email = #{email,jdbcType=VARCHAR},
+      default_company_id = #{defaultCompanyId,jdbcType=VARCHAR},
+      signature = #{signature,jdbcType=VARCHAR},
+      status = #{status,jdbcType=VARCHAR},
+      update_date = now(),
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      emial_code = #{emialCode,jdbcType=VARCHAR}
+      where id = #{id,jdbcType=VARCHAR}
+      and cellphone = #{cellphone,jdbcType=VARCHAR}
+  </update>
+  
+  	<!-- 批量修改默认组织，把默认组织为 defaultCompanyId都设置为null,解散组织的时候使用-->
+	<update id="updatedeAllfaultCompanyId" parameterType="java.lang.String">
+		update maoding_web_account
+		set default_company_id = null
+		where default_company_id = #{defaultCompanyId,jdbcType=VARCHAR}
+	</update>
+
+
+  <!-- 查询 -->
+  <select id="selectAllPersonByParam" resultType="com.maoding.user.dto.AccountDTO" parameterType="java.util.Map" >
+    select DISTINCT  ma.id,ma.user_name as userName,ma.cellphone,ma.email,
+    IFNULL(CONCAT(#{fastdfsUrl,jdbcType=VARCHAR},ua.file_group,'/',ua.attach_path),'') AS 'filePath'
+    from maoding_web_account ma
+     LEFT JOIN maoding_web_company_user mu ON mu.user_id = ma.id
+    LEFT JOIN maoding_web_user_attach ua on ma.id = ua.user_id and ua.attach_type='5'
+     WHERE ma.`status` = 0 and mu.audit_status='1' and mu.company_id IN
+    <foreach collection="orgList" index="index" item="orgId" open="(" separator="," close=")">
+      #{orgId}
+    </foreach>
+    <if test="maodingAid != null" >
+    union(
+        select
+      aid.id,aid.user_name as userName,aid.cellphone,aid.email,'' as 'filePath'
+      from maoding_web_account aid where aid.id = '123f9ef123c140fd9b6c7a5123c68e1a'
+  )
+    </if>
+  </select>
+
+
+  <!-- 查询 -->
+  <select id="selectProjectPrincipal" resultMap="BaseResultMap" parameterType="java.util.Map" >
+    select
+    m.*
+    from maoding_web_account m
+    WHERE m.id IN(
+      SELECT b.user_id FROM  maoding_web_project_responsible_person a
+      LEFT JOIN maoding_web_company_user b ON a.company_user_id = b.id
+       WHERE 1=1
+    <if test="projectId != null" >
+      and a.project_id = #{projectId,jdbcType=VARCHAR}
+    </if>
+    <if test="companyId != null" >
+      and a.company_id = #{companyId,jdbcType=VARCHAR}
+    </if>
+    <if test="type != null" >
+     and a.type = #{type,jdbcType=VARCHAR}
+    </if>
+       )
+  </select>
+
+  <!-- 查询 -->
+  <select id="selectOtherParticipationPeople" resultMap="BaseResultMap" parameterType="java.util.Map" >
+    select
+    m.*
+    from maoding_web_account m
+    WHERE m.id IN(
+    SELECT c.user_id FROM maoding_web_project_process_node a
+    LEFT JOIN maoding_web_project_process b ON a.process_id = b.id
+    LEFT JOIN maoding_web_company_user c ON a.company_user_id = c.id
+    WHERE 1=1
+    <if test="projectId != null" >
+      and b.project_id = #{projectId,jdbcType=VARCHAR}
+    </if>
+    <if test="companyId != null" >
+      and b.company_id = #{companyId,jdbcType=VARCHAR}
+    </if>
+    GROUP BY c.user_id
+    )
+  </select>
+
+  <!-- 查询 -->
+  <select id="selectSignPeople" resultMap="BaseResultMap" parameterType="java.util.Map" >
+    select
+    m.*
+    from maoding_web_account m
+    WHERE m.id IN(
+    SELECT a.create_by FROM maoding_web_project_server_content a
+    WHERE 1=1
+    <if test="projectId != null" >
+      and a.project_id = #{projectId,jdbcType=VARCHAR}
+    </if>
+    GROUP BY a.create_by
+    )
+  </select>
+
+
+
+
+
+
+
+  <!-- v2查询 -->
+  <select id="selectV2AllPersonByParam" resultMap="BaseResultMap" parameterType="java.util.Map" >
+    select
+    ma.*
+    from maoding_web_account ma  LEFT JOIN maoding_web_company_user mu ON mu.user_id = ma.id AND ma.`status` = 0 WHERE company_id IN ( #{companyIds,jdbcType=VARCHAR}) AND audit_status = 1 GROUP BY ma.id;
+    union all
+    select mwa.* from maoding_web_account mwa where mwa.id = '123f9ef123c140fd9b6c7a5123c68e1a';
+  </select>
+
+
+
+</mapper>

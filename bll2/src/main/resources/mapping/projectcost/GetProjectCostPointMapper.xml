@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetProjectCostPointMapper" >
+  <resultMap id="BaseResultMapDTO" type="com.maoding.projectcost.dto.ProjectCostPointDTO" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="project_id" property="projectId" jdbcType="VARCHAR" />
+    <result column="fee_description" property="feeDescription" jdbcType="VARCHAR" />
+    <result column="fee_proportion" property="feeProportion" jdbcType="VARCHAR" />
+    <result column="task_id" property="taskId" jdbcType="VARCHAR" />
+    <result column="fee" property="fee" jdbcType="DECIMAL" />
+    <result column="type" property="type" jdbcType="VARCHAR" />
+    <result column="seq" property="seq" jdbcType="VARCHAR" />
+    <result column="pid" property="pid" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <sql id="Base_Column_List" >
+    id, project_id, status,fee_description, fee_proportion, fee, type,task_id, create_date,
+    create_by, update_date, update_by,seq,pid
+  </sql>
+
+  <select id="selectByParam" parameterType="java.util.Map" resultMap="BaseResultMapDTO">
+    SELECT
+    <include refid="Base_Column_List" />
+    from maoding_web_project_cost_point
+    where status = '0'
+    <if test="projectId != null" >
+      and project_id = #{projectId,jdbcType=VARCHAR}
+    </if>
+    <if test="type != null" >
+      and type = #{type,jdbcType=VARCHAR}
+    </if>
+    <if test="flag != null" >
+      and flag = #{flag,jdbcType=VARCHAR}
+    </if>
+    <if test="pid != null" >
+      and pid = #{pid,jdbcType=VARCHAR}
+    </if>
+    <if test="taskIdList != null" >
+      and task_id in
+      <foreach collection="taskIdList" index="index" item="taskId" open="(" separator="," close=")">
+        #{taskId}
+      </foreach>
+    </if>
+    <if test="costId != null" >
+      and cost_id = #{costId,jdbcType=VARCHAR}
+    </if>
+    <if test="pidIsNull != null" >
+      and pid is NULL
+    </if>
+    order by create_date,seq
+  </select>
+
+  <select id="getCostPointData" resultType="com.maoding.projectcost.dto.ProjectCostPointDataForMyTaskDTO" parameterType="java.util.Map">
+    SELECT b.id,
+    b.fee_description as feeDescription,
+    b.fee_proportion as feeProportion,
+    b.fee,
+    b.type,
+    c.id as pointDetailId,
+    c.fee as pointDetailFee,
+    ifnull(f.nick_name,e.company_name) as companyName
+    <if test = "paymentDetailId!=null">
+      ,d.fee as paymentFee
+    </if>
+    from maoding_web_project_cost a
+    LEFT JOIN maoding_web_project_cost_point b on a.id = b.cost_id
+    LEFT JOIN maoding_web_project_cost_point_detail c on b.id = c.point_id
+    <if test = "paymentDetailId!=null">
+      LEFT JOIN maoding_web_project_cost_payment_detail d on c.id = d.point_detail_id
+    </if>
+    LEFT JOIN maoding_web_company e on (a.from_company_id = e.id or a.to_company_id = e.id) and e.id!= #{companyId,jdbcType=VARCHAR}
+    LEFT JOIN maoding_web_business_partner f on f.company_id = e.id
+    where 1=1
+    <if test = "pointDetailId!=null">
+      AND c.id = #{pointDetailId,jdbcType=VARCHAR}
+    </if>
+    <if test = "paymentDetailId!=null">
+      AND d.id = #{paymentDetailId,jdbcType=VARCHAR}
+    </if>
+  </select>
+</mapper>

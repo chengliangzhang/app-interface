@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetProjectProfitStatisticsMapper" >
+	<select id="profitAmount" resultType="com.maoding.project.dto.ProjectProfitFeeAmountDTO" parameterType="java.util.Map" >
+		SELECT sum((CASE when a.company_id=#{companyId,jdbcType=VARCHAR} then IFNULL(a.total_contract_amount,0) else 0 end)) as totalContractAmount, SUM(IFNULL(c.fee,0)) as contractAmount ,
+		SUM(IFNULL(e.designFee,0)-IFNULL(d.designFee,0)) as designFee, SUM(IFNULL(e.paidDesignFee,0) - IFNULL(payDesignFee,0)) as profitDesignFee, SUM(IFNULL(g.manageFee,0)-IFNULL(f.manageFee,0)) as manageFee, SUM(IFNULL(g.paidManageFee,0)- IFNULL(f.payManageFee,0)) as profitManageFee
+		from maoding_web_project a
+		-- 合同回款
+		LEFT JOIN (SELECT f.project_id, sum(f.fee) as fee from maoding_web_project_fee f where f.`status`='0' and f.type='2' GROUP BY f.project_id)c on a.id = c.project_id and a.company_id=#{companyId,jdbcType=VARCHAR}
+		-- 合作设计费支出
+		LEFT JOIN ( select t.project_id,t.from_company,t.to_company,audit_status,sum(IFNULL(cf.fee,0)) as designFee ,SUM( CASE WHEN cf.pay_date is not NULL THEN cf.fee ELSE 0 END) as payDesignFee
+		from maoding_web_project_server_content_fee cf,maoding_web_project_task t
+		where cf.server_content_id=t.server_content_id and t.`status`='0' and cf.type='1' and t.from_company=#{companyId,jdbcType=VARCHAR} GROUP BY t.project_id)d on a.id = d.project_id and d.from_company=#{companyId,jdbcType=VARCHAR}
+		-- 合作设计费收入
+		LEFT JOIN ( select t.project_id,t.from_company,t.to_company,audit_status,sum(IFNULL(cf.fee,0)) as designFee ,SUM( CASE WHEN cf.paid_date is not NULL THEN cf.fee ELSE 0 END) as paidDesignFee
+		from maoding_web_project_server_content_fee cf,maoding_web_project_task t
+		where cf.server_content_id=t.server_content_id and t.`status`='0' and cf.type='1' and t.to_company=#{companyId,jdbcType=VARCHAR} GROUP BY t.project_id)e on a.id = e.project_id and e.from_company!=e.to_company and e.to_company=#{companyId,jdbcType=VARCHAR}
+		-- 技术审查费支出
+		LEFT JOIN ( select t.project_id,t.from_company,t.task_level,audit_status,sum(IFNULL(cf.fee,0)) as manageFee ,SUM( CASE WHEN cf.pay_date is not NULL THEN cf.fee ELSE 0 END) as payManageFee
+		from maoding_web_project_server_content_fee cf,maoding_web_project_task t
+		where cf.server_content_id=t.server_content_id and t.`status`='0' and cf.type='2' and  t.from_company=#{companyId,jdbcType=VARCHAR} GROUP BY t.project_id)f on a.id = f.project_id and f.from_company=#{companyId,jdbcType=VARCHAR}
+		-- 技术审查费收入
+		LEFT JOIN ( select t.project_id,t.from_company,t.task_level,audit_status,sum(IFNULL(cf.fee,0)) as manageFee ,SUM( CASE WHEN cf.paid_date is not NULL THEN cf.fee ELSE 0 END) as paidManageFee
+		from maoding_web_project_server_content_fee cf,maoding_web_project_task t
+		where cf.server_content_id=t.server_content_id and t.`status`='0' and cf.type='2' and t.task_level='1'  GROUP BY t.project_id)g on a.id = g.project_id and a.company_bid !=a.company_id and a.company_bid=#{companyId,jdbcType=VARCHAR}
+
+		where  1=1 and a.pstatus='0'
+		and (a.company_id=#{companyId,jdbcType=VARCHAR} or a.company_bid=#{companyId,jdbcType=VARCHAR}
+		or d.from_company=#{companyId,jdbcType=VARCHAR} or d.to_company=#{companyId,jdbcType=VARCHAR}
+		or e.from_company=#{companyId,jdbcType=VARCHAR} or e.to_company=#{companyId,jdbcType=VARCHAR})
+		<if test="startDate!=null and startDate!=''.toString()">
+			<![CDATA[  and a.contract_date >= #{startDate,jdbcType=VARCHAR}  ]]>
+		</if>
+
+		<if test="endDate!=null and endDate!=''.toString()">
+			<![CDATA[  and a.contract_date <= #{endDate,jdbcType=VARCHAR}  ]]>
+		</if>
+	</select>
+
+ <!--  项目统计-项目收支总览统计-->
+
+	<select id="profitAmountDetail" resultType="com.maoding.project.dto.ProjectProfitFeeAmountDTO" parameterType="java.util.Map" >
+		SELECT DATE_FORMAT(a.create_date,'%Y-%m-%d') as createDate,a.id,a.project_name as projectName,a.company_id as companyId,IFNULL(a.total_contract_amount,0) as totalContractAmount,IFNULL(c.fee,0) as contractAmount ,
+		IFNULL(e.designFee,0)-IFNULL(d.designFee,0) as designFee,IFNULL(e.paidDesignFee,0) - IFNULL(payDesignFee,0) as profitDesignFee,IFNULL(g.manageFee,0)-IFNULL(f.manageFee,0) as manageFee,IFNULL(g.paidManageFee,0)- IFNULL(f.payManageFee,0) as profitManageFee
+		from maoding_web_project a
+		-- 合同回款
+		LEFT JOIN (SELECT f.project_id, sum(f.fee) as fee from maoding_web_project_fee f where f.`status`='0' and f.type='2' GROUP BY f.project_id)c on a.id = c.project_id
+		-- 合作设计费支出
+		LEFT JOIN ( select t.project_id,t.from_company,t.to_company,audit_status,sum(IFNULL(cf.fee,0)) as designFee ,SUM( CASE WHEN cf.pay_date is not NULL THEN cf.fee ELSE 0 END) as payDesignFee
+		from maoding_web_project_server_content_fee cf,maoding_web_project_task t
+		where cf.server_content_id=t.server_content_id and t.`status`='0' and cf.type='1' and t.from_company=#{companyId,jdbcType=VARCHAR} GROUP BY t.project_id)d on a.id = d.project_id and d.from_company=#{companyId,jdbcType=VARCHAR}
+		-- 合作设计费收入
+		LEFT JOIN ( select t.project_id,t.from_company,t.to_company,audit_status,sum(IFNULL(cf.fee,0)) as designFee ,SUM( CASE WHEN cf.paid_date is not NULL THEN cf.fee ELSE 0 END) as paidDesignFee
+		from maoding_web_project_server_content_fee cf,maoding_web_project_task t
+		where cf.server_content_id=t.server_content_id and t.`status`='0' and cf.type='1' and t.to_company=#{companyId,jdbcType=VARCHAR} GROUP BY t.project_id)e on a.id = e.project_id and e.from_company!=e.to_company and e.to_company=#{companyId,jdbcType=VARCHAR}
+		-- 技术审查费支出
+		LEFT JOIN ( select t.project_id,t.from_company,t.task_level,audit_status,sum(IFNULL(cf.fee,0)) as manageFee ,SUM( CASE WHEN cf.pay_date is not NULL THEN cf.fee ELSE 0 END) as payManageFee
+		from maoding_web_project_server_content_fee cf,maoding_web_project_task t
+		where cf.server_content_id=t.server_content_id and t.`status`='0' and cf.type='2' and  t.from_company=#{companyId,jdbcType=VARCHAR} GROUP BY t.project_id)f on a.id = f.project_id and f.from_company=#{companyId,jdbcType=VARCHAR}
+		-- 技术审查费收入
+		LEFT JOIN ( select t.project_id,t.from_company,t.task_level,audit_status,sum(IFNULL(cf.fee,0)) as manageFee ,SUM( CASE WHEN cf.paid_date is not NULL THEN cf.fee ELSE 0 END) as paidManageFee
+		from maoding_web_project_server_content_fee cf,maoding_web_project_task t
+		where cf.server_content_id=t.server_content_id and t.`status`='0' and cf.type='2' and t.task_level='1'  GROUP BY t.project_id)g on a.id = g.project_id and a.company_bid !=a.company_id and a.company_bid=#{companyId,jdbcType=VARCHAR}
+
+		where  1=1 and a.pstatus='0'
+		and (a.company_id=#{companyId,jdbcType=VARCHAR} or a.company_bid=#{companyId,jdbcType=VARCHAR}
+		or d.from_company=#{companyId,jdbcType=VARCHAR} or d.to_company=#{companyId,jdbcType=VARCHAR}
+		or e.from_company=#{companyId,jdbcType=VARCHAR} or e.to_company=#{companyId,jdbcType=VARCHAR})
+		<if test="startDate!=null and startDate!=''.toString()">
+			<![CDATA[  and a.contract_date  >= #{startDate,jdbcType=VARCHAR}  ]]>
+		</if>
+
+		<if test="endDate!=null and endDate!=''.toString()">
+			<![CDATA[  and a.contract_date  <= #{endDate,jdbcType=VARCHAR}  ]]>
+		</if>
+
+		<if test="_parameter.containsKey('startPage')">
+			limit #{startPage},#{endPage}
+		</if>
+	</select>
+
+  <!-- 项目收支总览 详情条目数 -->
+  <select id="profitAmountDetailCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+	  select IFNULL(count(1),0)
+	  from
+	  (select a.id
+	  from maoding_web_project a
+	  LEFT JOIN  maoding_web_project_task c on a.id=c.project_id and c.`status`='0'
+	  where 1=1 and a.pstatus='0'
+	  and (a.company_id=#{companyId,jdbcType=VARCHAR} or a.company_bid=#{companyId,jdbcType=VARCHAR}
+	  or c.from_company=#{companyId,jdbcType=VARCHAR} or c.to_company=#{companyId,jdbcType=VARCHAR})
+	  <if test="_parameter.containsKey('startDate')">
+		  <![CDATA[  and a.contract_date >= #{startDate,jdbcType=VARCHAR}  ]]>
+	  </if>
+	  <if test="_parameter.containsKey('endDate')">
+		  <![CDATA[  and a.contract_date <= #{endDate,jdbcType=VARCHAR}  ]]>
+	  </if>
+	  group by a.id
+	  )a1
+  </select>
+
+</mapper>

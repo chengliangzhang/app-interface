@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetMyTaskByPageMapper" >
+
+<resultMap id="BaseResultMap" type="com.maoding.mytask.entity.MyTaskEntity" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="task_title" property="taskTitle" jdbcType="VARCHAR" />
+    <result column="task_type" property="taskType" jdbcType="INTEGER" />
+    <result column="handler_id" property="handlerId" jdbcType="VARCHAR" />
+    <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="target_id" property="targetId" jdbcType="VARCHAR" />
+    <result column="param1" property="param1" jdbcType="VARCHAR" />
+    <result column="param2" property="param2" jdbcType="VARCHAR" />
+    <result column="param3" property="param3" jdbcType="VARCHAR" />
+    <result column="param4" property="param4" jdbcType="VARCHAR" />
+    <result column="project_id" property="projectId" jdbcType="VARCHAR" />
+    <result column="task_content" property="taskContent" jdbcType="LONGVARCHAR" />
+</resultMap>
+
+<select id="getMyTaskList" resultType="com.maoding.mytask.dto.MyTaskListDTO" parameterType="java.util.Map">
+    SELECT b.id as projectId,IFNULL(b.project_name,'报销审批') as projectName,COUNT(a.id) as totalNum,sum(CASE WHEN a.status='1'  THEN 1 ELSE 0 END) AS completeNum
+    from maoding_web_my_task a
+    LEFT JOIN maoding_web_project b on a.project_id = b.id
+    where (a.`status` = 1 or a.`status` = '0') and a.param4=0
+    and a.company_id = #{companyId,jdbcType=VARCHAR}
+    and (
+          (
+            a.handler_id =  #{handlerId,jdbcType=VARCHAR}
+            and ((b.id is null and a.`status` = '0') or (b.id is not null and b.pstatus='0'))
+          )
+          <if test="isHandler!=null">
+            or (a.handler_id is NULL  and a.param3=1)
+          </if>
+      )
+    and a.task_type!=12
+    GROUP BY b.id
+    order by IFNULL(b.create_date,now()) desc
+    <if test="startPage!=null">
+        LIMIT #{startPage},#{endPage}
+    </if>
+</select>
+
+
+<!-- 根据不同的参数查询我的任务 -->
+<select id="getMyTaskByProjectId" resultMap="BaseResultMap" parameterType="java.util.Map" >
+    select *
+    from maoding_web_my_task
+    where status!='2' and param4 = '0'
+    and company_id = #{companyId,jdbcType=VARCHAR}
+    AND
+    (
+    handler_id = #{handlerId,jdbcType=VARCHAR}
+    <if test="isHandler!=null">
+        or (handler_id is NULL  and param3=1)
+    </if>
+    )
+    <if test="projectId != null" >
+        AND project_id = #{projectId,jdbcType=VARCHAR}
+    </if>
+    <if test="projectId == null" >
+        AND task_type = 11 and status='0'
+    </if>
+    and task_type!=12
+    order by status,create_date desc
+    <if test="startPage!=null">
+        LIMIT #{startPage},#{endPage}
+    </if>
+</select>
+</mapper>

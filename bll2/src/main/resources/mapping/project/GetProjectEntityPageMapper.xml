@@ -1,0 +1,443 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetProjectEntityPageMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.project.dto.ProjectTableDTO" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="project_name" property="projectName" jdbcType="VARCHAR" />
+    <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="company_bid" property="companyBid" jdbcType="VARCHAR" />
+    <result column="project_no" property="projectNo" jdbcType="VARCHAR" />
+    <result column="parent_projectid" property="parentProjectid" jdbcType="VARCHAR" />
+    <result column="total_contract_amount" property="totalContractAmount" jdbcType="DECIMAL" />
+    <result column="company_name" property="companyName" jdbcType="VARCHAR" />
+    <result column="sign_date" property="signDate" jdbcType="DATE" />
+    <result column="party_a" property="partyA" jdbcType="VARCHAR" />
+    <result column="party_b" property="partyB" jdbcType="VARCHAR" />
+    <result column="design_company_name" property="designCompanyName" jdbcType="VARCHAR" />
+    <result column="from_company_name" property="fromCompanyName" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <resultMap id="companyListMap" type="com.maoding.org.dto.CompanyDTO" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="company_name" property="companyName" jdbcType="VARCHAR" />
+  </resultMap>
+  <!-- 项目管理查询 (经营列表)-->
+  <select id="getProjectListByCondition" resultMap="BaseResultMap" parameterType="java.util.Map">
+    SELECT  a.id,
+    a.company_id,
+    a.project_no,
+    a.project_name,
+    a.parent_projectid,
+    a.total_contract_amount,
+    a.company_bid,
+    a.status,
+    (select company_name from maoding_web_company c1 WHERE c1.id=a.company_id) as company_name,
+    (select company_name from maoding_web_company c2 WHERE c2.id=a.company_bid) as party_b,
+    (select company_name from maoding_web_project_construct c3 WHERE c3.id=a.construct_company) as party_a,
+    a.contract_date as sign_date
+    FROM maoding_web_project a
+    left join maoding_web_project_task c on a.id=c.project_id and c.status='0'
+    <if test="type!=null and type==3">
+      LEFT JOIN maoding_web_depart e on c.to_company = e.id
+    </if>
+    WHERE a.pstatus='0'
+    <if test="type!=null and type==0">
+      <if test="relationCompany!=null">
+        and (a.company_id = #{relationCompany,jdbcType=VARCHAR}  or c.from_company = #{relationCompany,jdbcType=VARCHAR}  or c.to_company = #{relationCompany,jdbcType=VARCHAR}  or a.company_bid = #{relationCompany,jdbcType=VARCHAR})
+      </if>
+    </if>
+
+    <if test="type!=null and type==1">
+      <if test="relationCompany!=null">
+        and a.company_id = #{relationCompany,jdbcType=VARCHAR}
+      </if>
+    </if>
+
+    <if test="type!=null and type==2">
+      <if test="relationCompany!=null">
+        and c.from_company = #{relationCompany,jdbcType=VARCHAR}
+      </if>
+    </if>
+
+    <if test="type!=null and type==3">
+      <if test="relationCompany!=null">
+        and (c.to_company = #{relationCompany,jdbcType=VARCHAR} or e.company_id =#{relationCompany,jdbcType=VARCHAR}  )
+      </if>
+    </if>
+
+    <if test="type!=null and type==4">
+      <if test="relationCompany!=null">
+        and a.company_bid = #{relationCompany,jdbcType=VARCHAR}
+      </if>
+    </if>
+
+    <if test="_parameter.containsKey('companyId')">
+      and a.company_id = #{companyId,jdbcType=VARCHAR}
+    </if>
+
+    <if test="projectName!=null">
+      and a.project_name like '%' #{projectName} '%'
+    </if>
+
+    <if test="startSignDate!=null and startSignDate!=''.toString()">
+      <![CDATA[  and a.contract_date >= #{startSignDate,jdbcType=VARCHAR}  ]]>
+    </if>
+
+    <if test="endSignDate!=null and endSignDate!=''.toString()">
+      <![CDATA[  and a.contract_date <= #{endSignDate,jdbcType=VARCHAR}  ]]>
+    </if>
+    group by a.id
+    order by a.contract_date DESC,a.project_create_date DESC,a.project_name desc
+    <if test="_parameter.containsKey('startPage')">
+      limit #{startPage},#{endPage}
+    </if>
+  </select>
+
+
+  <!-- 项目管理查询 (经营列表-我是发包人)-->
+  <select id="getProjectListByCondition2" resultMap="BaseResultMap" parameterType="java.util.Map">
+    SELECT  a.id,
+    a.company_id,
+    a.project_no,
+    a.project_name,
+    a.parent_projectid,
+    a.total_contract_amount,
+    a.company_bid,
+    group_concat(c.design_company_name) as design_company_name,
+    (select company_name from maoding_web_company c1 WHERE c1.id=a.company_id) as company_name,
+    a.contract_date as sign_date
+    FROM maoding_web_project a
+    left join (SELECT DISTINCT o.id,t.project_id,t.from_company,t.to_company,case (o.org_type)
+    when 0 then (select company_name from maoding_web_company c4 where c4.id = o.id)
+    else (select depart_name from maoding_web_depart d1 where d1.id = o.id)  end  as design_company_name
+    from maoding_web_project_task t
+    LEFT JOIN maoding_web_org o on t.to_company = o.id
+    )c on a.id=c.project_id
+    WHERE a.pstatus='0' and c.from_company = #{relationCompany,jdbcType=VARCHAR}
+    <if test="projectName!=null">
+      and a.project_name like '%' #{projectName} '%'
+    </if>
+
+    <if test="designCompanyName!=null">
+      and c.design_company_name like '%' #{designCompanyName} '%'
+    </if>
+
+    <if test="startSignDate!=null and startSignDate!=''.toString()">
+      <![CDATA[  and a.contract_date >= #{startSignDate,jdbcType=VARCHAR}  ]]>
+    </if>
+
+    <if test="endSignDate!=null and endSignDate!=''.toString()">
+      <![CDATA[  and a.contract_date <= #{endSignDate,jdbcType=VARCHAR}  ]]>
+    </if>
+    group by a.id
+    order by a.project_create_date DESC,a.project_name desc
+    <if test="_parameter.containsKey('startPage')">
+      limit #{startPage},#{endPage}
+    </if>
+  </select>
+
+  <!-- 项目管理查询 (经营列表-我是接包人)-->
+  <select id="getProjectListByCondition3" resultMap="BaseResultMap" parameterType="java.util.Map">
+    SELECT  a.id,
+    a.company_id,
+    a.project_no,
+    a.project_name,
+    a.parent_projectid,
+    a.total_contract_amount,
+    a.company_bid,
+    group_concat( DISTINCT d.company_name) as from_company_name,
+    (select company_name from maoding_web_company c1 WHERE c1.id=a.company_id) as company_name,
+    a.contract_date as sign_date
+    FROM maoding_web_project a
+    left join maoding_web_project_task c on a.id=c.project_id
+    LEFT JOIN maoding_web_company d on c.from_company = d.id
+    WHERE a.pstatus='0' and c.to_company = #{relationCompany,jdbcType=VARCHAR}
+
+    <if test="projectName!=null">
+      and a.project_name like '%' #{projectName} '%'
+    </if>
+
+    <if test="departId!=null">
+      and c.to_company like '%' #{departId} '%'
+    </if>
+
+    <if test="fromCompanyName!=null">
+      and d.company_name like '%' #{fromCompanyName} '%'
+    </if>
+
+    <if test="startSignDate!=null and startSignDate!=''.toString()">
+      <![CDATA[  and a.contract_date >= #{startSignDate,jdbcType=VARCHAR}  ]]>
+    </if>
+
+    <if test="endSignDate!=null and endSignDate!=''.toString()">
+      <![CDATA[  and a.contract_date <= #{endSignDate,jdbcType=VARCHAR}  ]]>
+    </if>
+    group by a.id
+    order by c.project_create_date DESC,a.project_name desc
+    <if test="_parameter.containsKey('startPage')">
+      limit #{startPage},#{endPage}
+    </if>
+  </select>
+
+
+
+
+  <!-- 项目管理查询  我是发包人 条数查询 -->
+  <select id="getProjectListByConditionCount2" resultType="java.lang.Integer" parameterType="java.util.Map">
+    select count(1) from(
+    SELECT  a.id
+    FROM
+    maoding_web_project a
+    left join (SELECT DISTINCT o.id,t.project_id,t.from_company,t.to_company,case (o.org_type)
+    when 0 then (select company_name from maoding_web_company c4 where c4.id = o.id)
+    else (select depart_name from maoding_web_depart d1 where d1.id = o.id)  end  as design_company_name
+    from maoding_web_project_task t
+    LEFT JOIN maoding_web_org o on t.to_company = o.id
+    )c on a.id=c.project_id
+    WHERE a.pstatus='0' and c.from_company = #{relationCompany,jdbcType=VARCHAR}
+
+    <if test="projectName!=null">
+      and a.project_name like '%' #{projectName} '%'
+    </if>
+
+    <if test="designCompanyName!=null">
+      and c.design_company_name like '%' #{designCompanyName} '%'
+    </if>
+
+    <if test="startSignDate!=null and startSignDate!=''.toString()">
+      <![CDATA[  and a.contract_date >= #{startSignDate,jdbcType=VARCHAR}  ]]>
+    </if>
+
+    <if test="endSignDate!=null and endSignDate!=''.toString()">
+      <![CDATA[  and a.contract_date <= #{endSignDate,jdbcType=VARCHAR}  ]]>
+    </if>
+
+    group by a.id
+    )p
+  </select>
+
+
+  <!-- 项目管理查询-->
+  <select id="getProjectListByConditionCount3" resultType="java.lang.Integer" parameterType="java.util.Map">
+    select count(1) from(
+    SELECT  a.id
+    FROM
+    maoding_web_project a
+    left join maoding_web_project_task c on a.id=c.project_id
+    LEFT JOIN maoding_web_company d on c.from_company = d.id
+    WHERE a.pstatus='0' and c.to_company = #{relationCompany,jdbcType=VARCHAR}
+
+    <if test="projectName!=null">
+      and a.project_name like '%' #{projectName} '%'
+    </if>
+
+    <if test="fromCompanyName!=null">
+      and d.company_name like '%' #{fromCompanyName} '%'
+    </if>
+
+    <if test="startSignDate!=null and startSignDate!=''.toString()">
+      <![CDATA[  and a.contract_date >= #{startSignDate,jdbcType=VARCHAR}  ]]>
+    </if>
+
+    <if test="endSignDate!=null and endSignDate!=''.toString()">
+      <![CDATA[  and a.contract_date <= #{endSignDate,jdbcType=VARCHAR}  ]]>
+    </if>
+
+    group by a.id
+    )p
+  </select>
+
+  <select id="getDesignCompanys" resultMap="companyListMap" parameterType="java.util.Map">
+
+    SELECT a2.id,a2.company_name
+    FROM maoding_web_company  a2
+    LEFT JOIN maoding_web_project_task b2 on a2.id=b2.to_company
+    WHERE b2.project_id= #{projectId,jdbcType=VARCHAR} and b2.from_company= #{fromCompany,jdbcType=VARCHAR}
+    group by a2.id
+    UNION
+    (
+    SELECT  a1.id,a1.depart_name as company_name
+    FROM maoding_web_depart  a1
+    LEFT JOIN maoding_web_project_task b1 on a1.id=b1.to_company
+    WHERE b1.project_id= #{projectId,jdbcType=VARCHAR} and b1.from_company= #{fromCompany,jdbcType=VARCHAR}
+    and b1.to_company!=a1.company_id
+    group by a1.id
+    )
+  </select>
+
+  <!-- 我要报销 选择项目下拉框 -->
+  <select id="getProjectListByCompanyId" parameterType="java.util.Map" resultType="com.maoding.project.dto.ProjectDTO">
+    SELECT  a.id,
+    a.company_id,
+    a.project_no,
+    a.project_name as projectName
+    FROM maoding_web_project a
+    left join maoding_web_project_task c on a.id=c.project_id
+    WHERE a.pstatus='0'
+    and (a.company_id = #{companyId,jdbcType=VARCHAR}  or c.company_id = #{companyId,jdbcType=VARCHAR})
+    <if test="searchVal!=null">
+      and a.project_name like '%' #{searchVal} '%'
+    </if>
+    group by a.id
+  </select>
+
+
+
+  <!-- 项目管理查询 (经营列表)-->
+  <select id="getProjectTaskManageByCondition" resultMap="BaseResultMap" parameterType="java.util.Map">
+    SELECT  a.id,
+    a.company_id,
+    a.project_no,
+    a.project_name,
+    a.parent_projectid,
+    a.total_contract_amount,
+    a.company_bid,
+    a.status,
+    (select company_name from maoding_web_company c1 WHERE c1.id=a.company_id) as company_name,
+    a.contract_date as sign_date
+    FROM maoding_web_project a
+    left join maoding_web_project_task c on a.id=c.project_id and c.status='0'
+    left join maoding_web_project_task_manager d on c.server_content_id = d.scontent_id
+    LEFT JOIN maoding_web_depart e on c.to_company = e.id
+    WHERE a.pstatus='0' AND d.status='0'
+    and (c.to_company = #{relationCompany,jdbcType=VARCHAR} or e.company_id =#{relationCompany,jdbcType=VARCHAR}  )
+
+    <if test="_parameter.containsKey('companyId')">
+      and a.company_id = #{companyId,jdbcType=VARCHAR}
+    </if>
+
+    <if test="projectName!=null">
+      and a.project_name like '%' #{projectName} '%'
+    </if>
+
+    <if test="startSignDate!=null and startSignDate!=''.toString()">
+      <![CDATA[  and a.contract_date >= #{startSignDate,jdbcType=VARCHAR}  ]]>
+    </if>
+
+    <if test="endSignDate!=null and endSignDate!=''.toString()">
+      <![CDATA[  and a.contract_date <= #{endSignDate,jdbcType=VARCHAR}  ]]>
+    </if>
+    group by a.id
+    order by a.contract_date DESC,a.project_create_date DESC,a.project_name desc
+    <if test="_parameter.containsKey('startPage')">
+      limit #{startPage},#{endPage}
+    </if>
+  </select>
+
+
+  <select id="getProjectTaskManageCountByCondition" resultType="java.lang.Integer" parameterType="java.util.Map">
+    select count(1) from(
+    SELECT a.id
+    FROM maoding_web_project a
+    left join maoding_web_project_task c on a.id=c.project_id and c.status='0'
+    left join maoding_web_project_task_manager d on c.server_content_id = d.scontent_id
+    LEFT JOIN maoding_web_depart e on c.to_company = e.id
+    WHERE a.pstatus='0' AND d.status='0'
+    and (c.to_company = #{relationCompany,jdbcType=VARCHAR} or e.company_id =#{relationCompany,jdbcType=VARCHAR} )
+    <if test="_parameter.containsKey('companyId')">
+      and a.company_id = #{companyId,jdbcType=VARCHAR}
+    </if>
+
+    <if test="projectName!=null">
+      and a.project_name like '%' #{projectName} '%'
+    </if>
+
+    <if test="startSignDate!=null and startSignDate!=''.toString()">
+      <![CDATA[  and a.contract_date >= #{startSignDate,jdbcType=VARCHAR}  ]]>
+    </if>
+
+    <if test="endSignDate!=null and endSignDate!=''.toString()">
+      <![CDATA[  and a.contract_date <= #{endSignDate,jdbcType=VARCHAR}  ]]>
+    </if>
+    group by a.id
+    )p
+  </select>
+
+
+  <!--v2-->
+  <resultMap id="V2BaseResultMap" type="com.maoding.v2.project.dto.V2ProjectTableDTO" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="project_name" property="projectName" jdbcType="VARCHAR" />
+    <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="company_name" property="companyName" jdbcType="VARCHAR" />
+    <result column="user_name" property="addProjectUserName" jdbcType="VARCHAR" />
+    <result column="designContent" property="designContent" jdbcType="VARCHAR" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="flag" property="flag" jdbcType="INTEGER" />
+  </resultMap>
+
+
+  <!-- v2项目列表-->
+  <select id="getV2ProjectList" resultMap="V2BaseResultMap" parameterType="java.util.Map">
+    SELECT  a.id,
+    a.company_id,
+    a.project_name,
+    b.user_name,
+    a.create_by,
+    b.id,
+    (SELECT company_name from maoding_web_company f where f.id = a.company_id ) as company_name,
+    IF(d.id is NOT null,1,IF(f.id is not null,2,0)) as flag
+    FROM maoding_web_project a
+    left join maoding_web_company_user b on a.create_by = b.user_id and a.company_id = b.company_id
+    LEFT JOIN maoding_web_project_task c on a.id = c.project_id and c.task_status='0'
+    LEFT JOIN maoding_web_project_member d on a.id = d.project_id and d.deleted=0 and d.company_user_id=#{companyUserId,jdbcType=VARCHAR}
+    LEFT JOIN maoding_web_attention f on a.id = f.target_id and f.company_user_id = #{companyUserId,jdbcType=VARCHAR}
+    WHERE a.pstatus='0'
+      and (a.company_id = #{appOrgId,jdbcType=VARCHAR}   or a.company_bid = #{appOrgId,jdbcType=VARCHAR} or c.company_id = #{appOrgId,jdbcType=VARCHAR} )
+    <if test="type!=null and type==1">
+      and (d.id is not null)
+    </if>
+    <if test="type!=null and type==2">
+      and (f.id is not null)
+    </if>
+    <if test="projectName!=null">
+      and a.project_name like '%' #{projectName} '%'
+    </if>
+    <if test="status!=null">
+      and a.status = #{status,jdbcType=VARCHAR}
+    </if>
+    group by a.id
+    order by a.project_create_date DESC,a.project_name desc
+    <if test="_parameter.containsKey('startPage')">
+      limit #{startPage},#{endPage}
+    </if>
+  </select>
+
+  <!-- 项目管理查询-->
+  <select id="getProjectListByConditionCount" resultType="java.lang.Integer" parameterType="java.util.Map">
+    SELECT  count(DISTINCT a.id)
+    FROM maoding_web_project a
+    LEFT JOIN maoding_web_project_task c on a.id = c.project_id and c.task_status='0'
+    WHERE a.pstatus='0'
+    and (a.company_id = #{appOrgId,jdbcType=VARCHAR}   or a.company_bid = #{appOrgId,jdbcType=VARCHAR} or c.company_id = #{appOrgId,jdbcType=VARCHAR} )
+  </select>
+
+  <!-- 获取当前人与该项目的关系 flag：1（参与），2（关注），0（无关系）-->
+  <select id="getProjectFlag" parameterType="java.util.Map" resultType="java.lang.Integer">
+    SELECT
+      IF(d.id is NOT null,1,IF(f.id is not null,2,0)) as flag
+    FROM maoding_web_project a
+    LEFT JOIN maoding_web_project_member d on a.id = d.project_id and d.deleted=0 and d.company_user_id=#{companyUserId,jdbcType=VARCHAR}
+    LEFT JOIN maoding_web_attention f on a.id = f.target_id and f.company_user_id = #{companyUserId,jdbcType=VARCHAR}
+    WHERE a.id=#{id,jdbcType=VARCHAR}
+    GROUP by a.id
+  </select>
+
+
+  <!-- 获取当前人与该项目的关系 flag：1（参与），0（无关系）用于项目群删除人员做判断-->
+  <select id="getProjectFlagByUserId" parameterType="java.util.Map" resultType="java.lang.Integer">
+    SELECT
+    IF(count(1)>0,1,0) as flag
+    FROM maoding_web_project_member a
+    where a.deleted=0
+    and a.project_id = #{id,jdbcType=VARCHAR}
+    and a.account_id=#{userId,jdbcType=VARCHAR}
+    <if test="companyId!=null">
+      and a.company_id =  #{companyId,jdbcType=VARCHAR}
+    </if>
+    <if test="notTargetId!=null">
+      and a.target_id !=  #{notTargetId,jdbcType=VARCHAR}
+    </if>
+  </select>
+</mapper>

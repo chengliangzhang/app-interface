@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetProjectProcessInstanceByTaskManageIdMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.project.entity.ProjectProcessInstanceEntity" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="process_id" property="processId" jdbcType="VARCHAR" />
+    <result column="process_node_id" property="processNodeId" jdbcType="VARCHAR" />
+    <result column="node_name" property="nodeName" jdbcType="VARCHAR" />
+    <result column="process_history_id" property="processHistoryId" jdbcType="VARCHAR" />
+    <result column="last_node_id" property="lastNodeId" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="VARCHAR" />
+    <result column="end_time" jdbcType="DATE" property="endTime" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="current_node_id" property="currentNodeId" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <sql id="Base_Column_List" >
+    id, process_id, process_node_id, node_name, process_history_id, last_node_id, status,end_time,
+    create_date, create_by, update_date, update_by
+  </sql>
+
+  <select id="getProjectProcessInstanceByTaskManageId" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    SELECT a.*
+    from maoding_web_project_process_instance a
+    LEFT JOIN maoding_web_project_process b on a.process_id = b.id
+    LEFT JOIN maoding_web_project_task c on b.task_manage_id = c.id
+    where c.id = #{taskManageId,jdbcType=VARCHAR}
+  </select>
+
+</mapper>

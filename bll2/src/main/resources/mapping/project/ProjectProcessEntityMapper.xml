@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ProjectProcessEntityMapper">
+  <resultMap id="BaseResultMap" type="com.maoding.project.entity.ProjectProcessEntity">
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="process_name" jdbcType="VARCHAR" property="processName" />
+    <result column="company_id" jdbcType="VARCHAR" property="companyId" />
+    <result column="project_id" jdbcType="VARCHAR" property="projectId" />
+    <result column="task_manage_id" jdbcType="VARCHAR" property="taskManageId" />
+    <result column="status" jdbcType="INTEGER" property="status" />
+    <result column="seq" jdbcType="INTEGER" property="seq" />
+    <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
+    <result column="create_by" jdbcType="VARCHAR" property="createBy" />
+    <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
+    <result column="update_by" jdbcType="VARCHAR" property="updateBy" />
+  </resultMap>
+
+
+  <sql id="Base_Column_List">
+    id, process_name, company_id, project_id, task_manage_id,status,seq, create_date, create_by,
+    update_date, update_by
+  </sql>
+
+  <select id="selectById" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from maoding_web_project_process
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+
+  <select id="getProcessMaxSeq" resultType="java.lang.Integer">
+    select
+    COUNT(1)+1
+    from maoding_web_project_process where task_manage_id = #{taskManageId,jdbcType=VARCHAR}
+  </select>
+
+  <select id="selectByParam" resultMap="BaseResultMap" parameterType="java.util.Map" >
+    SELECT
+    <include refid="Base_Column_List" />
+    FROM maoding_web_project_process
+    WHERE status='0'
+    <if test="taskManageId != null" >
+     and task_manage_id = #{taskManageId,jdbcType=VARCHAR}
+    </if>
+    <if test="projectId != null" >
+      and project_id = #{projectId,jdbcType=VARCHAR}
+    </if>
+    <if test="withOutTaskManagerId != null" >
+      and task_manage_id != #{withOutTaskManagerId,jdbcType=VARCHAR}
+    </if>
+  </select>
+
+  <delete id="deleteById" parameterType="java.lang.String">
+    delete from maoding_web_project_process
+    where id = #{id,jdbcType=VARCHAR}
+  </delete>
+
+  <insert id="insert" parameterType="com.maoding.project.entity.ProjectProcessEntity">
+    insert into maoding_web_project_process (id, process_name, company_id, 
+      project_id, task_manage_id,status, seq,create_date,
+      create_by, update_date, update_by
+      )
+    values (#{id,jdbcType=VARCHAR}, #{processName,jdbcType=VARCHAR}, #{companyId,jdbcType=VARCHAR}, 
+      #{projectId,jdbcType=VARCHAR}, #{taskManageId,jdbcType=VARCHAR},'0', #{seq,jdbcType=INTEGER},now(),
+      #{createBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}
+      )
+  </insert>
+
+  <update id="updateById" parameterType="com.maoding.project.entity.ProjectProcessEntity">
+    update maoding_web_project_process
+    <set>
+      <if test="processName != null">
+        process_name = #{processName,jdbcType=VARCHAR},
+      </if>
+      <if test="companyId != null">
+        company_id = #{companyId,jdbcType=VARCHAR},
+      </if>
+      <if test="projectId != null">
+        project_id = #{projectId,jdbcType=VARCHAR},
+      </if>
+      <if test="taskManageId != null">
+        task_manage_id = #{taskManageId,jdbcType=VARCHAR},
+      </if>
+
+      <if test="status != null">
+        status = #{status,jdbcType=INTEGER},
+      </if>
+
+      <if test="seq != null and seq!=0" >
+        seq = #{seq,jdbcType=INTEGER},
+      </if>
+
+      <if test="createDate != null">
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createBy != null">
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+        update_date =now(),
+      <if test="updateBy != null">
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+  <update id="update" parameterType="com.maoding.project.entity.ProjectProcessEntity">
+    update maoding_web_project_process
+    set process_name = #{processName,jdbcType=VARCHAR},
+      company_id = #{companyId,jdbcType=VARCHAR},
+      project_id = #{projectId,jdbcType=VARCHAR},
+      task_manage_id = #{taskManageId,jdbcType=VARCHAR},
+      status = #{status,jdbcType=INTEGER},
+      seq = #{seq,jdbcType=INTEGER},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+
+  <update id="updateByTaskManageId" parameterType="java.util.Map">
+    update maoding_web_project_process
+    set status = #{status,jdbcType=INTEGER}
+    where task_manage_id = #{taskManageId,jdbcType=VARCHAR}
+  </update>
+</mapper>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetImGroupMemberMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.hxIm.dto.ImGroupMemberDataDTO" >
+    <result column="id" property="id" jdbcType="VARCHAR" />
+    <result column="user_name" property="userName" jdbcType="VARCHAR" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="user_id" property="userId" jdbcType="VARCHAR" />
+    <result column="img" property="img" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <select id="selectNewGroupMembers" parameterType="com.maoding.hxIm.dto.ImGroupMemberQuery"  resultMap="BaseResultMap">
+      SELECT
+      cu.user_id,
+      cu.id AS  'id',
+      cu.user_name AS 'name',
+      IF(ua.file_group IS NULL ,NULL,CONCAT(#{url,jdbcType=VARCHAR},ua.file_group,'/',ua.attach_path)) AS 'img',
+      mu.user_name
+      FROM  maoding_im_group_member tu
+      LEFT JOIN maoding_web_user mu on mu.id=tu.account_id
+      LEFT JOIN maoding_web_company_user cu ON (tu.account_id = cu.user_id
+        <if test="projectGroup == null" >
+          AND tu.org_id = cu.company_id
+        </if>
+      )
+      LEFT JOIN maoding_web_user_attach ua ON ( ua.user_id = cu.user_id AND ua.attach_type = 5 )
+      WHERE  tu.org_id = #{orgId,jdbcType=VARCHAR}
+      AND cu.departure_time IS NULL
+      AND  cu.audit_status='1'
+      GROUP BY tu.account_id
+  </select>
+
+  <select id="selectCustomGroupMembers" parameterType="com.maoding.hxIm.dto.ImGroupMemberQuery"  resultMap="BaseResultMap">
+      SELECT
+      cu.user_id ,
+      cu.id AS  'id',
+      cu.user_name AS 'name',
+      IF(ua.file_group IS NULL ,NULL,CONCAT(#{fastdfsUrl,jdbcType=VARCHAR},ua.file_group,'/',ua.attach_path)) AS 'img',
+      mu.user_name
+      FROM maoding_im_group_member tu
+      LEFT JOIN maoding_im_group g on tu.group_id = g.id
+      LEFT JOIN maoding_web_user mu on mu.id=tu.account_id
+      LEFT JOIN maoding_web_company_user cu ON (tu.account_id = cu.user_id)
+      LEFT JOIN maoding_web_user_attach ua ON ( ua.user_id = cu.user_id AND ua.attach_type = 5 )
+      WHERE g.group_no = #{groupId,jdbcType=VARCHAR}
+      AND cu.departure_time IS NULL
+      AND cu.audit_status='1'
+      GROUP BY tu.account_id
+  </select>
+
+  <select id="selectNewDepartGroupMembers" parameterType="com.maoding.hxIm.dto.ImGroupMemberQuery"  resultMap="BaseResultMap">
+       SELECT a.user_id , a.id  AS 'id', a.user_name AS 'name',
+        IF(ua.file_group IS NULL ,NULL,CONCAT(#{url,jdbcType=VARCHAR},ua.file_group,'/',ua.attach_path)) AS 'img',
+        u.user_name
+        FROM maoding_im_group_member tu
+        LEFT JOIN maoding_web_user u ON u.id=tu.account_id
+        LEFT JOIN  maoding_web_company_user a ON tu.account_id = a.user_id AND a.company_id = #{companyId,jdbcType=VARCHAR}
+        LEFT JOIN maoding_web_user_attach ua ON ( ua.user_id = a.user_id AND ua.attach_type = 5
+        )
+        WHERE  tu.org_id = #{orgId,jdbcType=VARCHAR}
+        AND a.audit_status='1'
+        <if test="userId != null" >
+          AND a.user_id = #{userId,jdbcType=VARCHAR}
+        </if>
+        group by tu.account_id
+  </select>
+
+
+    <select id="selectGroupMembers" parameterType="java.util.Map"  resultMap="BaseResultMap">
+        SELECT
+        cu.user_id,
+        cu.id AS  'id',
+        cu.user_name AS 'name',
+        IF(ua.file_group IS NULL ,NULL,CONCAT(#{url},ua.file_group,'/',ua.attach_path)) AS 'img',
+        mu.user_name
+        FROM  maoding_im_group_member tu
+        LEFT JOIN maoding_web_user mu on mu.id=tu.account_id
+        LEFT JOIN maoding_web_company_user cu ON tu.account_id = cu.user_id
+        LEFT JOIN maoding_web_user_attach ua ON ( ua.user_id = cu.user_id AND ua.attach_type = 5)
+        WHERE  tu.org_id = #{orgId}
+        AND  cu.audit_status='1'
+        GROUP BY tu.account_id
+    </select>
+
+</mapper>

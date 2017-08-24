@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetImGroupMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.hxIm.dto.ImGroupDataDTO" >
+    <result column="group_no" property="groupId" jdbcType="VARCHAR" />
+    <result column="group_name" property="name" jdbcType="VARCHAR" />
+    <result column="group_owner" property="admin" jdbcType="VARCHAR" />
+    <result column="group_img" property="img" jdbcType="VARCHAR" />
+    <result column="root_org_id" property="rootOrgId" jdbcType="VARCHAR" />
+    <result column="org_id" property="orgId" jdbcType="VARCHAR" />
+    <result column="group_type" property="groupType" jdbcType="INTEGER" />
+    <result column="url" property="url" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <resultMap id="BaseResultMap2" type="com.maoding.hxIm.dto.ImGroupDataDTO" extends="BaseResultMap">
+    <collection property="memberInfo" column="{orgId=org_id,url = url}" select="GetImGroupMemberMapper.selectGroupMembers" fetchType="eager" />
+  </resultMap>
+
+  <sql id="sqlColumn">
+    a.org_id,a.group_no, a.group_name, a.group_owner,a.root_org_id,a.group_type
+    <if test="url != null">
+      ,CONCAT(#{url,jdbcType=VARCHAR},a.group_img) as group_img
+    </if>
+    <if test="url != null">
+      ,a.group_img
+    </if>
+  </sql>
+
+  <select id="selectGroupList" resultMap="BaseResultMap" parameterType="java.util.Map">
+    select
+    *
+    from maoding_im_group
+    where 1=1
+    <if test="orgId != null" >
+      and (orgId=#{orgId,jdbcType=VARCHAR} or groupId=#{orgId,jdbcType=VARCHAR})
+    </if>
+    <if test="groupId != null" >
+      and (orgId=#{groupId,jdbcType=VARCHAR} or groupId=#{groupId,jdbcType=VARCHAR})
+    </if>
+  </select>
+
+
+  <select id="selectCompanyGroupByParameter" resultMap="BaseResultMap" parameterType="com.maoding.hxIm.dto.ImGroupQuery">
+  	select <include refid="sqlColumn" />
+    from maoding_im_group a
+    where 1=1
+  	<if test="id != null" >
+        and id=#{id,jdbcType=VARCHAR}
+    </if>
+    <if test="orgId != null" >
+        and (org_id=#{orgId,jdbcType=VARCHAR} or group_no=#{orgId,jdbcType=VARCHAR})
+    </if>
+    <if test="groupId != null" >
+        and (org_id=#{groupId,jdbcType=VARCHAR} or group_no=#{groupId,jdbcType=VARCHAR})
+    </if>
+    <if test="userId != null" >
+        and org_id IN (SELECT cu.company_id FROM maoding_web_company_user cu WHERE cu.user_id=#{userId,jdbcType=VARCHAR} and cu.audit_status='1')
+    </if>
+    order by root_org_id,create_date
+  </select>
+
+  <select id="selectCustomGroupByParameter" resultMap="BaseResultMap" parameterType="com.maoding.hxIm.dto.ImGroupQuery">
+    select DISTINCT  <include refid="sqlColumn" />
+    from maoding_im_group a
+    LEFT JOIN maoding_im_group_member b on a.id = b.group_id
+    <if test="companyId!=null">
+      LEFT JOIN maoding_web_company_user c on b.company_user_id = c.id
+    </if>
+    where 1=1  and a.group_type = 2
+    <if test="groupId!=null">
+      and a.group_no =  #{groupId}
+    </if>
+    <if test="userId!=null">
+      and b.account_id=#{userId}
+    </if>
+    <if test="companyId!=null">
+        and c.company_id = #{companyId}
+    </if>
+    order by a.create_date
+  </select>
+
+
+  <select id="selectProjectGroupByParameter" resultMap="BaseResultMap" parameterType="com.maoding.hxIm.dto.ImGroupQuery">
+    select DISTINCT  <include refid="sqlColumn" />
+    from maoding_im_group a
+    <if test="userId != null" >
+      LEFT JOIN maoding_im_group_member b on a.id = b.group_id
+    </if>
+    <if test="companyId != null" >
+      LEFT JOIN maoding_web_project c on a.org_id =c.id
+      LEFT JOIN maoding_web_project_task d on c.id = d.project_id and d.task_status='0'
+    </if>
+    where 1=1 and a.group_type = 3
+    <if test="userId != null" >
+      and b.account_id=#{userId,jdbcType=VARCHAR}
+    </if>
+    <if test="orgId != null" >
+      and a.org_id =#{orgId,jdbcType=VARCHAR}
+    </if>
+    <if test="companyId != null" >
+      and( c.company_id = #{companyId,jdbcType=VARCHAR} or c.company_bid = #{companyId,jdbcType=VARCHAR} or d.company_id =  #{companyId,jdbcType=VARCHAR} )
+    </if>
+    order by a.create_date
+  </select>
+
+  <select id="listAllGroupByUserId" resultMap="BaseResultMap2" parameterType="com.maoding.hxIm.dto.ImGroupQuery">
+    select <include refid="sqlColumn" />,#{url} as url
+    from maoding_im_group a
+    LEFT JOIN maoding_im_group_member b on a.id = b.group_id
+    where 1=1 and b.account_id = #{userId}
+  </select>
+
+  <select id="listAllGroupByUserIdAndCompanyId" resultMap="BaseResultMap" parameterType="com.maoding.hxIm.dto.ImGroupQuery">
+    select <include refid="sqlColumn" />
+    from maoding_im_group a
+    LEFT JOIN maoding_im_group_member b on a.id = b.group_id
+    LEFT JOIN maoding_web_depart c on a.org_id = c.id
+    where 1=1 and b.account_id = #{userId}
+    and ((a.org_id = #{companyId} and a.group_type = 0)
+    or (c.company_id = #{companyId} and a.group_type = 1)
+    or (a.root_org_id =#{companyId} and a.group_type = 2 ))
+  </select>
+
+</mapper>

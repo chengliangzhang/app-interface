@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetPermissionUserMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.role.dto.PermissionDTO" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="code" property="code" jdbcType="VARCHAR" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="pid" property="pid" jdbcType="VARCHAR" />
+
+    <!-- 一对多的关系 -->
+    <collection property="companyUserList" ofType="com.maoding.org.dto.CompanyUserAppDTO">
+      <result column="company_user_id" property="id" jdbcType="VARCHAR" />
+      <result column="user_id" property="userId" jdbcType="VARCHAR" />
+      <result column="user_name" property="userName" jdbcType="VARCHAR" />
+      <result column="imgUrl" property="imgUrl" jdbcType="VARCHAR" />
+      <result column="cellphone" property="cellphone" jdbcType="VARCHAR" />
+    </collection>
+  </resultMap>
+
+    <resultMap id="BaseResultMap2" type="com.maoding.role.dto.PermissionDTO" >
+        <id column="id" property="id" jdbcType="VARCHAR" />
+        <result column="code" property="code" jdbcType="VARCHAR" />
+        <result column="name" property="name" jdbcType="VARCHAR" />
+        <result column="pid" property="pid" jdbcType="VARCHAR" />
+    </resultMap>
+
+  <!-- 角色-权限 只查询角色对应的权限-->
+  <select id="getPermissionByRole2" resultMap="BaseResultMap" parameterType="java.util.Map">
+      SELECT
+      a.id,
+      a. CODE,
+      a. NAME,
+      a.pid,
+      c.id AS company_user_id,
+      c.user_name,
+      c.user_id,
+      c.cellphone,
+	  c.imgUrl
+    FROM
+      maoding_web_permission a
+    LEFT JOIN maoding_web_role_permission b ON a.id = b.permission_id
+    LEFT JOIN (
+       SELECT
+          DISTINCT u.id,
+          c.permission_id,
+          c.seq,
+          u.company_id,
+          u.user_id,
+          u.user_name,
+		  d.cellphone,
+		  CONCAT(#{fastdfsUrl,jdbcType=VARCHAR},e.file_group,'/',e.attach_path) as imgUrl
+      FROM maoding_web_user_permission c
+      LEFT JOIN  maoding_web_company_user u on   c.user_id = u.user_id AND c.company_id = u.company_id
+	  LEFT JOIN maoding_web_account d on u.user_id = d.id
+	  LEFT JOIN maoding_web_user_attach e on d.id = e.user_id
+      WHERE u.company_id=#{companyId,jdbcType=VARCHAR}
+  ) c ON b.permission_id = c.permission_id
+      where a.status='0' and b.role_id=#{roleId,jdbcType=VARCHAR} and b.company_id=#{companyId,jdbcType=VARCHAR}
+      order by a.seq,c.seq
+  </select>
+
+    <!-- 角色-权限 只查询角色对应的权限 userId-->
+    <select id="getPermissionByRoleAndUserForApp" resultMap="BaseResultMap2" parameterType="java.util.Map">
+        SELECT
+        DISTINCT a.id,
+        a. CODE,
+        a. NAME,
+        a.pid
+        FROM
+        maoding_web_permission a
+        LEFT JOIN maoding_web_role_permission b ON a.id = b.permission_id
+        LEFT JOIN maoding_web_user_permission c on b.permission_id = c.permission_id
+        where a.status='0' and b.role_id=#{roleId,jdbcType=VARCHAR}
+        and b.company_id=#{companyId,jdbcType=VARCHAR}
+        and c.user_id=#{userId,jdbcType=VARCHAR}
+        and c.company_id=#{companyId,jdbcType=VARCHAR}
+        order by a.seq
+    </select>
+
+    <select id="getPermissionByRoleAndUser" resultMap="BaseResultMap2" parameterType="java.util.Map">
+        SELECT
+        DISTINCT a.id,
+        a. CODE,
+        a. NAME,
+        a.pid
+        FROM
+        maoding_web_permission a
+        LEFT JOIN maoding_web_role_permission b ON a.id = b.permission_id
+        LEFT JOIN ( SELECT DISTINCT up.permission_id,'1' as type FROM maoding_web_user_permission up
+        WHERE a.status='0' and user_id=#{userId,jdbcType=VARCHAR} AND company_id=#{companyId,jdbcType=VARCHAR})c on b.permission_id = c.permission_id
+        where b.role_id=#{roleId,jdbcType=VARCHAR}
+        and b.company_id=#{companyId,jdbcType=VARCHAR}
+        order by a.seq
+    </select>
+</mapper>

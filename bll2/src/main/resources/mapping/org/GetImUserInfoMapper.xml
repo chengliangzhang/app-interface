@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetImUserInfoMapper" >
+
+
+	<!-- 查找公司或部门下所有人员 -->
+	<select id="getImUserInfo" resultType="com.maoding.org.dto.ImUserInfoDTO" parameterType="com.maoding.org.dto.ImUserInfoQueryDTO">
+		SELECT
+		a.id as userId,
+		a.cellphone,
+		b.user_name as userName,
+		CONCAT(#{fastdfsUrl,jdbcType=VARCHAR},c.file_group,'/',c.attach_path) as img
+		<if test="companyUserId!=null">
+			,d.user_name as companyUserName,d.email,d.company_id as companyId
+		</if>
+		FROM maoding_web_account a
+		LEFT JOIN maoding_web_user b on a.id= b.id
+		LEFT JOIN maoding_web_user_attach c on c.user_id = a.id AND c.attach_type=5
+		<if test="companyUserId!=null">
+		  LEFT JOIN maoding_web_company_user d on a.id = d.user_id and d.id = #{companyUserId}
+		</if>
+		where a.id =#{userId,jdbcType=VARCHAR}
+		Limit 1
+	</select>
+
+</mapper>

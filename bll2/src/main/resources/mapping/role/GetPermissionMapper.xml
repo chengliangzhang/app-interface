@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetPermissionMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.role.dto.PermissionDTO" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="code" property="code" jdbcType="VARCHAR" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="pid" property="pid" jdbcType="VARCHAR" />
+    <result column="root_id" property="rootId" jdbcType="VARCHAR" />
+    <result column="seq" property="seq" jdbcType="INTEGER" />
+
+    <!-- 一对多的关系 -->
+    <collection property="childList" ofType="com.maoding.role.dto.PermissionDTO">
+      <result column="child_id" property="id" jdbcType="VARCHAR" />
+      <result column="child_code" property="code" jdbcType="VARCHAR" />
+      <result column="child_name" property="name" jdbcType="VARCHAR" />
+      <result column="child_pid" property="pid" jdbcType="VARCHAR" />
+      <result column="child_root_id" property="rootId" jdbcType="VARCHAR" />
+      <result column="child_seq" property="seq" jdbcType="INTEGER" />
+      <result column="permission_id" property="permissionId" jdbcType="VARCHAR" />
+      <result column="type" property="type" jdbcType="INTEGER" />
+    </collection>
+  </resultMap>
+
+    <resultMap id="BaseResultMap2" type="com.maoding.role.dto.PermissionDTO" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="code" property="code" jdbcType="VARCHAR" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="pid" property="pid" jdbcType="VARCHAR" />
+    <result column="root_id" property="rootId" jdbcType="VARCHAR" />
+    <result column="seq" property="seq" jdbcType="INTEGER" />
+    </resultMap>
+
+  <select id="getAllPermission" resultMap="BaseResultMap" >
+    select a.id,a.code,a.name,a.pid,a.root_id,a.seq,
+    b.id as child_id,b.code as child_code,b.name as child_name,b.pid as child_pid,b.root_id as child_root_id,b.seq as child_seq
+    from maoding_web_permission a
+    LEFT JOIN maoding_web_permission b on a.id = b.pid
+    where a.pid is null
+    order by a.seq,b.seq
+  </select>
+
+  <!-- 角色-权限 查询主从信息（所有的权限都查询）-->
+  <select id="getPermissionByRole" resultMap="BaseResultMap" parameterType="java.util.Map">
+     select a.id,a.code,a.name,a.pid,a.root_id,a.seq,
+    b.id as child_id,b.code as child_code,b.name as child_name,b.pid as child_pid,b.root_id as child_root_id,b.seq as child_seq,c.permission_id,c.type
+    from maoding_web_permission a
+    LEFT JOIN maoding_web_permission b on a.id = b.pid
+	LEFT JOIN ( SELECT rp.*,'1' as type from maoding_web_role_permission rp) c on b.id=c.permission_id and role_id=#{roleId,jdbcType=VARCHAR} and c.company_id=#{companyId,jdbcType=VARCHAR}
+    where a.pid is null
+    order by a.seq,b.seq
+  </select>
+
+  <!-- 获取用户权限 封装成主从结构的数据（type为null,则未拥有的权限，type！=null,则查询自己的权限，用于人员列表使用）-->
+  <select id="getPermissionByUserId" resultMap="BaseResultMap" parameterType="java.util.Map">
+    select distinct(a.id),a.code,a.name,a.pid,a.root_id,a.seq,
+    b.id as child_id,b.code as child_code,b.name as child_name,b.pid as child_pid,b.root_id as child_root_id,b.seq as child_seq,c.permission_id,c.type
+    from maoding_web_permission a
+    LEFT JOIN maoding_web_permission b on a.id = b.pid
+    LEFT JOIN (
+      SELECT DISTINCT permission_id,'2' AS type
+      FROM maoding_web_user_permission up
+      WHERE user_id = #{userId,jdbcType=VARCHAR}
+      AND company_id = #{companyId,jdbcType=VARCHAR}
+  ) c ON b.id = c.permission_id
+  WHERE a.pid IS NULL
+    <if test="type != null" >
+      and c.type = #{type,jdbcType=VARCHAR}
+    </if>
+  GROUP BY child_id
+  ORDER BY a.seq,b.seq
+  </select>
+
+  <!-- 获取用户权限 只拥有的权限的code值-->
+  <select id="getPermissionCodeByUserId" resultType="java.lang.String" parameterType="java.util.Map">
+    SELECT
+	  GROUP_CONCAT(DISTINCT p.CODE)
+    FROM
+    maoding_web_permission p,
+    maoding_web_user_permission up
+    WHERE
+        p.id = up.permission_id
+    AND up.user_id = #{userId,jdbcType=VARCHAR}
+    AND up.company_id = #{companyId,jdbcType=VARCHAR}
+
+  </select>
+
+  <!-- 获取用户权限 只拥有的权限的code值-->
+  <select id="getPermissionCodeByUserIdWs" resultType="java.lang.String" parameterType="java.util.Map">
+    SELECT
+    GROUP_CONCAT(DISTINCT p.CODE)
+    FROM
+       maoding_web_permission p
+          Left join
+      maoding_web_user_permission up on p.id = up.permission_id
+    Left join  maoding_web_company_user cu on up.user_id = cu.user_id and up.company_id = cu.company_id
+    WHERE
+       cu.audit_status='1'
+    AND up.user_id = #{userId,jdbcType=VARCHAR}
+    AND up.company_id = #{companyId,jdbcType=VARCHAR}
+
+  </select>
+
+
+    <!-- 获取用户权限 只拥有的权限-->
+    <select id="getUserPermission" resultMap="BaseResultMap2" parameterType="java.util.Map">
+        SELECT DISTINCT
+        p.id,p.`code`,p.name,p.pid,p.seq,p.root_id
+        FROM
+        maoding_web_permission p,
+        maoding_web_user_permission up
+        WHERE
+          p.id = up.permission_id
+        AND up.user_id = #{userId,jdbcType=VARCHAR}
+        AND up.company_id = #{companyId,jdbcType=VARCHAR}
+    </select>
+
+
+
+
+</mapper>

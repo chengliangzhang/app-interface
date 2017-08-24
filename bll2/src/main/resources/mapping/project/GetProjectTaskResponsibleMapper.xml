@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="GetProjectTaskResponsibleMapper">
+  <resultMap id="BaseResultMap" type="com.maoding.project.dto.ProjectTaskResponsibleDTO">
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="target_id" jdbcType="VARCHAR" property="targetId" />
+    <result column="user_name" jdbcType="VARCHAR" property="userName" />
+    <result column="company_id" jdbcType="VARCHAR" property="companyId" />
+    <result column="project_id" jdbcType="VARCHAR" property="projectId" />
+    <result column="type" jdbcType="VARCHAR" property="type" />
+    <result column="seq" jdbcType="INTEGER" property="seq" />
+    <result column="major_name" jdbcType="VARCHAR" property="majorName" />
+    <result column="user_id" jdbcType="VARCHAR" property="userId" />
+    <result column="task_id" jdbcType="VARCHAR" property="taskId" />
+  </resultMap>
+
+  <sql id="Base_Column_List">
+    id, target_id, company_id, project_id, type, major_name, user_name,seq,task_id
+  </sql>
+
+  <select id="getProjectResponsiblePersonByProject" parameterType="java.util.Map" resultMap="BaseResultMap">
+    select
+    a.*,b.user_name,b.user_id
+    from maoding_web_project_task_responsibler a
+    LEFT JOIN maoding_web_company_user b on a.target_id = b.id
+    where a.company_id = #{companyId,jdbcType=VARCHAR}
+    and a.project_id = #{projectId,jdbcType=VARCHAR}
+    and a.type=1
+  </select>
+
+  <select id="getProjectTaskResponsibleByProject" parameterType="java.util.Map" resultType="java.lang.String">
+    select
+    GROUP_CONCAT(b.task_name)
+    from maoding_web_project_member a
+    LEFT JOIN maoding_web_project_task b on a.target_id = b.id
+    where b.task_status='0' AND a.deleted=0
+    and a.company_id = #{companyId,jdbcType=VARCHAR}
+    and a.project_id =  #{projectId,jdbcType=VARCHAR}
+    <if test="companyUserId != null" >
+      and a.target_id = #{companyUserId,jdbcType=VARCHAR}
+    </if>
+    order by a.create_date
+  </select>
+
+  <select id="getProjectMajorPersonByProjectCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+    select
+    count(1)
+    from maoding_web_project_task_responsibler a
+    where a.type=2
+    and a.company_id = #{companyId,jdbcType=VARCHAR}
+    and a.project_id =  #{projectId,jdbcType=VARCHAR}
+  </select>
+
+
+  <select id="getProjectResponsiblePersonIdToString" parameterType="java.util.Map" resultType="java.lang.String">
+    select
+    GROUP_CONCAT(target_id)
+    from maoding_web_project_task_responsibler a
+    where a.type=1
+    and a.company_id = #{companyId,jdbcType=VARCHAR}
+    and a.project_id =  #{projectId,jdbcType=VARCHAR}
+  </select>
+
+
+  <select id="getResponsiblerByTaskId" parameterType="java.lang.String" resultType="java.util.Map">
+    select a.id,a.target_id as targetId,b.user_name as userName
+    from maoding_web_project_task_responsibler a
+    LEFT JOIN maoding_web_company_user b on a.target_id = b.id
+    where a.type=1 and a.task_id = #{taskId,jdbcType=VARCHAR}
+    GROUP by a.target_id
+    order by a.seq
+  </select>
+
+
+  <select id="getProjectMajorPersonByTaskManageList" parameterType="java.util.Map" resultType="java.util.Map">
+    select
+    GROUP_CONCAT(target_id) as targetIds,a.task_id as taskId
+    from maoding_web_project_task_responsibler a
+    where 1=1
+    and a.company_id = #{companyId,jdbcType=VARCHAR}
+    and a.project_id =  #{projectId,jdbcType=VARCHAR}
+    <if test="companyUserId != null" >
+      and a.target_id = #{companyUserId,jdbcType=VARCHAR}
+    </if>
+    and a.task_id in
+    <foreach collection="taskIdList" index="index" item="taskId" open="(" separator="," close=")">
+      #{taskId}
+    </foreach>
+  </select>
+
+</mapper>

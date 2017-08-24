@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="ExpMainEntityMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.financial.entity.ExpMainEntity" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="user_id" property="userId" jdbcType="VARCHAR" />
+    <result column="exp_date" property="expDate" jdbcType="DATE" />
+    <result column="approve_status" property="approveStatus" jdbcType="VARCHAR" />
+    <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="depart_id" property="departId" jdbcType="VARCHAR" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="version_num" property="versionNum" jdbcType="INTEGER" />
+    <result column="exp_no" property="expNo" jdbcType="VARCHAR" />
+    <result column="exp_flag" property="expFlag" jdbcType="INTEGER" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, user_id,  exp_date,  approve_status, company_id, depart_id,
+    remark, create_date, create_by, update_date, update_by,version_num,exp_no,exp_flag
+  </sql>
+  <resultMap id="BaseResultMapWithUserName" type="com.maoding.financial.dto.ExpMainDTO" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="user_id" property="userId" jdbcType="VARCHAR" />
+    <result column="user_name" property="userName" jdbcType="VARCHAR" />
+    <result column="exp_date" property="expDate" jdbcType="DATE" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+    <result column="approve_status" property="approveStatus" jdbcType="VARCHAR" />
+
+  </resultMap>
+
+  <select id="selectByIdWithUserName" resultType="com.maoding.financial.dto.ExpMainDTO" parameterType="java.lang.String" >
+    select 
+    a.id as id,a.user_id as userId,b.user_name as userName,a.exp_date as expDate,a.remark as remark,a.approve_status as approveStatus,
+    IF(d.file_group IS NULL ,NULL,CONCAT(#{fastdfsUrl,jdbcType=VARCHAR},d.file_group,'/',d.attach_path)) AS imgUrl
+    from maoding_web_exp_main a
+    LEFT JOIN maoding_web_company_user b on a.user_id = b.id
+     LEFT JOIN maoding_web_user_attach d on b.user_id = d.user_id and d.attach_type = 5
+    where a.id = #{id,jdbcType=VARCHAR}
+  </select>
+
+  <select id="selectByIdWithUserNameByParam" resultType="com.maoding.financial.dto.ExpMainDTO" parameterType="java.util.Map" >
+    select
+    a.id as id,a.user_id as userId,b.user_name as userName,a.exp_date as expDate,a.remark as remark,a.approve_status as approveStatus,
+    IF(d.file_group IS NULL ,NULL,CONCAT(#{fastdfsUrl,jdbcType=VARCHAR},d.file_group,'/',d.attach_path)) AS imgUrl
+    from maoding_web_exp_main a
+    LEFT JOIN maoding_web_company_user b on a.user_id = b.id
+    LEFT JOIN maoding_web_user_attach d on b.user_id = d.user_id and d.attach_type = 5
+    where a.id = #{id,jdbcType=VARCHAR}
+  </select>
+
+  <select id="selectById" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select
+    <include refid="Base_Column_List" />
+    from maoding_web_exp_main
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+
+  <delete id="deleteById" parameterType="java.lang.String" >
+    delete from maoding_web_exp_main
+    where id = #{id,jdbcType=VARCHAR}
+  </delete>
+
+  <insert id="insert" parameterType="com.maoding.financial.entity.ExpMainEntity" >
+    insert into maoding_web_exp_main (id, user_id,
+      exp_date,  approve_status,
+      company_id, depart_id, remark, 
+      create_date, create_by, update_date, 
+      update_by,exp_no,exp_flag)
+    values (#{id,jdbcType=VARCHAR}, #{userId,jdbcType=VARCHAR},
+      now(), #{approveStatus,jdbcType=VARCHAR},
+      #{companyId,jdbcType=VARCHAR}, #{departId,jdbcType=VARCHAR}, #{remark,jdbcType=VARCHAR}, 
+      now(), #{createBy,jdbcType=VARCHAR}, now(),
+      #{updateBy,jdbcType=VARCHAR},
+      #{expNo,jdbcType=VARCHAR}, #{expFlag,jdbcType=INTEGER})
+  </insert>
+
+  <update id="updateById" parameterType="com.maoding.financial.entity.ExpMainEntity" >
+    update maoding_web_exp_main
+    <set >
+      <if test="userId != null" >
+        user_id = #{userId,jdbcType=VARCHAR},
+      </if>
+      <if test="expDate != null" >
+        exp_date = now(),
+      </if>
+      <if test="approveStatus != null" >
+        approve_status = #{approveStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="companyId != null" >
+        company_id = #{companyId,jdbcType=VARCHAR},
+      </if>
+      <if test="departId != null" >
+        depart_id = #{departId,jdbcType=VARCHAR},
+      </if>
+      <if test="remark != null" >
+        remark = #{remark,jdbcType=VARCHAR},
+      </if>
+      <if test="createDate != null" >
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createBy != null" >
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+        update_date = now(),
+      <if test="updateBy != null" >
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="versionNum != null" >
+       version_num = (#{versionNum,jdbcType=INTEGER} + 1),
+      </if>
+      <if test="expNo != null" >
+        exp_no = (#{expNo,jdbcType=VARCHAR}),
+      </if>
+      <if test="expFlag != null" >
+        exp_flag = (#{expFlag,jdbcType=INTEGER}),
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+    <if test="versionNum != null" >
+      and version_num = #{versionNum,jdbcType=INTEGER}
+    </if>
+  </update>
+
+  <update id="update" parameterType="com.maoding.financial.entity.ExpMainEntity" >
+    update maoding_web_exp_main
+    set user_id = #{userId,jdbcType=VARCHAR},
+      exp_date = #{expDate,jdbcType=DATE},
+      approve_status = #{approveStatus,jdbcType=VARCHAR},
+      company_id = #{companyId,jdbcType=VARCHAR},
+      depart_id = #{departId,jdbcType=VARCHAR},
+      remark = #{remark,jdbcType=VARCHAR},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+
+  <select id="selectByParam" resultMap="BaseResultMap" parameterType="java.util.Map">
+    select
+    m.*
+    from maoding_web_exp_main m
+    where 1=1
+    <if test="expNo != null" >
+      and m.exp_no=#{expNo,jdbcType=VARCHAR}
+    </if>
+
+  </select>
+
+
+</mapper>

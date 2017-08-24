@@ -1,0 +1,6 @@
+2016-11-25 10:46:40 上午 com.android.providers.downloads [Thread:146] receive an intent from server, action=com.xiaomi.mipush.RECEIVE_MESSAGE 
+2016-11-25 10:46:40 上午 com.android.providers.downloads [Thread:146] processing a message, action=Notification 
+2016-11-25 10:46:40 上午 com.android.providers.downloads [Thread:148] receive an intent from server, action=com.xiaomi.mipush.RECEIVE_MESSAGE 
+2016-11-25 10:46:40 上午 com.android.providers.downloads [Thread:148] processing a message, action=Notification 
+2016-11-25 16:48:40 下午 com.android.providers.downloads [Thread:232] receive an intent from server, action=com.xiaomi.mipush.RECEIVE_MESSAGE 
+2016-11-25 16:48:40 下午 com.android.providers.downloads [Thread:232] processing a message, action=Command 
