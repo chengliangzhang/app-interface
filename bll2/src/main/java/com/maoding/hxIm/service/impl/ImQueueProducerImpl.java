@@ -288,6 +288,8 @@ public class ImQueueProducerImpl extends NewBaseService implements ImQueueProduc
         ImQueueEntity queue = new ImQueueEntity();
         BaseDTO.copyFields(queueDTO, queue);
         queue.initEntity();
+        queue.setQueueStatus(0);
+        queue.setDeleted(false);
         if(StringUtil.isNullOrEmpty(queue.getUpVersion())){
             queue.setUpVersion(0L);
         }

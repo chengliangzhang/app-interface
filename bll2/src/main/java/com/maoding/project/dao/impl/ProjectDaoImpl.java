@@ -4,9 +4,9 @@ import com.maoding.core.base.dao.GenericDao;
 import com.maoding.org.dto.CompanyDTO;
 import com.maoding.org.dto.ProjectUserDTO;
 import com.maoding.project.dao.ProjectDao;
-import com.maoding.project.dto.ProjectDTO;
-import com.maoding.project.dto.ProjectTableDTO;
+import com.maoding.project.dto.*;
 import com.maoding.project.entity.ProjectEntity;
+import com.maoding.task.dto.HomeDTO;
 import com.maoding.v2.project.dto.V2ProjectTableDTO;
 import org.springframework.stereotype.Service;
 
@@ -25,46 +25,13 @@ import java.util.Map;
 public class ProjectDaoImpl extends GenericDao<ProjectEntity> implements ProjectDao {
 
     /**
-     * 方法描述：经营列表
-     * 作者：MaoSF
-     * 日期：2016/7/29
-     *
-     * @param param
-     * @param:
-     * @return:
-     */
-    @Override
-    public List<ProjectTableDTO> getProjectListByCondition(Map<String, Object> param) {
-        return this.sqlSession.selectList("GetProjectEntityPageMapper.getProjectListByCondition",param);
-    }
-
-
-    /**
      * 方法描述：经营列表总数据（用于分页）
      * 作者：MaoSF
      * 日期：2016/7/29
-     *
-     * @param param
-     * @param:
-     * @return:
      */
     @Override
     public int getProjectListByConditionCount(Map<String, Object> param) {
         return this.sqlSession.selectOne("GetProjectEntityPageMapper.getProjectListByConditionCount", param);
-    }
-
-    /**
-     * 方法描述：（经营列表中）--获取设计人
-     * 作者：MaoSF
-     * 日期：2016/8/2
-     *
-     * @param param
-     * @param:
-     * @return:
-     */
-    @Override
-    public List<CompanyDTO> getDesignCompanys(Map<String, Object> param) {
-        return this.sqlSession.selectList("GetProjectEntityPageMapper.getDesignCompanys",param);
     }
 
     /**
@@ -79,73 +46,6 @@ public class ProjectDaoImpl extends GenericDao<ProjectEntity> implements Project
 
 
     /**
-     * 方法描述：更改项目状态（删除项目使用）
-     * 作者：MaoSF
-     * 日期：2016/11/29
-     *
-     * @param entity
-     * @param:
-     * @return:
-     */
-    @Override
-    public int updatePstatus(ProjectEntity entity) {
-        return this.sqlSession.update("ProjectEntityMapper.updatePstatus",entity);
-    }
-
-
-/*******************************新的接口**********************************************/
-
-
-    /**
-     * 方法描述：获取项目列表(数量)
-     * 作者：chenzhujie
-     * 日期：2016/7/29
-     * @param:
-     * @return:
-     */
-    public int newGetProjectsCountByParam(Map<String, Object> param) throws Exception{
-        return this.sqlSession.selectOne("ProjectEntityMapper.newGetProjectsCountByParam",param);
-    }
-
-    /**
-     * 方法描述：查询签发组织
-     * 作者：Chenzhujie
-     * 日期：2016/12/13
-     * @param:dto
-     * @return:
-     */
-    public List<Map<String,Object>> selectSignTeam(Map<String, Object> param)throws Exception{
-        return this.sqlSession.selectList("ProjectEntityMapper.selectSignTeam",param);
-    }
-
-    /**
-     * 方法描述：任务管理列表
-     * 作者：MaoSF
-     * 日期：2016/12/5
-     *
-     * @param param
-     * @param:
-     * @return:
-     */
-    @Override
-    public List<ProjectTableDTO> getProjectTaskManageByCondition(Map<String, Object> param) {
-        return this.sqlSession.selectList("GetProjectEntityPageMapper.getProjectTaskManageByCondition", param);
-    }
-
-    /**
-     * 方法描述：任务管理总条数
-     * 作者：MaoSF
-     * 日期：2016/12/5
-     *
-     * @param param
-     * @param:
-     * @return:
-     */
-    @Override
-    public int getProjectTaskManageCountByCondition(Map<String, Object> param) {
-        return this.sqlSession.selectOne("GetProjectEntityPageMapper.getProjectTaskManageCountByCondition", param);
-    }
-    /**
      * 方法描述：v2项目列表
      * 作者：chenzhujie
      * 日期：2016/12/24
@@ -159,10 +59,7 @@ public class ProjectDaoImpl extends GenericDao<ProjectEntity> implements Project
      * 方法描述：获取项目的flag值
      * 作者：MaoSF
      * 日期：2017/2/14
-     *
      * @param param（id，companyUserId）
-     * @param:
-     * @return:
      */
     @Override
     public int getProjectFlag(Map<String, Object> param) {
@@ -170,26 +67,9 @@ public class ProjectDaoImpl extends GenericDao<ProjectEntity> implements Project
     }
 
     /**
-     * 方法描述：获取当前人与该项目的关系 flag：1（参与），0（无关系）用于项目群删除人员做判断
-     * 作者：MaoSF
-     * 日期：2017/2/14
-     *
-     * @param param（id，userId）
-     * @param:
-     * @return:
-     */
-    @Override
-    public int getProjectFlagByUserId(Map<String, Object> param) {
-        return this.sqlSession.selectOne("GetProjectEntityPageMapper.getProjectFlagByUserId",param);
-    }
-
-    /**
      * 方法描述：获取全部的project
      * 作者：TangY
      * 日期：2016/7/29
-     *
-     * @param:int
-     * @return:
      */
     @Override
     public List<ProjectEntity> selectAll() {
@@ -200,10 +80,6 @@ public class ProjectDaoImpl extends GenericDao<ProjectEntity> implements Project
      * 方法描述：项目成员（项目群组展示）
      * 作者：MaoSF
      * 日期：2017/5/23
-     *
-     * @param projectId
-     * @param:
-     * @return:
      */
     @Override
     public List<ProjectUserDTO> getProjectParticipation(String projectId,String fastdfsUrl) {
@@ -211,6 +87,71 @@ public class ProjectDaoImpl extends GenericDao<ProjectEntity> implements Project
         map.put("projectId",projectId);
         map.put("fastdfsUrl",fastdfsUrl);
         return this.sqlSession.selectList("GetProjectParticipationMapper.getProjectParticipation",map);
+    }
+
+    @Override
+    public ProjectCountDTO getMyProjectCount(Map<String, Object> param){
+        return this.sqlSession.selectOne("GetProjectEntityPageMapper.getMyProjectCount",param);
+    }
+
+    @Override
+    public ProjectCountDTO getAllProjectCount(Map<String, Object> param) {
+        return this.sqlSession.selectOne("GetProjectEntityPageMapper.getAllProjectCount",param);
+    }
+
+    @Override
+    public List<ProjectProgressDTO> getMyProjectList(Map<String, Object> param) {
+        return this.sqlSession.selectList("GetProjectEntityPageMapper.getMyProjectList",param);
+    }
+
+    @Override
+    public HomeDTO getProjectCountForHomeData(Map<String, Object> param) {
+        return this.sqlSession.selectOne("GetProjectEntityPageMapper.getProjectCountForHomeData",param);
+    }
+
+    @Override
+    public String getEnterpriseName(String enterpriseOrgId) {
+        return sqlSession.selectOne("EnterpriseMapper.getEnterpriseName",enterpriseOrgId);
+    }
+
+    @Override
+    public String getEnterpriseNameByProjectId(String projectId) {
+        return sqlSession.selectOne("EnterpriseMapper.getEnterpriseNameByProjectId", projectId);
+    }
+
+    @Override
+    public List<ProjectSimpleDataDTO> getProjectListForLaborHour(Map<String, Object> param) {
+        return this.sqlSession.selectList("GetProjectEntityPageMapper.getProjectListForLaborHour",param);
+    }
+
+    @Override
+    public String getProjectName(String id) {
+        ProjectEntity p = selectById(id);
+        return (p != null) ? p.getProjectName() : null;
+    }
+
+    /**
+     * @param query 项目查询条件
+     * @return 默认的功能分类列表
+     * @description 获取默认的功能分类列表
+     * @author 张成亮
+     * @date 2018/6/25 17:50
+     **/
+    @Override
+    public List<ProjectBuiltTypeDTO> listBuiltTypeConst(QueryProjectDTO query) {
+        return this.sqlSession.selectList("ProjectMapper.listBuiltTypeConst", query);
+    }
+
+    /**
+     * @param query 项目查询条件
+     * @return 自定义的功能分类列表
+     * @description 获取自定义的功能分类列表
+     * @author 张成亮
+     * @date 2018/6/25 17:53
+     **/
+    @Override
+    public List<ProjectBuiltTypeDTO> listBuiltTypeCustom(QueryProjectDTO query) {
+        return this.sqlSession.selectList("ProjectMapper.listBuiltTypeCustom", query);
     }
 }
 

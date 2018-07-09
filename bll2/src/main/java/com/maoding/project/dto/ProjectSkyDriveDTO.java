@@ -5,7 +5,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 深圳市设计同道技术有限公司
- * 类    名：ProjectSkyDriveDTO
+ * 类    名：ProjectSkyDriveDTO2
  * 类描述：项目网络磁盘实体
  * 作    者：MaoSF
  * 日    期：2016年12月18日-上午10:13:28

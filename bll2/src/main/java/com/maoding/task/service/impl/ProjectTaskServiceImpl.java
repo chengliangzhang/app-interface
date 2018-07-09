@@ -1,5 +1,6 @@
 package com.maoding.task.service.impl;
 
+import com.beust.jcommander.internal.Maps;
 import com.maoding.conllaboration.SyncCmd;
 import com.maoding.conllaboration.service.CollaborationService;
 import com.maoding.core.base.dto.BaseDTO;
@@ -11,37 +12,41 @@ import com.maoding.core.util.BeanUtilsEx;
 import com.maoding.core.util.DateUtils;
 import com.maoding.core.util.StringUtil;
 import com.maoding.dynamic.dao.ZInfoDAO;
-import com.maoding.dynamic.dto.ZTaskDTO;
 import com.maoding.dynamic.service.DynamicService;
-import com.maoding.dynamic.service.OrgDynamicService;
+import com.maoding.financial.dao.ExpMainDao;
+import com.maoding.message.dto.QueryMessageDTO;
+import com.maoding.message.dto.SendMessageDTO;
 import com.maoding.message.entity.MessageEntity;
 import com.maoding.message.service.MessageService;
 import com.maoding.mytask.dao.MyTaskDao;
+import com.maoding.mytask.dto.MyTaskCountDTO;
 import com.maoding.mytask.entity.MyTaskEntity;
 import com.maoding.mytask.service.MyTaskService;
 import com.maoding.org.dao.CompanyDao;
 import com.maoding.org.dao.CompanyUserDao;
 import com.maoding.org.dto.CompanyDataDTO;
-import com.maoding.org.dto.CompanyUserTableDTO;
+import com.maoding.org.dto.CompanyUserDataDTO;
 import com.maoding.org.entity.CompanyEntity;
 import com.maoding.org.entity.CompanyUserEntity;
 import com.maoding.org.service.CompanyService;
 import com.maoding.project.dao.ProjectDao;
-import com.maoding.project.dao.ProjectProcessDao;
 import com.maoding.project.dao.ProjectProcessNodeDao;
 import com.maoding.project.dto.ProjectTaskProcessNodeDTO;
 import com.maoding.project.entity.ProjectEntity;
 import com.maoding.project.entity.ProjectProcessNodeEntity;
 import com.maoding.project.entity.ProjectSkyDriveEntity;
-import com.maoding.project.service.*;
+import com.maoding.project.service.ProjectProcessService;
+import com.maoding.project.service.ProjectService;
+import com.maoding.project.service.ProjectSkyDriverService;
+import com.maoding.project.service.ProjectTaskResponsibleService;
 import com.maoding.projectcost.dao.ProjectCostDao;
 import com.maoding.projectcost.dto.ProjectCostDTO;
 import com.maoding.projectcost.entity.ProjectCostEntity;
 import com.maoding.projectcost.service.ProjectCostService;
-import com.maoding.projectmember.dao.ProjectMemberDao;
 import com.maoding.projectmember.dto.ProjectMemberDTO;
 import com.maoding.projectmember.entity.ProjectMemberEntity;
 import com.maoding.projectmember.service.ProjectMemberService;
+import com.maoding.role.dao.PermissionDao;
 import com.maoding.task.dao.ProjectProcessTimeDao;
 import com.maoding.task.dao.ProjectTaskDao;
 import com.maoding.task.dao.ProjectTaskRelationDao;
@@ -79,7 +84,7 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
     private ZInfoDAO zInfoDAO;
 
     @Autowired
-    private ProjectMemberDao projectMemberDao;
+    private ExpMainDao expMainDao;
 
     @Autowired
     private ProjectProcessTimeDao projectProcessTimeDao;
@@ -95,9 +100,6 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
 
     @Autowired
     private CompanyUserDao companyUserDao;
-
-    @Autowired
-    private ProjectProcessDao projectProcessDao;
 
     @Autowired
     private ProjectTaskRelationDao projectTaskRelationDao;
@@ -139,13 +141,13 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
     private DynamicService dynamicService;
 
     @Autowired
-    private OrgDynamicService orgDynamicService;
-
-    @Autowired
     private CompanyService companyService;
 
     @Autowired
     private MessageService messageService;
+
+    @Autowired
+    private PermissionDao permissionDao;
 
 
     @Value("${fastdfs.url}")
@@ -220,19 +222,6 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
         return this.projectTaskDao.selectByParam(map);
     }
 
-    /**
-     * 方法描述：项目签发数据（项目详情界面，签发组织板块数据）
-     * 作者：MaoSF
-     * 日期：2016/12/31
-     *
-     * @param projectId
-     * @param:
-     * @return:
-     */
-    @Override
-    public List<ProjectIssueDataDTO> getTaskIssueData(String projectId) throws Exception {
-        return projectTaskDao.getTaskIssueData(projectId);
-    }
 
     /**
      * 方法描述：项目任务列表（任务分配界面）
@@ -353,14 +342,14 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
 //            return 1;
 //        }
 //        Map<String, Object> map = new HashMap<String, Object>();
-//        List<CompanyUserTableDTO> companyUserList = null;
+//        List<CompanyUserDataDTO> companyUserList = null;
 //
 //        //项目基本信息编辑
 //        map.put("permissionId", "50");//企业负责人
 //        map.put("companyId", companyId);
 //        companyUserList = this.companyUserDao.getCompanyUserByPermissionId(map);
 //        if (!CollectionUtils.isEmpty(companyUserList)) {
-//            for(CompanyUserTableDTO dto:companyUserList){
+//            for(CompanyUserDataDTO dto:companyUserList){
 //                if(dto.getUserId().equals(accountId)){
 //                    return 1;
 //                }
@@ -389,7 +378,7 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
         }
         map.put("companyId", companyId);
         map.put("userId", accountId);
-        List<CompanyUserTableDTO> companyUserList = this.companyUserDao.getCompanyUserByPermissionId(map);
+        List<CompanyUserDataDTO> companyUserList = this.companyUserDao.getCompanyUserByPermissionId(map);
         if (!CollectionUtils.isEmpty(companyUserList)) {
             return 1;
         }
@@ -407,7 +396,7 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
      */
     @Override
     public List<ProjectTaskDTO> getProjectTaskRootData(String projectId, String companyId) throws Exception {
-        List<ProjectTaskDTO> list = this.projectTaskDao.getProjectTaskRootData(projectId);
+        List<ProjectTaskDTO> list = this.projectTaskDao.getProjectTaskRootData(projectId,companyId);
         //设置负责人
         if (!CollectionUtils.isEmpty(list)) {
             for (ProjectTaskDTO dto : list) {
@@ -448,7 +437,7 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
         List<ProjectTaskDTO> list = new ArrayList<ProjectTaskDTO>();
         ProjectEntity projectEntity = this.projectDao.selectById(projectId);
         if (projectEntity != null && projectEntity.getCompanyId().equals(companyId)) {
-            list = this.projectTaskDao.getProjectTaskRootData(projectId);
+            list = this.projectTaskDao.getProjectTaskRootData(projectId,companyId);
         } else {
             list = this.projectTaskDao.getProjectTaskRootOfOperater(map);
         }
@@ -743,11 +732,12 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
                 //查询立项方签发给其他组织
                 List<ProjectTaskRelationEntity> taskRelationEntityList2 = this.projectTaskRelationDao.getProjectTaskRelationByFromCompanyId(projectId, relationEntity.getToCompanyId());
                 if (!CollectionUtils.isEmpty(taskRelationEntityList2)) {
-                    for (ProjectTaskRelationEntity relationEntity1 : taskRelationEntityList2)
+                    for(ProjectTaskRelationEntity relationEntity1 : taskRelationEntityList2) {
                         if (relationEntity1.getFromCompanyId().equals(companyId) || relationEntity1.getToCompanyId().equals(companyId)) {
                             isAdd = true;
                             break;
                         }
+                    }
                 }
                 if (isAdd) {
                     dto.getChildList().add(dto1);
@@ -988,13 +978,13 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
         } else {//如果签发给其他团队
             //查询是否存在已签发给此公司
             //设计经营负责人
-            this.saveProjectManager(task.getProjectId(), task.getId(), task.getCompanyId(), managerId, designerId, accountId);
+            this.saveProjectManager(task.getProjectId(), task.getId(), task.getCompanyId(), managerId, designerId, accountId,currentCompanyId);
             //保存
             this.saveProjectTaskRelation2(task, currentCompanyId, accountId);
         }
     }
 
-    private void saveProjectManager(String projectId, String taskId, String companyId, String managerId, String designerId, String accountId) throws Exception {
+    private void saveProjectManager(String projectId, String taskId, String companyId, String managerId, String designerId, String accountId,String currentCompanyId) throws Exception {
 
         ProjectManagerEntity entity = new ProjectManagerEntity();
         entity.setCompanyId(companyId);
@@ -1003,17 +993,18 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
 
         ProjectMemberEntity managerEntity = this.projectMemberService.getOperatorManager(projectId, companyId);
         if (managerEntity == null) {
-            this.projectMemberService.saveProjectMember(projectId, companyId, managerId, ProjectMemberType.PROJECT_OPERATOR_MANAGER, accountId, false);
+            this.projectMemberService.saveProjectMember(projectId, companyId, managerId, ProjectMemberType.PROJECT_OPERATOR_MANAGER, accountId, false,currentCompanyId);
         } else {
-            MessageEntity msg = getMessage(projectId, taskId, companyId, managerId);
-            messageService.sendMessage(msg);
+//            MessageEntity msg = getMessage(projectId, taskId, companyId, managerId);
+//            messageService.sendMessage(msg);
+            sendMessage(projectId, taskId, companyId, managerId, null,accountId,SystemParameters.MESSAGE_TYPE_5,currentCompanyId);
         }
 
         //查询签发给的公司是否存在签发的记录
         List<ProjectTaskRelationEntity> taskRelationList = this.projectTaskRelationDao.getProjectTaskRelationByCompanyId(projectId, companyId);
         if (CollectionUtils.isEmpty(taskRelationList)) {//若果不存在签发的记录，则推送签发的任务
             // 发送任务
-            this.myTaskService.saveMyTask(taskId, SystemParameters.ISSUE_TASK, companyId, managerId);
+            this.myTaskService.saveMyTask(taskId, SystemParameters.ISSUE_TASK, companyId, managerId,currentCompanyId);
         }
     }
 
@@ -1037,31 +1028,83 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
      * 方法描述：在签发任务时设置设计负责人并通知设计负责人
      * 作者：ZCL
      */
-    private void notifyIssuedDesigner(String projectId, String taskId, String companyId) throws Exception {
+    private void notifyIssuedDesigner(String projectId, String taskId, String companyId,String currentCompanyId,String accountId) throws Exception {
         ProjectMemberEntity designerEntity = this.projectMemberService.getDesignManager(projectId, companyId);
         if (designerEntity == null) {
             //签发到的公司中选择具备经营权限的人员中选择第一个填入项目经营负责人位置
             Map<String, Object> map = new HashMap<String, Object>();
             map.put("permissionId", "52");//设计总监权限id
             map.put("companyId", companyId);
-            List<CompanyUserTableDTO> companyUserList = this.companyUserDao.getCompanyUserByPermissionId(map);
+            List<CompanyUserDataDTO> companyUserList = this.companyUserDao.getCompanyUserByPermissionId(map);
             if (companyUserList.size() > 0) {
-                CompanyUserTableDTO u = companyUserList.get(0);
-                this.projectMemberService.saveProjectMember(projectId, companyId, u.getId(), ProjectMemberType.PROJECT_DESIGNER_MANAGER, null, true);
+                CompanyUserDataDTO u = companyUserList.get(0);
+                this.projectMemberService.saveProjectMember(projectId, companyId, u.getId(), ProjectMemberType.PROJECT_DESIGNER_MANAGER, accountId, false,currentCompanyId);
             }
         }
     }
 
-    private MessageEntity getMessage(String projectId, String taskId, String companyId, String managerId) {
-        MessageEntity msg = new MessageEntity();
-        msg.setProjectId(projectId);
-        msg.setCompanyId(companyId);
-        msg.setTargetId(taskId);
-        msg.setUserId(managerId);
-        msg.setMessageType(SystemParameters.MESSAGE_TYPE_5);
-        return msg;
-    }
+//    private MessageEntity getMessage(String projectId, String taskId, String companyId, String managerId) {
+//        MessageEntity msg = new MessageEntity();
+//        msg.setProjectId(projectId);
+//        msg.setCompanyId(companyId);
+//        msg.setTargetId(taskId);
+//        msg.setUserId(managerId);
+//        msg.setMessageType(SystemParameters.MESSAGE_TYPE_5);
+//        return msg;
+//    }
 
+    private MessageEntity sendMessage(String projectId, String taskId, String companyId, String managerId,String userId, String accountId,Integer messageType,String currentCompanyId) throws Exception {
+        if(StringUtil.isNullOrEmpty(userId)){
+            CompanyUserEntity userEntity = this.companyUserDao.selectById(managerId);
+            if(userEntity != null) {
+                userId = userEntity.getUserId();
+            }
+        }
+        if(!StringUtil.isNullOrEmpty(userId)){
+            String messageContent = null;
+//            //所有的生产任务已经完成（仅自己生产的），给本组织的设计负责人推送消息：hi，“卯丁科技大厦一期-方案设计....”的设计任务已完成，请你确认，谢谢！
+//            put(String.format("%d", MESSAGE_TYPE_407),"hi，“?-?”的设计任务已完成，请你确认，谢谢！" );
+//            //本团队所有的生产任务已经完成（包含签发给其他组织的任务）：hi，“卯丁科技大厦一期-方案设计，初步设计....”所有生产任务已完成，请你确认，谢谢！
+//            put(String.format("%d", MESSAGE_TYPE_408),"hi，“?-?”所有生产任务已完成，请你确认，谢谢！" );//此处还应该推送任务，任务类型22
+//            //合作方 A 给 B的任务全部完成，给A组织的设计负责人推送消息
+//            put(String.format("%d", MESSAGE_TYPE_409),"hi，“?-?”的设计任务已完成，请你跟进相关项目收支的经营工作，谢谢！" );
+            if(messageType==SystemParameters.MESSAGE_TYPE_407){
+                //查询本组织生产的所有的根任务
+                messageContent = this.projectTaskDao.getProductRootTaskName(projectId,currentCompanyId);
+            }
+            ProjectEntity project= projectDao.selectById(projectId);
+            if(messageType==SystemParameters.MESSAGE_TYPE_408 ){
+                //查询所有签发的任务(当前公司)
+                if(currentCompanyId.equals(project.getCompanyId())){
+                    messageContent = this.projectTaskDao.getIssueTaskName(projectId,currentCompanyId,1,null);
+                }else {
+                    messageContent = this.projectTaskDao.getIssueTaskName(projectId,currentCompanyId,2,null);
+                }
+
+            }
+            if( messageType==SystemParameters.MESSAGE_TYPE_409){
+                //查询companyId--currentCompanyId（签发的任务）
+                //查询所有签发的任务(当前公司)
+                if(currentCompanyId.equals(project.getCompanyId())){
+                    messageContent = this.projectTaskDao.getIssueTaskName(projectId,currentCompanyId,1,null);
+                }else {
+                    messageContent = this.projectTaskDao.getIssueTaskName(projectId,currentCompanyId,2,companyId);
+                }
+            }
+            MessageEntity m = new MessageEntity();
+            m.setUserId(userId);
+            m.setProjectId(projectId);
+            m.setCompanyId(companyId);
+            m.setTargetId(taskId);
+            m.setMessageType(messageType);
+            m.setCreateBy(accountId);
+            m.setSendCompanyId(currentCompanyId);
+            m.setMessageContent(messageContent);
+            m.setCreateDate(new Date());
+            messageService.sendMessage(m);
+        }
+        return null;
+    }
 
     /**
      * 方法描述：保存费用
@@ -1129,7 +1172,7 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
                 if (!StringUtil.isNullOrEmpty(dto.getManagerId()))
                 //设计经营负责人
                 {
-                    this.saveProjectManager(dto.getProjectId(), dto.getId(), dto.getCompanyId(), dto.getManagerId(), dto.getDesignerId(), dto.getAccountId());
+                    this.saveProjectManager(dto.getProjectId(), dto.getId(), dto.getCompanyId(), dto.getManagerId(), dto.getDesignerId(), dto.getAccountId(),dto.getAppOrgId());
                 }
                 this.saveProjectTaskRelation2(taskEntity, dto.getAppOrgId(), dto.getAccountId());
             } else {
@@ -1215,9 +1258,19 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
     }
 
 
+    /**
+     * 方法描述：给设计负责人推送任务-->发布后，任务负责人默认为设计负责人
+     * 作者：MaoSF
+     * 日期：2017/4/20
+     */
+    private void sendTaskToDesignerForPublishTask(String projectId, String taskId, String companyId, String currentCompanyId, String accountId) throws Exception {
+        //如果不为空，则设置任务负责人，默认为设计负责人
+        this.projectTaskResponsibleService.insertTaskResponsibleForPublishTask(projectId, companyId, taskId, accountId, currentCompanyId);
+    }
+
     private void saveProjectTaskResponsibler(SaveProjectTaskDTO dto, String id, String targetId, boolean isModify) throws Exception {
         if (isModify) {
-            this.projectTaskResponsibleService.insertTaskResponsible(dto.getProjectId(), dto.getCompanyId(), targetId, id, dto.getAccountId());
+            this.projectTaskResponsibleService.insertTaskResponsible(dto.getProjectId(), dto.getCompanyId(), targetId, id, dto.getAccountId(),dto.getAppOrgId());
         } else {
             this.projectTaskResponsibleService.insertTaskResponsible(dto.getProjectId(), dto.getCompanyId(), targetId, id, dto.getAccountId(), dto.getAppOrgId());
         }
@@ -1237,6 +1290,7 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
         relationEntity.setFromCompanyId(dto.getAppOrgId());
         relationEntity.setToCompanyId(dto.getManagerId());
         relationEntity.setTaskId(id);
+        relationEntity.setProjectId(dto.getProjectId());
         relationEntity.setCreateBy(dto.getAccountId());
         this.projectTaskRelationDao.insert(relationEntity);
 
@@ -1668,13 +1722,15 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
         }
 
         //通知协同
-        if(pTask.getTaskType()==SystemParameters.TASK_TYPE_PHASE)
+        if(pTask.getTaskType()==SystemParameters.TASK_TYPE_PHASE){
             collaborationService.pushSyncCMD_PT(pTask.getProjectId(),pTask.getTaskPath(),SyncCmd.PT0);
-        else if(pTask.getTaskType()==SystemParameters.TASK_TYPE_ISSUE)
-            collaborationService.pushSyncCMD_PT(pTask.getProjectId(),pTask.getTaskPath(),SyncCmd.PT1);
-        else
-            collaborationService.pushSyncCMD_PT(pTask.getProjectId(),pTask.getTaskPath(),SyncCmd.PT2);
-
+        }
+        else if(pTask.getTaskType()==SystemParameters.TASK_TYPE_ISSUE) {
+            collaborationService.pushSyncCMD_PT(pTask.getProjectId(), pTask.getTaskPath(), SyncCmd.PT1);
+        }
+        else {
+            collaborationService.pushSyncCMD_PT(pTask.getProjectId(), pTask.getTaskPath(), SyncCmd.PT2);
+        }
         return responseBean;
     }
 
@@ -1771,73 +1827,6 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
     }
 
     /**
-     * 方法描述：获取任务详情及子任务
-     * 作者：MaoSF
-     * 日期：2016/12/31
-     */
-    @Override
-    public ProjectTaskDetailDTO getProductTaskForEdit(String id, String companyId, String accountId) throws Exception {
-        ProjectTaskDetailDTO detailDTO = new ProjectTaskDetailDTO();
-        ProjectTaskDTO dto = this.projectTaskDao.getProductTaskForEdit(id);
-        if (dto != null) {
-            this.setTaskState(dto);
-            BaseDTO.copyFields(dto, detailDTO);
-            //负责人处理
-            ProjectMemberDTO manager = this.projectMemberService.getTaskDesignerDTO(dto.getId());
-            if (manager != null) {
-                detailDTO.setManagerId(manager.getCompanyUserId());
-                detailDTO.setManagerName(manager.getCompanyUserName());
-            }
-
-            if (!StringUtil.isNullOrEmpty(dto.getTaskPid())) {
-                detailDTO.setTaskParentName(this.projectTaskDao.getTaskParentName(dto.getTaskPid()));
-            }
-
-            ProjectEntity projectEntity = this.projectDao.selectById(dto.getProjectId());
-            if (projectEntity != null) {
-                detailDTO.setProjectName(projectEntity.getProjectName());
-            }
-
-
-            //查询子任务
-            List<ProjectTaskDTO> childList = this.projectTaskDao.getProjectTaskByPidForProduct(id);
-            List<ProjectTaskDetailDTO> list = new ArrayList<>();
-            for (ProjectTaskDTO child : childList) {
-                if (child.getTaskType() == 3) {
-                    continue;//过滤未发布的版本数据
-                }
-                this.setTaskState(child);
-                ProjectTaskDetailDTO detailDTO1 = new ProjectTaskDetailDTO();
-                BaseDTO.copyFields(child, detailDTO1);
-                //负责人处理
-                ProjectMemberDTO manager1 = this.projectMemberService.getTaskDesignerDTO(detailDTO1.getId());
-                if (manager1 != null) {
-                    detailDTO1.setManagerId(manager1.getCompanyUserId());
-                    detailDTO1.setManagerName(manager1.getCompanyUserName());
-                }
-
-                //查询对与的我的任务的id
-                Map<String, Object> map = new HashMap<>();
-                map.put("taskType", SystemParameters.PRODUCT_TASK_RESPONSE);
-                map.put("targetId", detailDTO1.getId());
-                List<MyTaskEntity> taskEntityList = this.myTaskDao.getMyTaskByParam(map);
-                if (!CollectionUtils.isEmpty(taskEntityList)) {
-                    detailDTO1.setMyTaskId(taskEntityList.get(0).getId());
-                }
-                list.add(detailDTO1);
-            }
-            detailDTO.setChildTaskList(list);
-            List<ProjectTaskProcessNodeDTO> designUserList = this.projectMemberService.listDesignUser(dto.getId());
-            detailDTO.setDesignUserList(designUserList);
-            //处理权限
-            this.handleTaskDetailRoleFlag(detailDTO, companyId, accountId, dto.getProjectId(), dto.getTaskPath(), projectEntity.getCompanyBid(), list.size());
-
-        }
-        return detailDTO;
-    }
-
-
-    /**
      * 方法描述：处理当前任务权限标示（roleFlag）
      * 作者：MaoSF
      * 日期：2017/1/18
@@ -1917,69 +1906,6 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
         dto.setRoleFlag(map);
     }
 
-
-    /**
-     * 方法描述：处理当前任务权限标示（roleFlag）
-     * 作者：MaoSF
-     * 日期：2017/1/18
-     */
-    public void handleTaskDetailRoleFlag2(ProjectTaskDetailDTO dto, String companyId, String taskPath, String companyBid,String responsibleId,CompanyUserEntity  userEntity ,ProjectMemberEntity designManager) throws Exception {
-        Map<String, String> map = new HashMap<String, String>();
-        if (userEntity!=null) {
-            String companyUserId = userEntity.getId();
-            if (dto.getCompanyId().equals(companyId)) {//如果是本团队的任务
-
-                ProjectMemberDTO responsiblerParentTaskMap = null;
-                if (!StringUtil.isNullOrEmpty(dto.getTaskPid())) {
-                    responsiblerParentTaskMap = this.projectMemberService.getTaskDesignerDTO(dto.getTaskPid());
-                }
-                if (responsibleId != null) {
-                    //如果是设计负责人
-                    if ((designManager != null && designManager.getCompanyUserId().equals(companyUserId))) {
-                        if (StringUtil.isNullOrEmpty(dto.getCompleteDate())) {
-                            map.put("flag1", "1");
-                            map.put("flag3", "1");
-                        }
-                        map.put("flag2", "1");
-                        if (dto.getTaskType() == 0) {
-                            map.put("flag4", "1");
-                            map.put("flag5", "1");
-                            List<ProjectTaskEntity> projectTaskEntityList = this.projectTaskDao.getProjectTaskByPid2(dto.getId());
-                            if (CollectionUtils.isEmpty(projectTaskEntityList)) {
-                                map.put("flag6", "1");
-                            }
-                        }
-                    }
-                    //如果是父级任务负责人
-                    if (responsiblerParentTaskMap != null && companyUserId.equals(responsiblerParentTaskMap.getCompanyUserId())) {
-                        //如果不是设计负责人，才走下面，因为如果是设计负责人，则已经具有所有的权限了
-                        if (!(designManager != null && designManager.getCompanyUserId().equals(companyUserId))) {
-                            map.put("flag2", "1");
-                            if (dto.getTaskType() == 0) {
-                                map.put("flag4", "1");
-                                map.put("flag5", "1");
-                                List<ProjectTaskEntity> projectTaskEntityList = this.projectTaskDao.getProjectTaskByPid2(dto.getId());
-                                if (CollectionUtils.isEmpty(projectTaskEntityList)) {
-                                    map.put("flag6", "1");
-                                }
-                            }
-                        }
-                    }
-                    //如果是任务负责人
-                    if (responsibleId.equals(companyUserId) && StringUtil.isNullOrEmpty(dto.getCompleteDate())) {//如果是任务负责人
-                        map.put("flag1", "1");
-                        map.put("flag3", "1");
-                    }
-                }
-            }
-            //如果是乙方经营负责人且存在任务负责人，则可以操作
-//            if (designManager != null && designManager.getCompanyUserId().equals(companyUserId)
-//                    && companyId.equals(companyBid) && StringUtil.isNullOrEmpty(dto.getCompleteDate())) {
-//                map.put("flag3", "1");
-//            }
-        }
-        dto.setRoleFlag(map);
-    }
 
     /**
      * 方法描述：处理当前任务权限标示（roleFlag）
@@ -2094,42 +2020,28 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
      * 日期：2017/3/12
      */
     @Override
-    public ResponseBean handleProjectTaskCompleteDate(String taskId, String companyUserId) throws Exception {
-        ProjectTaskEntity task = this.projectTaskDao.selectById(taskId);
-        //查询设计负责人
-        ProjectMemberEntity designerManager = this.projectMemberService.getDesignManager(task.getProjectId(), task.getCompanyId());
-        if (!StringUtil.isNullOrEmpty(task.getTaskPid())) {
-            //查询子任务是否全部完成
-            Map<String, Object> map = new HashMap<>();
-            map.put("taskPid", task.getTaskPid());
-            map.put("notComplete", "1");//查询未完成的
-            List<ProjectTaskEntity> taskList = this.projectTaskDao.selectByParam(map);
-            if (CollectionUtils.isEmpty(taskList)) {//如果全部完成，则推送任务
-                ProjectTaskEntity parentTask = this.projectTaskDao.selectById(task.getTaskPid());
-                ProjectMemberEntity paramDesignerManager = null;
-                if (!task.getCompanyId().equals(parentTask.getCompanyId())) {
-                    paramDesignerManager = this.projectMemberService.getDesignManager(parentTask.getProjectId(), parentTask.getCompanyId());
-                } else {
-                    paramDesignerManager = designerManager;
-                }
-                if (paramDesignerManager != null) {
-                    myTaskService.saveMyTask(parentTask.getId(), SystemParameters.TASK_COMPLETE, parentTask.getCompanyId(), paramDesignerManager.getCompanyUserId(), false);
+    public ResponseBean handleProjectTaskCompleteDate(String projectId, String companyId, String accountId) throws Exception {
+        ProjectEntity project = this.projectDao.selectById(projectId);
+        if(project==null){
+            return ResponseBean.responseError("任务已失效");
+        }
+        if(project.getCompanyId().equals(companyId)){
+            //推送消息
+        }else {
+            //查询所有的签发方组织
+            Map<String,Object> map = new HashMap<>();
+            map.put("projectId",projectId);
+            map.put("toCompanyId",companyId);
+            List<ProjectTaskRelationEntity> relationList = this.projectTaskRelationDao.getTaskRelationParam(map);
+            for(ProjectTaskRelationEntity relation : relationList){
+                List<ProjectMemberEntity> designList = this.projectMemberService.listDesignManagerAndAssist(projectId,relation.getFromCompanyId());
+                List<ProjectMemberEntity> designs = getDesignManagerFilterMe(designList,accountId);
+                for(ProjectMemberEntity designerManager:designs){
+                    this.sendMessage(projectId, null, designerManager.getCompanyId(), designerManager.getCompanyUserId(), designerManager.getAccountId(), accountId, SystemParameters.MESSAGE_TYPE_409, companyId);
                 }
             }
         }
-        //只要生产根任务都完成，都需要推送任务
-        if ((task != null) && (designerManager != null)) {
-            CompanyUserEntity userEntity = this.companyUserDao.selectById(designerManager.getCompanyUserId());
-            if (userEntity == null) return null;
-            MessageEntity messageEntity = new MessageEntity();
-            messageEntity.setProjectId(task.getProjectId());
-            messageEntity.setCompanyId(task.getCompanyId());
-            messageEntity.setTargetId(taskId);
-            messageEntity.setUserId(userEntity.getUserId());
-            messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_35);
-            this.messageService.sendMessage(messageEntity);
-        }
-        return null;
+        return ResponseBean.responseSuccess();
     }
 
     /**
@@ -2148,7 +2060,7 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
             return ResponseBean.responseError("查询失败");
         }
         map.put("targetId", userEntity.getId());
-        List<ProejctTaskForDesignerDTO> taskList = this.projectTaskDao.getMyProjectTask(map);
+        List<ProjectTaskForDesignerDTO> taskList = this.projectTaskDao.getMyProjectTask(map);
         return ResponseBean.responseSuccess().addData("taskList", taskList);
     }
 
@@ -2286,10 +2198,6 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
      * 方法描述：设置任务状态
      * 作者：MaoSF
      * 日期：2017/4/6
-     *
-     * @param dto
-     * @param:
-     * @return:
      */
     @Override
     public void setTaskState(ProjectTaskDTO dto) throws Exception {
@@ -2301,97 +2209,27 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
             return;
         }
         //设置状态
-        int taskState = getTaskState(StringUtil.isNullOrEmpty(dto.getBeModifyId())?dto.getId():dto.getBeModifyId());
+        int taskState = getTaskState(StringUtil.isNullOrEmpty(dto.getBeModifyId())?dto.getId():dto.getBeModifyId(),dto.getProjectId());
         dto.setTaskState(taskState);
         String stateHtml = getStateHtml(dto.getEndTime(), dto.getStartTime(), dto.getCompleteDate(), taskState);
         dto.setStateHtml(stateHtml);
     }
 
-    public int getTaskState(String id) {
-        return this.projectTaskDao.getTaskState(id);
+    public int getTaskState(String id,String projectId) {
+        return this.projectTaskDao.getTaskState(id,projectId);
     }
 
     public String getStateHtml(String endTime, String startTime, String completeDate, int taskState) {
-
         return this.projectTaskDao.getStateText(taskState, startTime, endTime, completeDate);
-    }
-
-
-    @Override
-    public ResponseBean getIssueTaskForMyTask(String projectId, String companyId) throws Exception {
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("projectId", projectId);
-        map.put("companyId", companyId);
-
-        List<ProjectTaskDTO> list = new ArrayList<>();
-        ProjectEntity projectEntity = this.projectDao.selectById(projectId);
-        if (projectEntity != null && projectEntity.getCompanyId().equals(companyId)) {
-            list = this.projectTaskDao.getProjectTaskRootData(projectId);
-        } else {
-            list = this.projectTaskDao.getProjectTaskByCompanyId(map);
-        }
-        List<ProjectTaskDetailDTO> taskList = new ArrayList<>();
-        ProjectMemberDTO managerDTO = this.projectMemberService.getOperatorManagerDTO(projectId, companyId);
-
-        for (ProjectTaskDTO dto1 : list) {
-            setTaskState(dto1);
-            ProjectTaskDetailDTO detailDTO = new ProjectTaskDetailDTO();
-            BaseDTO.copyFields(dto1, detailDTO);
-            //负责人处理
-            if (managerDTO != null) {
-                detailDTO.setManagerId(managerDTO.getCompanyUserId());
-                detailDTO.setManagerName(managerDTO.getUserName());
-            }
-            if (!StringUtil.isNullOrEmpty(dto1.getTaskPid())) {
-                detailDTO.setTaskParentName(this.projectTaskDao.getTaskParentName(dto1.getTaskPid()));
-            }
-            //设定约定时间
-            List<ProjectProcessTimeEntity> timeList = null;
-            if (dto1.getTaskType() == 1) {
-                map.clear();
-                map.put("targetId", dto1.getId());
-                map.put("type", "1");
-                timeList = projectProcessTimeDao.getProjectProcessTime(map);
-
-            } else {
-                if (null != projectTaskRelationDao.getProjectTaskRelationByTaskId(dto1.getId())) {//如果存在转发的记录
-                    map.clear();
-                    map.put("targetId", dto1.getId());
-                    map.put("type", "2");
-                    map.put("notCompanyId", companyId);
-                    timeList = projectProcessTimeDao.getProjectProcessTime(map);
-                }
-            }
-
-            if (!CollectionUtils.isEmpty(timeList)) {
-                detailDTO.setAppointedStartTime(timeList.get(0).getStartTime());
-                detailDTO.setAppointedEndTime(timeList.get(0).getEndTime());
-            }
-            //查询子任务
-            List<ProjectTaskDTO> childList = this.projectTaskDao.getProjectTaskByPid(detailDTO.getId(), companyId);
-            List<ProjectTaskDetailDTO> childDetailList = new ArrayList<>();
-            for (ProjectTaskDTO child : childList) {
-                this.setTaskState(child);
-                ProjectTaskDetailDTO detailDTO1 = new ProjectTaskDetailDTO();
-                BaseDTO.copyFields(child, detailDTO1);
-                childDetailList.add(detailDTO1);
-            }
-            detailDTO.setChildTaskList(childDetailList);
-            taskList.add(detailDTO);
-        }
-        return ResponseBean.responseSuccess().addData("taskList", taskList);
     }
 
     /**
      * 方法描述：设置设计负责人（我的任务）获取的数据
      * 作者：MaoSF
      * 日期：2017/5/5
-     *
-     * @param:map(projectId,companyId,)
-     * @return:
      */
 
+    @Override
     public ResponseBean getArrangeDesignManagerForMyTask(String projectId, String companyId) throws Exception {
 
         ProjectTaskDataDTO dto = new ProjectTaskDataDTO();
@@ -2413,11 +2251,9 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
      * 方法描述：设置任务负责人（我的任务）获取的数据
      * 作者：MaoSF
      * 日期：2017/5/5
-     *
-     * @param:map(projectId,companyId,)
-     * @return:
      */
 
+    @Override
     public ResponseBean getArrangeTaskResponseForMyTask(String projectId, String taskId, String companyId) throws Exception {
 
         //获取当前项目在当前团队的经营负责人和项目负责人
@@ -2440,26 +2276,30 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
      * 方法描述：处理设校审（我的任务）获取的数据
      * 作者：MaoSF
      * 日期：2017/5/5
-     *
-     * @param:map(projectId,taskId，companyId,)
-     * @return:
      */
     @Override
     public ResponseBean getHandProcessDataForMyTask(String projectId, String taskId, String companyId) throws Exception {
+        //获取任务
+        ProjectTaskDTO task = this.getTaskForMyTask(projectId,taskId, companyId);
+        //查询任务负责人
+        List<ProjectTaskProcessNodeDTO> designUserList = this.projectMemberService.listDesignMember(taskId);
+        return ResponseBean.responseSuccess().addData("projectTask", task).addData("designUserList", designUserList);
+    }
 
+    @Override
+    public ProjectTaskDTO getTaskForMyTask(String projectId, String taskId, String companyId) throws Exception {
         //获取任务
         ProjectTaskDTO task = this.projectTaskDao.getProjectTaskById(taskId, companyId);
         if (task != null) {
             this.setTaskState(task);
+            ProjectEntity project = this.projectDao.selectById(projectId);
+            task.setNodeName(project.getProjectName());
+            if(!StringUtil.isNullOrEmpty(task.getTaskPid())){
+                String parentName = projectTaskDao.getTaskParentNameExceptOwn(taskId);
+                task.setNodeName(project.getProjectName()+"/"+parentName);
+            }
         }
-        //查询任务负责人
-        ProjectMemberDTO taskResponsible = this.projectMemberService.getTaskDesignerDTO(taskId);
-        if (taskResponsible != null) {
-            task.setTaskResponsibleName(taskResponsible.getCompanyUserName());
-        }
-
-        List<ProjectTaskProcessNodeDTO> designUserList = this.projectMemberService.listDesignUser(taskId);
-        return ResponseBean.responseSuccess().addData("projectTask", task).addData("designUserList", designUserList);
+        return task;
     }
 
     /**
@@ -2523,8 +2363,12 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
             }
 
             TaskWithFullNameDTO target = zInfoDAO.getTaskByTaskId(e.getBeModifyId());
-            if ((origin != null) && (origin.getTaskType() == SystemParameters.TASK_TYPE_PRODUCT)) origin.setTaskType(SystemParameters.TASK_TYPE_ISSUE); //生产根任务作为签发任务处理
-            if ((target != null) && (target.getTaskType() == SystemParameters.TASK_TYPE_PRODUCT)) target.setTaskType(SystemParameters.TASK_TYPE_ISSUE); //生产根任务作为签发任务处理
+            if ((origin != null) && (origin.getTaskType() == SystemParameters.TASK_TYPE_PRODUCT)) {
+                origin.setTaskType(SystemParameters.TASK_TYPE_ISSUE); //生产根任务作为签发任务处理
+            }
+            if ((target != null) && (target.getTaskType() == SystemParameters.TASK_TYPE_PRODUCT)){
+                target.setTaskType(SystemParameters.TASK_TYPE_ISSUE); //生产根任务作为签发任务处理
+            }
             messageService.sendMessage(origin,target,null,e.getProjectId(),currentCompanyId,currentUserId);
             //通知协同
             this.collaborationService.pushSyncCMD_PT(e.getProjectId(),e.getTaskPath(),SyncCmd.PT1);
@@ -2672,13 +2516,14 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
 
         if (currentCompanyId.equals(task.getCompanyId())) {//如果签发的是给自己的团队
             //给设计负责人发送安排任务负责人的任务
-            this.sendTaskToDesigner(task.getProjectId(), task.getId(), task.getCompanyId(), currentCompanyId, accountId);
+            this.sendTaskToDesignerForPublishTask(task.getProjectId(), task.getId(), task.getCompanyId(), currentCompanyId, accountId);
+           // this.sendTaskToDesigner(task.getProjectId(), task.getId(), task.getCompanyId(), currentCompanyId, accountId);
         } else {//如果签发给其他团队
             //查询是否存在已签发给此公司
             //设置并通知对方公司经营负责人
-            this.sendTaskToProjectManager(task.getProjectId(), task.getId(), task.getCompanyId());
+            this.sendTaskToProjectManager(task.getProjectId(), task.getId(), task.getCompanyId(),currentCompanyId,accountId);
             //设置并通知对方公司设计负责人
-            this.notifyIssuedDesigner(task.getProjectId(), task.getId(), task.getCompanyId());
+            this.notifyIssuedDesigner(task.getProjectId(), task.getId(), task.getCompanyId(),currentCompanyId,accountId);
             //保存签发关系
             this.saveProjectTaskRelation2(task, currentCompanyId, accountId);
         }
@@ -2699,6 +2544,7 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
         relationEntity.setToCompanyId(task.getCompanyId());
         relationEntity.setTaskId(task.getId());
         relationEntity.setCreateBy(accountId);
+        relationEntity.setProjectId(task.getProjectId());
         this.projectTaskRelationDao.insert(relationEntity);
 
         this.saveProjectCost(task, currentCompanyId);//保存管理的费用
@@ -2713,39 +2559,49 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
 
 
     /**
-     * 方法描述：任务发布后，给经营负责人推送任务
+     * 方法描述：任务发布后，给外部经营负责人推送任务
      * 作者：MaoSF
      * 日期：2017/5/16
      *
      * @param:
      * @return:
      */
-    private void sendTaskToProjectManager(String projectId, String taskId, String companyId) throws Exception {
-        ProjectMemberEntity projectManager = this.projectMemberService.getOperatorManager(projectId, companyId);
-        if (projectManager == null) {
+    private void sendTaskToProjectManager(String projectId, String taskId, String companyId,String currentCompanyId,String accountId) throws Exception {
+        ProjectMemberEntity memberEntity = this.projectMemberService.getOperatorManager(projectId, companyId);
+        boolean isSendTask = false ;
+        if (memberEntity == null) {
             //签发到的公司中选择具备经营权限的人员中选择第一个填入项目经营负责人位置
             Map<String, Object> map = new HashMap<String, Object>();
             map.put("permissionId", "51");//经营总监权限id
             map.put("companyId", companyId);
-            List<CompanyUserTableDTO> companyUserList = this.companyUserDao.getCompanyUserByPermissionId(map);
+            List<CompanyUserDataDTO> companyUserList = this.companyUserDao.getCompanyUserByPermissionId(map);
             if (companyUserList.size() > 0) {
-                CompanyUserTableDTO u = companyUserList.get(0);
-                projectManager = this.projectMemberService.saveProjectMember(projectId, companyId, u.getId(), ProjectMemberType.PROJECT_OPERATOR_MANAGER, null, false);
+                CompanyUserDataDTO u = companyUserList.get(0);
+                memberEntity = this.projectMemberService.saveProjectMember(projectId, companyId, u.getId(), ProjectMemberType.PROJECT_OPERATOR_MANAGER, accountId, false,currentCompanyId);
+                isSendTask = true;
             }
         }
 
-        if (projectManager != null) {
-            String managerId = projectManager.getCompanyUserId();
+        //为乙方服务的
+        if (memberEntity != null && !isSendTask) {
+            String managerId = memberEntity.getCompanyUserId();
             //查询签发给的公司是否存在签发的记录
             List<ProjectTaskRelationEntity> taskRelationList = this.projectTaskRelationDao.getProjectTaskRelationByCompanyId(projectId, companyId);
             if (CollectionUtils.isEmpty(taskRelationList)) {//若果不存在签发的记录，则推送签发的任务
-                // 发送任务
-                this.myTaskService.saveMyTask(taskId, SystemParameters.ISSUE_TASK, companyId, managerId);
-
-            } else {
-                MessageEntity msg = getMessage(projectId, taskId, companyId, managerId);
-                messageService.sendMessage(msg);
+                // 发送任务 boolean isSendMessage,String createBy,String currentCompanyId
+                this.myTaskService.saveMyTask(taskId, SystemParameters.ISSUE_TASK, companyId, managerId,false,accountId,currentCompanyId);
             }
+        }
+        //给经营负责人推送消息，如果是第一次，则推送MESSAGE_TYPE_302，否则推送MESSAGE_TYPE_303
+        QueryMessageDTO query = new QueryMessageDTO();
+        query.setProjectId(projectId);
+        query.setCompanyId(companyId);
+        query.setMessageType(SystemParameters.MESSAGE_TYPE_303);
+        query.setUserId(memberEntity.getAccountId());
+        if(CollectionUtils.isEmpty(messageService.getMessageByParam(query))){
+            this.sendMessage(projectId,null,companyId,memberEntity.getId(),memberEntity.getAccountId(),accountId,SystemParameters.MESSAGE_TYPE_303,currentCompanyId);
+        }else {
+            this.messageService.sendMessageForProjectManager(new SendMessageDTO(projectId, companyId,accountId,currentCompanyId,SystemParameters.MESSAGE_TYPE_306));
         }
     }
 
@@ -2764,7 +2620,8 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
             if (!publishTask.getCompanyId().equals(currentCompanyId)) {
                 this.handleProjectTaskRelation(taskEntity, currentCompanyId, accountId);
             } else {
-                this.sendTaskToDesigner(taskEntity.getProjectId(), taskEntity.getId(), taskEntity.getCompanyId(), currentCompanyId, accountId);
+                this.sendTaskToDesignerForPublishTask(taskEntity.getProjectId(), taskEntity.getId(), taskEntity.getCompanyId(), currentCompanyId, accountId);
+               // this.sendTaskToDesigner(taskEntity.getProjectId(), taskEntity.getId(), taskEntity.getCompanyId(), currentCompanyId, accountId);
             }
         }
         //处理计划进度时间
@@ -2827,8 +2684,8 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
             //查询签发的子任务，由于存在时间变更，需要通知子任务
             List<ProjectIssueTaskDTO> taskList = this.projectTaskDao.getTaskByTaskPidForChangeProcessTime(taskEntity.getId());
             for (ProjectIssueTaskDTO child : taskList) {
-                if (StringUtil.isNullOrEmpty(child.getStartTime()) || !(DateUtils.datecompareDate(processTime.getStartTime(), child.getStartTime()) <= 0
-                        && DateUtils.datecompareDate(processTime.getEndTime(), child.getEndTime()) >= 0)) {
+                if (StringUtil.isNullOrEmpty(child.getStartTime()) || !(DateUtils.datecompareDate(processTime.getStartTime(), DateUtils.date2Str(child.getStartTime(),DateUtils.date_sdf)) <= 0
+                        && DateUtils.datecompareDate(processTime.getEndTime(),  DateUtils.date2Str(child.getEndTime(),DateUtils.date_sdf)) >= 0)) {
                     //启动未发布状态
                     ProjectTaskEntity notPublishTask = new ProjectTaskEntity();
                     if (StringUtil.isNullOrEmpty(child.getId())) {//如果没有未发布数据
@@ -2902,9 +2759,9 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
             for (ProjectIssueTaskDTO dto : issueTaskDTO.getChildTaskList()) {
                 if ("0".equals(dto.getTaskStatus())) {//已发布的数据
                     //设置状态
-                    int taskState = getTaskState(dto.getBeModifyId());
+                    int taskState = getTaskState(dto.getBeModifyId(),dto.getProjectId());
                     dto.setTaskState(taskState);
-                    String stateHtml = getStateHtml(dto.getEndTime(), dto.getStartTime(), dto.getCompleteDate(), taskState);
+                    String stateHtml = getStateHtml(DateUtils.date2Str(dto.getEndTime(),DateUtils.date_sdf),DateUtils.date2Str(dto.getStartTime(),DateUtils.date_sdf), DateUtils.date2Str(dto.getCompleteDate(),DateUtils.date_sdf), taskState);
                     dto.setStateHtml(stateHtml);
                 } else if ("2".equals(dto.getTaskStatus())) {//未发布状态
                     if (dto.getTaskType() == 3 && dto.getId().equals(dto.getBeModifyId())) {
@@ -2920,9 +2777,9 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
                             planStartTime = processTimeList.get(0).getStartTime();
                             planEndTime = processTimeList.get(0).getEndTime();
                         }
-                        int taskState = getTaskState(dto.getBeModifyId());
+                        int taskState = getTaskState(dto.getBeModifyId(),dto.getProjectId());
                         dto.setTaskState(taskState);
-                        String stateHtml = getStateHtml(planEndTime, planStartTime, dto.getCompleteDate(), taskState);
+                        String stateHtml = getStateHtml(planEndTime, planStartTime,DateUtils.date2Str(dto.getCompleteDate(),DateUtils.date_sdf) , taskState);
                         dto.setStateHtml(stateHtml);
                     }
                 }
@@ -2993,22 +2850,24 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
         if (projectTaskEntity == null) {
             return ResponseBean.responseError("操作失败");
         }
-        //如果是处理完成
+        /***************此逻辑于2017-11-28调整，去掉设校审的限制********************/
         //1.判断是否存在设校审，并且是是否完成
         Map<String, Object> map = new HashMap<>();
-        map.put("taskManageId", taskId);
-        map.put("notComplete", "1");//查询未完成的
-        List<ProjectProcessNodeEntity> processNodeList = this.projectProcessNodeDao.getProcessNodeByParam(map);
-        if (!CollectionUtils.isEmpty(processNodeList)) {
-            String taskNames = projectTaskEntity.getTaskName() + "中";
-            for (ProjectProcessNodeEntity entity : processNodeList) {
-                taskNames += entity.getNodeName() + "、";
-            }
-            taskNames = taskNames.substring(0, taskNames.length() - 1);
-            return ResponseBean.responseError(taskNames + "工作还未完成，该任务不能标记成完成状态。");
-        }
+//        map.put("taskManageId", taskId);
+//        map.put("notComplete", "1");//查询未完成的
+//        List<ProjectProcessNodeEntity> processNodeList = this.projectProcessNodeDao.getProcessNodeByParam(map);
+//        if (!CollectionUtils.isEmpty(processNodeList)) {
+//            String taskNames = projectTaskEntity.getTaskName() + "中";
+//            for (ProjectProcessNodeEntity entity : processNodeList) {
+//                taskNames += entity.getNodeName() + "、";
+//            }
+//            taskNames = taskNames.substring(0, taskNames.length() - 1);
+//            return ResponseBean.responseError(taskNames + "工作还未完成，该任务不能标记成完成状态。");
+//        }
         //2.判断子任务是否完成
         map.put("taskPid", taskId);
+        map.put("notIncludeDesignTask", "1");//不包含设计任务
+        map.put("notComplete", "1");//查询未完成的
         List<ProjectTaskEntity> taskList = this.projectTaskDao.selectByParam(map);
         if (!CollectionUtils.isEmpty(taskList)) {
             String taskNames = "";
@@ -3018,27 +2877,56 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
             taskNames = taskNames.substring(0, taskNames.length() - 1);
             return ResponseBean.responseError("此任务中" + taskNames + "还未完成，该任务不能标记成完成状态");
         }
-        //把任务设置为完成
+        //设置完成状态
         if (StringUtil.isNullOrEmpty(projectTaskEntity.getCompleteDate())) {
             //保存原有数据
             ProjectTaskEntity originTask = new ProjectTaskEntity();
             BeanUtilsEx.copyProperties(projectTaskEntity, originTask);
-
+            projectTaskEntity.setEndStatus(1);
             projectTaskEntity.setCompleteDate(DateUtils.getDate());
             this.projectTaskDao.updateById(projectTaskEntity);
+
             //生成项目动态
             dynamicService.addDynamic(originTask, projectTaskEntity, companyId, accountId);
             /**************下面代码需要处理****************/
-            if (!StringUtil.isNullOrEmpty(projectTaskEntity.getTaskPid())) {
-                CompanyUserEntity companyUserEntity = this.companyUserDao.getCompanyUserByUserIdAndCompanyId(accountId, companyId);
-                this.handleProjectTaskCompleteDate(projectTaskEntity.getId(), companyUserEntity.getId());
+            //此处只处理生产的根任务
+            if (projectTaskEntity.getTaskType() == SystemParameters.TASK_TYPE_ISSUE || projectTaskEntity.getTaskType() == SystemParameters.TASK_TYPE_PHASE) {
+                //给经营任务负责人推送消息
+                ProjectMemberEntity projectManager = this.projectMemberService.getOperatorManager(projectId, companyId);
+                if (projectManager != null) {//该处如果是当前操作人大话，都需要推送此消息
+                    this.sendMessage(projectId,taskId,companyId,projectManager.getCompanyUserId(),projectManager.getAccountId(),accountId,SystemParameters.MESSAGE_TYPE_406,companyId);
+                }
+                //判断是否所有的生产任务已经完成，如果完成，则需要给当前组织的设计负责人推送消息
+                map.clear();
+                map.put("projectId",projectId);
+                map.put("notComplete", "1");//查询未完成的
+                map.put("companyId",companyId);
+                if(CollectionUtils.isEmpty(this.projectTaskDao.selectByParam(map))){//如果不存在未完成的，则全部完成，给设计负责人推送消息
+                    List<ProjectMemberEntity> designList = this.projectMemberService.listDesignManagerAndAssist(projectId,companyId);
+                    List<ProjectMemberEntity> designs = getDesignManagerFilterMe(designList,accountId);
+                    for(ProjectMemberEntity designerManager:designs){
+                        this.sendMessage(projectId, taskId, companyId, designerManager.getCompanyUserId(), designerManager.getAccountId(), accountId, SystemParameters.MESSAGE_TYPE_407, companyId);
+                    }
+                }
+                //判断所有的任务是否已经完成
+                this.sendMeaninglessTask(projectId,taskId,companyId,accountId);
+                /**********20170921屏蔽**************/
+                // this.handleProjectTaskCompleteDate(projectTaskEntity.getId(),accountId);
             }
-            /******************************/
-            //通知协同
-            this.collaborationService.pushSyncCMD_PT(projectTaskEntity.getProjectId(),projectTaskEntity.getTaskPath(),SyncCmd.PT2);
+            //如果是生产的任务
+            if(!StringUtil.isNullOrEmpty(projectTaskEntity.getTaskPid()) && projectTaskEntity.getTaskType() == SystemParameters.TASK_TYPE_PRODUCT){
+                //通知上一级任务负责人
+                ProjectMemberEntity parentLeader = this.projectMemberService.getProjectMember(projectId, companyId, ProjectMemberType.PROJECT_TASK_RESPONSIBLE, projectTaskEntity.getTaskPid());
+                if (parentLeader != null  && !(StringUtil.isSame(parentLeader.getAccountId(), accountId))){
+                    this.sendMessage(projectId,taskId,companyId,parentLeader.getCompanyUserId(),parentLeader.getAccountId(),accountId,SystemParameters.MESSAGE_TYPE_406,companyId);
+                }
+            }
+            /******************通知协同**************************/
+            this.collaborationService.pushSyncCMD_PT(projectTaskEntity.getProjectId(), projectTaskEntity.getTaskPath(), SyncCmd.PT2);
         }
         return ResponseBean.responseSuccess("操作成功");
     }
+
 
     /**
      * 方法描述：对象信息复制（用于数据记录更新的时候，不存在被修改的记录，则产生一条永不修改的记录数据）
@@ -3063,5 +2951,309 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
         taskEntity.setTaskStatus(taskStatus);
         this.projectTaskDao.updateById(taskEntity);
         return ResponseBean.responseSuccess();
+    }
+
+    @Override
+    public List<ProjectIssueTaskDTO> listProjectIssueTask(QueryProjectTaskDTO query) throws Exception {
+         List<ProjectIssueTaskDTO> list = this.projectTaskDao.listOperatorTaskList(query) ;
+         //排序
+        list = orderIssueTaskList(list, "");
+        return list;
+    }
+
+    @Override
+    public List<ProjectIssueTaskDTO> listProjectProductTask(QueryProjectTaskDTO query) throws Exception {
+        List<ProjectIssueTaskDTO> list = this.projectTaskDao.getProductTaskList(query) ;
+        list = orderIssueTaskList(list, "");
+        return list;
+    }
+
+    private List<ProjectIssueTaskDTO> orderIssueTaskList(List<ProjectIssueTaskDTO> list, String id) {
+        //排序
+        List<ProjectIssueTaskDTO> result = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            ProjectIssueTaskDTO projectTaskDTO = list.get(i);
+            if ("".equals(id)) {
+                if (StringUtil.isNullOrEmpty(projectTaskDTO.getTaskPid())) {//生产那块根节点在sql查出来的taskPid设为null
+                    result.add(projectTaskDTO);
+                    result.addAll(orderIssueTaskList(list, projectTaskDTO.getId()));
+                }
+            }
+            if (id.equals(projectTaskDTO.getTaskPid())) {
+                result.add(projectTaskDTO);
+                result.addAll(orderIssueTaskList(list, projectTaskDTO.getId()));
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public IssueTaskDTO getProjectIssueTask(QueryProjectTaskDTO query) throws Exception {
+        if(StringUtil.isNullOrEmpty(query.getCompanyId())){
+            query.setCompanyId(query.getAppOrgId());
+        }
+        IssueTaskDTO issueTaskDTO = new IssueTaskDTO();
+        List<ProjectIssueTaskDTO> treeList = this.listProjectIssueTask(query);
+        issueTaskDTO.setTreeList(treeList);
+        for(ProjectIssueTaskDTO dto:treeList){
+            dto.setStatusText(this.projectTaskDao.getStateText(dto.getTaskState(),dto.getStartTime(),dto.getEndTime(),dto.getCompleteDate()));
+           if(StringUtil.isNullOrEmpty(query.getTaskPid()) && StringUtil.isNullOrEmpty(dto.getTaskPid())) {
+               dto.setChildCount(getChildTaskCount(treeList,dto.getId()));
+               issueTaskDTO.getTaskList().add(dto);
+           }
+           if(!StringUtil.isNullOrEmpty(query.getTaskPid()) && query.getTaskPid().equals(dto.getTaskPid())){
+               dto.setChildCount(getChildTaskCount(treeList,dto.getId()));
+               issueTaskDTO.getTaskList().add(dto);
+           }
+        }
+        issueTaskDTO.setProjectName(projectDao.getProjectName(query.getProjectId()));
+        return issueTaskDTO;
+    }
+
+    @Override
+    public IssueTaskDTO getProjectProductTask(QueryProjectTaskDTO query) throws Exception {
+        if(StringUtil.isNullOrEmpty(query.getCompanyId())){
+            query.setCompanyId(query.getAppOrgId());
+        }
+        IssueTaskDTO issueTaskDTO = new IssueTaskDTO();
+        List<ProjectIssueTaskDTO> treeList = this.listProjectProductTask(query);
+        issueTaskDTO.setTreeList(treeList);
+        for(ProjectIssueTaskDTO dto:treeList){
+            dto.setStatusText(this.projectTaskDao.getStateText(dto.getTaskState(),dto.getStartTime(),dto.getEndTime(),dto.getCompleteDate()));
+            //任务负责人
+            ProjectMemberDTO designer =  this.projectMemberService.getTaskDesignerDTO(dto.getId());
+            dto.setTaskResponsibleName(designer==null?"":designer.getCompanyUserName());
+            if(StringUtil.isNullOrEmpty(query.getTaskPid()) && StringUtil.isNullOrEmpty(dto.getTaskPid())) {
+                dto.setChildCount(getChildTaskCount(treeList,dto.getId()));
+                issueTaskDTO.getTaskList().add(dto);
+            }
+            if(!StringUtil.isNullOrEmpty(query.getTaskPid()) && query.getTaskPid().equals(dto.getTaskPid())){
+                dto.setChildCount(getChildTaskCount(treeList,dto.getId()));
+                issueTaskDTO.getTaskList().add(dto);
+            }
+        }
+        issueTaskDTO.setProjectName(projectDao.getProjectName(query.getProjectId()));
+        return issueTaskDTO;
+    }
+
+    private int getChildTaskCount(List<ProjectIssueTaskDTO> treeList,String id){
+        int count = 0;
+        for(ProjectIssueTaskDTO dto:treeList){
+            if(id.equals(dto.getTaskPid())){
+                count++;
+            }
+        }
+        return count;
+    }
+
+    @Override
+    public HomeDataDTO getHomeData(Map<String,Object> param) throws Exception {
+        HomeDataDTO data = new HomeDataDTO();
+        String companyId = (String)param.get("appOrgId");
+        String accountId = (String)param.get("accountId");
+        CompanyUserEntity userEntity = companyUserDao.getCompanyUserByUserIdAndCompanyId(accountId,companyId);
+        if(userEntity==null){
+            return data;
+        }
+        Map<String,Object> map = new HashMap<>();
+
+        //获取当前人的角色，是否是企业负责人，经营负责人，设计负责人
+        //判断是否具有财务和企业负责人的权限
+        map.put("companyId", companyId);
+        map.put("permissionIds",SystemParameters.PERMISSION_IDS);
+        map.put("userId",accountId);
+        int isHasOrg = this.permissionDao.getCompanyUserIsHasPermission(map);
+        if(isHasOrg>0){
+            data.setPermissionFlag(1);
+        }
+        map.clear();
+        map.put("companyId",companyId);
+        map.put("companyUserId",userEntity.getId());
+        map.put("handlerId",userEntity.getId());
+        //组织banner
+        data.setCompanyBanner(this.projectSkyDriverService.getCompanyBannerImg(companyId));
+        //我的任务统计
+        data.setMyTaskCount(myTaskService.selectMyTaskCount(companyId,accountId));
+        //即将到期的任务
+        data.setDueTaskList(myTaskService.getDueTask(map));
+        data.getMyTaskCount().setDueTimeCount(data.getDueTaskList().size());//即将到期任务总数
+        //已超时的任务
+        data.setOvertimeTaskList(myTaskService.getOvertimeTask(map));
+        if(isHasOrg==0){
+            //我的项目统计
+            data.setProjectCount(projectDao.getMyProjectCount(map));
+            map.put("myProject","1");//只查询我相关的项目
+            //项目进度数据
+            data.setProjectList(projectService.getMyProjectList(map));
+        }else {
+            //我的项目统计
+            data.setProjectCount(projectDao.getAllProjectCount(map));
+            //项目进度数据
+            data.setProjectList(projectService.getMyProjectList(map));
+        }
+
+        //报销数据统计
+        data.setExpAmount(expMainDao.getMyExpAmount(userEntity.getId()));
+
+        return data;
+    }
+
+    @Override
+    public HomeDTO getHomeData2(Map<String, Object> param) throws Exception {
+        HomeDTO data = new HomeDTO();
+        String companyId = (String)param.get("appOrgId");
+        String accountId = (String)param.get("accountId");
+        CompanyUserEntity userEntity = companyUserDao.getCompanyUserByUserIdAndCompanyId(accountId,companyId);
+        if(userEntity==null){
+            return data;
+        }
+        Map<String,Object> map = new HashMap<>();
+        //获取当前人的角色，是否是企业负责人，经营负责人，设计负责人
+        //判断是否具有财务和企业负责人的权限
+        map.put("companyId", companyId);
+        map.put("permissionIds",SystemParameters.PERMISSION_IDS);
+        map.put("userId",accountId);
+        int isHasOrg = this.permissionDao.getCompanyUserIsHasPermission(map);
+
+        map.clear();
+        map.put("companyId", companyId);
+        map.put("companyUserId",userEntity.getId());
+        map.put("handlerId",userEntity.getId());
+        HomeDTO projectCountData = projectDao.getProjectCountForHomeData(map);
+        if(projectCountData!=null){
+            data = projectCountData;
+        }
+        //组织banner
+        data.setCompanyBanner(this.projectSkyDriverService.getCompanyBannerImg(companyId));
+        //我的任务统计
+        MyTaskCountDTO myTaskCountData = myTaskService.selectMyTaskCount(companyId,accountId);
+        int total = 0;
+        if(myTaskCountData != null) {
+            data.getMyTaskCount().setCompleteCount(myTaskCountData.getCompleteCount());
+            data.getMyTaskCount().setOvertimeCount(myTaskCountData.getOvertimeCount());
+            total = myTaskCountData.getTotalCount();
+        }
+        //即将到期的任务
+        data.getMyTaskCount().setDueTimeCount(myTaskService.getDueTask(map).size());
+        //正在进行中的任务
+        data.getMyTaskCount().setProgressCount(total==0?0:(total-data.getMyTaskCount().getCompleteCount()
+              //  -data.getMyTaskCount().getOvertimeCount()-data.getMyTaskCount().getDueTimeCount()
+                )
+        );
+        //审批数据
+        //待审批的
+        //由于请假出差的任务未设置，通过其他查询获取数据
+        ApproveCount leaveApproveCount = expMainDao.getMyApproveLeaveCount(userEntity.getId());
+        data.setApproveCount(leaveApproveCount);
+        //我提交的
+        ApproveCount leaveMySubmitCount = expMainDao.getMySubmitLeaveCount(userEntity.getId());
+        data.setMySubmitCount(leaveMySubmitCount);
+        if(isHasOrg>0){
+            data.setPermissionFlag(1);
+        }
+        return data;
+    }
+
+    @Override
+    public TaskDataDTO getProjectInfoOfTask(String projectId, String companyId, Integer taskType){
+        TaskDataDTO dataDTO = new TaskDataDTO();
+        List<ProjectIssueTaskDTO> taskList = null;
+        List<ProjectIssueTaskDTO> overtimeTaskList = new ArrayList<>();
+        List<ProjectIssueTaskDTO> dueTaskList = new ArrayList<>();
+        if(taskType== SystemParameters.TASK_TYPE_ISSUE){
+            taskList= projectTaskDao.getOperatorTaskListByCompanyId(projectId,companyId);
+        }else {
+            taskList = projectTaskDao.getProductTaskListByCompanyId(projectId,companyId);
+        }
+
+        dataDTO.setTaskCount(CollectionUtils.isEmpty(taskList)?0:taskList.size());
+        int completeCount = 0;
+        int timeOutTaskCount = 0;
+        for(ProjectIssueTaskDTO data:taskList){
+
+            if(data.getTaskState() == 7){
+                dueTaskList.add(data);
+                continue;
+            }
+            if(data.getTaskState() == 3 || data.getTaskState() == 4){
+                completeCount++;
+                continue;
+            }
+            if(data.getTaskState() == 2){
+                timeOutTaskCount++;
+                overtimeTaskList.add(data);
+                continue;
+            }
+
+            if(!StringUtil.isNullOrEmpty(data.getEndTime())){
+                if(DateUtils.isThisMonth(data.getEndTime())){
+                    dueTaskList.add(data);
+                }
+            }
+        }
+        dataDTO.setTaskList(dueTaskList);
+        dataDTO.setOvertimeTaskList(overtimeTaskList);
+        dataDTO.setTimeOutTaskCount(timeOutTaskCount);
+        dataDTO.setCompleteTaskCount(completeCount);
+        return dataDTO;
+    }
+
+    private void sendMeaninglessTask(String projectId,String taskId,String currentCompanyId,String accountId) throws Exception{
+        ProjectEntity project = this.projectDao.selectById(projectId);
+        if(project==null){
+            return;
+        }
+        boolean isCompleteAll = false;
+        Map<String,Object> map = Maps.newHashMap();
+        if(currentCompanyId.equals(project.getCompanyId())){//如果是立项方
+            //判断所有的生产任务是否完成
+            map.clear();
+            map.put("projectId",projectId);
+            map.put("notComplete", "1");//查询未完成的
+            map.put("companyId",currentCompanyId);
+            if(CollectionUtils.isEmpty(this.projectTaskDao.selectByParam(map))){//如果不存在未完成的，则全部完成，给设计负责人推送消息
+                isCompleteAll = true;
+            }
+        }else {
+            //查询是否全部完成所有的生产，包含了自己的和签发出去的任务
+            if (CollectionUtils.isEmpty(this.projectTaskDao.listUnCompletedTaskByCompany(projectId, null, currentCompanyId))) {
+                isCompleteAll = true;
+            }
+        }
+        if(isCompleteAll){//如果全部完成，则推送消息，推送任务，任务类型为SystemParameters.TASK_COMPLETE
+            List<ProjectMemberEntity> designList = this.projectMemberService.listDesignManagerAndAssist(projectId,currentCompanyId);
+            List<ProjectMemberEntity> designs = getDesignManagerFilterDuplicated(designList);
+            for(ProjectMemberEntity designerManager:designs){
+                myTaskService.saveMyTask(taskId, SystemParameters.TASK_COMPLETE, currentCompanyId, designerManager.getCompanyUserId(), false, accountId, currentCompanyId);
+            }
+            designs = getDesignManagerFilterMe(designList,accountId);
+            for(ProjectMemberEntity designerManager:designs){
+                this.sendMessage(projectId, taskId, currentCompanyId, designerManager.getCompanyUserId(), designerManager.getAccountId(), accountId, SystemParameters.MESSAGE_TYPE_408, currentCompanyId);
+            }
+        }
+    }
+
+    private List<ProjectMemberEntity> getDesignManagerFilterMe(List<ProjectMemberEntity> memberList, String account) {
+        List<ProjectMemberEntity> list = new ArrayList<>();
+        String accountIds="";
+        for(ProjectMemberEntity member:memberList){
+            if(!member.getAccountId().equals(account) && !accountIds.contains(member.getAccountId())){
+                list.add(member);
+                accountIds+=member.getAccountId();
+            }
+        }
+        return list;
+    }
+
+    private List<ProjectMemberEntity> getDesignManagerFilterDuplicated(List<ProjectMemberEntity> memberList) {
+        List<ProjectMemberEntity> list = new ArrayList<>();
+        String accountIds="";
+        for(ProjectMemberEntity member:memberList){
+            if(!accountIds.contains(member.getAccountId())){
+                list.add(member);
+                accountIds+=member.getAccountId();
+            }
+        }
+        return list;
     }
 }

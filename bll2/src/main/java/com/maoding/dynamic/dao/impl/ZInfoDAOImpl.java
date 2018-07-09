@@ -293,9 +293,9 @@ public class ZInfoDAOImpl implements ZInfoDAO {
         result.setIdType(DynamicConst.TARGET_TYPE_COST_PAY);
         result.setId(pay.getId());
         if (!StringUtil.isNullOrEmpty(pay.getPayDate()))
-            result.setPayDate(DateUtils.str2Date(pay.getPayDate(),DateUtils.date_sdf2));
+            result.setPayDate(DateUtils.str2Date(pay.getPayDate()));
         if (!StringUtil.isNullOrEmpty(pay.getPaidDate()))
-            result.setPayDate(DateUtils.str2Date(pay.getPaidDate(),DateUtils.date_sdf2));
+            result.setPayDate(DateUtils.str2Date(pay.getPaidDate()));
         result.setPaidCost(pay.getFee());
         result.setFullName(getCostFullName(result));
         return result;

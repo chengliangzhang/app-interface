@@ -1,74 +1,367 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="GetMyTaskByPageMapper" >
+<mapper namespace="GetMyTaskByPageMapper">
+    <resultMap id="BaseResultMap" type="com.maoding.mytask.entity.MyTaskEntity">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="task_title" property="taskTitle" jdbcType="VARCHAR"/>
+        <result column="task_type" property="taskType" jdbcType="INTEGER"/>
+        <result column="handler_id" property="handlerId" jdbcType="VARCHAR"/>
+        <result column="company_id" property="companyId" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="create_date" property="createDate" jdbcType="TIMESTAMP"/>
+        <result column="create_by" property="createBy" jdbcType="VARCHAR"/>
+        <result column="update_date" property="updateDate" jdbcType="TIMESTAMP"/>
+        <result column="update_by" property="updateBy" jdbcType="VARCHAR"/>
+        <result column="target_id" property="targetId" jdbcType="VARCHAR"/>
+        <result column="param1" property="param1" jdbcType="VARCHAR"/>
+        <result column="param2" property="param2" jdbcType="VARCHAR"/>
+        <result column="param3" property="param3" jdbcType="VARCHAR"/>
+        <result column="param4" property="param4" jdbcType="VARCHAR"/>
+        <result column="project_id" property="projectId" jdbcType="VARCHAR"/>
+        <result column="task_content" property="taskContent" jdbcType="LONGVARCHAR"/>
+        <result column="complete_date" property="completeDate" jdbcType="DATE"/>
+        <result column="start_date" property="startDate" jdbcType="DATE"/>
+    </resultMap>
 
-<resultMap id="BaseResultMap" type="com.maoding.mytask.entity.MyTaskEntity" >
-    <id column="id" property="id" jdbcType="VARCHAR" />
-    <result column="task_title" property="taskTitle" jdbcType="VARCHAR" />
-    <result column="task_type" property="taskType" jdbcType="INTEGER" />
-    <result column="handler_id" property="handlerId" jdbcType="VARCHAR" />
-    <result column="company_id" property="companyId" jdbcType="VARCHAR" />
-    <result column="status" property="status" jdbcType="VARCHAR" />
-    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
-    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
-    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
-    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
-    <result column="target_id" property="targetId" jdbcType="VARCHAR" />
-    <result column="param1" property="param1" jdbcType="VARCHAR" />
-    <result column="param2" property="param2" jdbcType="VARCHAR" />
-    <result column="param3" property="param3" jdbcType="VARCHAR" />
-    <result column="param4" property="param4" jdbcType="VARCHAR" />
-    <result column="project_id" property="projectId" jdbcType="VARCHAR" />
-    <result column="task_content" property="taskContent" jdbcType="LONGVARCHAR" />
-</resultMap>
+    <sql id="taskWhere">
+        <if test="permissionCodes!=null">
+            or find_in_set(a.param3,#{permissionCodes})
+        </if>
+    </sql>
+    <select id="getMyTaskList" resultType="com.maoding.mytask.dto.MyTaskListDTO" parameterType="java.util.Map">
+        SELECT b.id as projectId,IFNULL(b.project_name,'报销审批') as projectName,COUNT(a.id) as totalNum,sum(CASE WHEN
+        a.status='1' THEN 1 ELSE 0 END) AS completeNum
+        from maoding_web_my_task a
+        LEFT JOIN maoding_web_project b on a.project_id = b.id
+        where  a.param4 = 0
+        and a.company_id = #{companyId,jdbcType=VARCHAR}
+        and (
+        (
+        a.handler_id = #{handlerId}
+        and ((b.id is null and a.`status` = '0') or (b.id is not null and b.pstatus='0'))
+        )
+        <include refid="taskWhere" />
+        )
+        and a.task_type!=12
+        GROUP BY b.id
+        order by IFNULL(b.create_date,now()) desc
+        <if test="startPage!=null">
+            LIMIT #{startPage},#{endPage}
+        </if>
+    </select>
 
-<select id="getMyTaskList" resultType="com.maoding.mytask.dto.MyTaskListDTO" parameterType="java.util.Map">
-    SELECT b.id as projectId,IFNULL(b.project_name,'报销审批') as projectName,COUNT(a.id) as totalNum,sum(CASE WHEN a.status='1'  THEN 1 ELSE 0 END) AS completeNum
-    from maoding_web_my_task a
-    LEFT JOIN maoding_web_project b on a.project_id = b.id
-    where (a.`status` = 1 or a.`status` = '0') and a.param4=0
-    and a.company_id = #{companyId,jdbcType=VARCHAR}
-    and (
-          (
-            a.handler_id =  #{handlerId,jdbcType=VARCHAR}
-            and ((b.id is null and a.`status` = '0') or (b.id is not null and b.pstatus='0'))
-          )
-          <if test="isHandler!=null">
-            or (a.handler_id is NULL  and a.param3=1)
-          </if>
-      )
-    and a.task_type!=12
-    GROUP BY b.id
-    order by IFNULL(b.create_date,now()) desc
-    <if test="startPage!=null">
-        LIMIT #{startPage},#{endPage}
-    </if>
-</select>
+    <!-- 根据不同的参数查询我的任务 -->
+    <select id="getMyTaskByProjectId" resultMap="BaseResultMap" parameterType="java.util.Map" >
+        select *
+        from maoding_web_my_task a
+        where param4 = '0'
+        and company_id = #{companyId}
+        AND
+        (
+        handler_id = #{handlerId}
+        <include refid="taskWhere" />
+        )
+        <if test="projectId != null" >
+            AND project_id = #{projectId}
+        </if>
+        <if test="projectId == null" >
+            AND task_type = 11 and status='0'
+        </if>
+        and task_type!=12
+        order by status,create_date desc
+        <if test="startPage!=null">
+            LIMIT #{startPage},#{endPage}
+        </if>
+    </select>
 
+    <sql id="notIncludeTaskType">
+        and (a.task_type != 11 and a.task_type !=23 and a.task_type !=12 and a.task_type !=1 )
+    </sql>
 
-<!-- 根据不同的参数查询我的任务 -->
-<select id="getMyTaskByProjectId" resultMap="BaseResultMap" parameterType="java.util.Map" >
-    select *
-    from maoding_web_my_task
-    where status!='2' and param4 = '0'
-    and company_id = #{companyId,jdbcType=VARCHAR}
-    AND
-    (
-    handler_id = #{handlerId,jdbcType=VARCHAR}
-    <if test="isHandler!=null">
-        or (handler_id is NULL  and param3=1)
-    </if>
-    )
-    <if test="projectId != null" >
-        AND project_id = #{projectId,jdbcType=VARCHAR}
-    </if>
-    <if test="projectId == null" >
-        AND task_type = 11 and status='0'
-    </if>
-    and task_type!=12
-    order by status,create_date desc
-    <if test="startPage!=null">
-        LIMIT #{startPage},#{endPage}
-    </if>
-</select>
+    <!-- 根据不同的参数查询我的任务 ,增加一个isProjectTask做兼容老版本处理 type:0：正在进行（包含了已超时），1：即将到期，2：超时进行，3：已完成，-->
+    <select id="getMyTaskByProjectId2" resultMap="BaseResultMap" parameterType="java.util.Map">
+        select a.*
+        from maoding_web_my_task a
+         <if test="type != null and (type =='1'.toString() || type=='2'.toString()) ">
+        LEFT JOIN maoding_web_project_task b on if(a.task_type=3,a.param1,a.target_id) = b.id and b.task_status !=1
+        </if>
+        <if test="keyword!=null">
+        LEFT JOIN maoding_web_project c on a.project_id = c.id
+        </if>
+        where a.company_id = #{companyId}
+        and a.param4 = '0'
+        <include refid="notIncludeTaskType" />
+        AND
+        (
+        a.handler_id = #{handlerId}
+        <include refid="taskWhere" />
+        )
+        <if test="type != null and type =='0'.toString()">
+            and a.status='0'
+        </if>
+        <if test="type != null and type =='1'.toString()">
+            <![CDATA[ and a.status='0' and (a.task_type!=100 and datediff(b.end_time,now())<8 and datediff(b.end_time,now())>=0 or a.task_type=100 and datediff(a.deadline,now())<8 and datediff(a.deadline,now())>=0) ]]>
+        </if>
+        <if test="type != null and type =='2'.toString()">
+            and a.status='0' and ( a.task_type!=100 and datediff(now(),b.end_time)>0 or a.task_type=100 and a.deadline is not null and datediff(now(),a.deadline)>0)
+        </if>
+        <if test="type != null and type =='3'.toString()">
+            and a.status='1'
+        </if>
+         <if test="projectId != null">
+            AND a.project_id = #{projectId}
+        </if>
+         <if test="keyword!=null">
+          AND  (c.project_name  LIKE '%' #{keyword} '%' or a.task_type=100 and a.task_title  LIKE '%' #{keyword} '%')
+         </if>
+
+        order by a.status,a.create_date desc
+        <if test="startPage!=null">
+            LIMIT #{startPage},#{endPage}
+        </if>
+    </select>
+
+    <!--<if test="taskStatus != null">-->
+        <!--and ( 1=1-->
+        <!--<if test="taskStatus1 != null">-->
+            <!--<![CDATA[   or (datediff(b.end_time,NOW())<0 and( a.task_type = 1 or a.task_type = 12 or a.task_type = 3 or a.task_type = 13)) ]]>-->
+        <!--</if>-->
+        <!--<if test="taskStatus2 != null">-->
+            <!--or (datediff(b.end_time,NOW())>=0 and( a.task_type = 1 or a.task_type = 12 or a.task_type = 3 or a.task_type = 13))-->
+        <!--</if>-->
+        <!--<if test="taskStatus3 != null">-->
+            <!--or (datediff(b.start_time,NOW())>0 and( a.task_type = 1 or a.task_type = 12 or a.task_type = 3 or a.task_type = 13))-->
+        <!--</if>-->
+        <!--<if test="taskStatus4 != null">-->
+            <!--<![CDATA[   or ((datediff(b.complete_date,b.end_time))<=0 and( a.task_type = 1 or a.task_type = 12 or a.task_type = 3 or a.task_type = 13)) ]]>-->
+        <!--</if>-->
+        <!--<if test="taskStatus5 != null">-->
+            <!--or ((datediff(b.complete_date,b.end_time))>0 and( a.task_type = 1 or a.task_type = 12 or a.task_type = 3 or a.task_type = 13))-->
+        <!--</if>-->
+        <!--<if test="taskStatus6 != null">-->
+            <!--or ( a.task_type != 1 and a.task_type != 12 and a.task_type != 3 and a.task_type != 13)-->
+        <!--</if>-->
+        <!--)-->
+    <!--</if>-->
+    <select id="getMyTaskCount" resultType="com.maoding.mytask.dto.MyTaskCountDTO" parameterType="java.util.Map">
+        SELECT
+        count(DISTINCT a.id) AS totalCount,
+        sum(if(a. STATUS = 1, 1, 0)) AS completeCount
+        from maoding_web_my_task a
+        where param4 = '0'
+        AND  a.company_id = #{companyId}
+        and (a.project_id is not null or a.task_type = 100)
+        and a.task_type != 12 and a.task_type !=1
+        and (
+        handler_id = #{handlerId}
+        <include refid="taskWhere" />
+        )
+        <if test="isComplete!=null and isComplete==0">
+            AND a.status!=1
+        </if>
+    </select>
+
+    <select id="getOvertimeCount" resultType="com.maoding.mytask.dto.MyTaskCountDTO" parameterType="java.util.Map">
+        SELECT  count(DISTINCT  a.id) as overtimeCount
+        from maoding_web_my_task a
+        LEFT JOIN maoding_web_project_task b on if(a.task_type=3,a.param1,a.target_id) = b.id
+        where param4 = '0'
+        and a.status='0'
+        and a.task_type != 12 and a.task_type !=1
+        and (handler_id = #{handlerId})
+        and  ( a.task_type!=100 and datediff(now(),b.end_time)>0 or a.task_type=100 and a.deadline is not null and datediff(now(),a.deadline)>0)
+    </select>
+
+    <select id="getProjectTaskCount" resultType="com.maoding.project.dto.ProjectProgressDTO"
+            parameterType="java.util.Map">
+        SELECT
+        count(DISTINCT a.id) AS taskCount,
+        sum(if(a. STATUS = 1, 1, 0)) AS completeCount
+        from maoding_web_my_task a
+        <if test="isCooperator !=null">
+            INNER JOIN (SELECT DISTINCT t.id from maoding_web_project_task_relation b ,maoding_web_project_task t
+            where t.project_id = #{projectId}
+            and b.project_id = #{projectId}
+            and (b.from_company_id = #{companyId} or b.to_company_id = #{companyId} )
+            and b.relation_status = 0 and t.task_status !=1
+            and POSITION(b.task_id IN t.task_path))b on if(a.task_type=3,a.param1,a.target_id) = b.id
+        </if>
+        where a.param4 = '0'
+        and a.project_id = #{projectId}
+    </select>
+
+    <select id="getTaskCount" parameterType="java.util.Map" resultType="com.maoding.task.dto.ApproveCount">
+        SELECT sum(if(task_type=11,1,0)) as expCount,
+        sum(if(task_type=23,1,0)) as costCount,
+        sum(if(task_type=24,1,0)) as leaveCount,
+        sum(if(task_type=25,1,0)) as businessTripCount,
+        sum(if(task_type=26,1,0)) as laborHourCount
+        from maoding_web_my_task a
+        where a.param4 = '0'
+        <if test="handlerId !=null">
+            and handler_id =  #{handlerId}
+            and a.status = 0
+        </if>
+        <if test="sendUserId !=null">
+            and create_by =  #{sendUserId}
+        </if>
+        <if test="companyId !=null">
+            and company_id =  #{companyId}
+        </if>
+    </select>
+    <select id="getOvertimeTask" resultType="com.maoding.mytask.dto.MyTaskDTO" parameterType="java.util.Map">
+        SELECT a.id,a.project_id as projectId,a.deadline,
+        if(a.task_type=100,a.task_title,b.task_name) as taskTitle,
+        if(a.task_type=100,concat('超时',datediff(now(),b.end_time),'天'),concat('超时',datediff(now(),a.deadline),'天')) as taskMemo,
+        c.project_name as projectName,
+        a.task_content as taskContent,a.task_type as taskType
+        from maoding_web_my_task a
+        LEFT JOIN maoding_web_project c on a.project_id = c.id
+        LEFT JOIN maoding_web_project_task b on if(a.task_type=3,a.param1,a.target_id) = b.id
+        where param4 = '0'
+        and a.status ='0'
+        and a.task_type != 12 and a.task_type !=1
+        and (handler_id = #{handlerId})
+        and  ( a.task_type!=100 and datediff(now(),b.end_time)>0 or  a.task_type=100 and a.deadline is not null and datediff(now(),a.deadline)>0)
+        GROUP BY a.id
+    </select>
+
+    <select id="getDueTask" resultType="com.maoding.mytask.dto.MyTaskDTO" parameterType="java.util.Map">
+        <![CDATA[
+         SELECT a.id,a.project_id as projectId,a.deadline,
+        if(a.task_type=100,a.task_title,b.task_name) as taskTitle,
+        if(a.task_type=100,concat('剩余',(datediff(a.deadline,now())+1),'天'),concat('剩余',(datediff(b.end_time,now())+1),'天')) as taskMemo,
+        if(a.status = 1,3,if(a.status=0 and a.deadline is null,1,if(a.status= 0 and a.deadline is not null and datediff(a.deadline,now())>=0,1,2))) as taskState,
+        if(a.task_type=100,(datediff(a.deadline,now())+1),(datediff(b.end_time,now())+1)) as overTime,
+        c.project_name as projectName,
+        a.task_content as taskContent,a.task_type as taskType
+        from maoding_web_my_task a
+        LEFT JOIN maoding_web_project c on a.project_id = c.id
+        LEFT JOIN maoding_web_project_task b on if(a.task_type=3,a.param1,a.target_id) = b.id
+        where a.status ='0'
+        and param4 = '0'
+        and a.task_type != 12 and a.task_type !=1
+        and (handler_id = #{handlerId})
+        and (a.task_type!=100 and datediff(b.end_time,now())<8 and datediff(b.end_time,now())>=0 or a.task_type=100 and a.deadline is not null and datediff(a.deadline,now())<8 and datediff(a.deadline,now())>=0)
+        GROUP BY a.id
+        ]]>
+    </select>
+
+    <select id="getMyAuditCount" resultType="com.maoding.financial.dto.ExpAmountDTO" parameterType="java.lang.String">
+        SELECT count(DISTINCT a.id) as auditCount
+        from maoding_web_my_task a
+        where task_type = 11 and status='0' and param4 = '0'
+        and a.handler_id = #{companyUserId,jdbcType=VARCHAR}
+    </select>
+
+    <!-- 单纯查询报销审批任务-->
+    <select id="getMyExpTask" resultMap="BaseResultMap" parameterType="java.util.Map">
+        select a.*
+        from maoding_web_my_task a
+        LEFT JOIN maoding_web_exp_main b on a.target_id = b.id
+        LEFT JOIN maoding_web_exp_detail c on b.id = c.main_id
+        LEFT JOIN maoding_web_project d on c.project_id = d.id
+        where a.param4 = '0'
+        and a.company_id = #{companyId,jdbcType=VARCHAR}
+        AND a.handler_id = #{handlerId,jdbcType=VARCHAR}
+        AND a.task_type = 11
+        <if test="expType != null">
+            and a.type = #{expType}
+        </if>
+        <if test="keyword!=null">
+          AND  d.project_name   LIKE '%' #{keyword,jdbcType=VARCHAR} '%'
+        </if>
+        <if test="userIds!=null">
+            AND POSITION(b.user_id IN #{userIds,jdbcType=VARCHAR})
+        </if>
+        <if test="startDate!=null">
+            <![CDATA[and #{startDate,jdbcType=VARCHAR} <= b.exp_date ]]>
+        </if>
+        <if test="endDate!=null">
+            <![CDATA[and  #{endDate,jdbcType=VARCHAR} >= b.exp_date  ]]>
+        </if>
+        GROUP  by a.id
+        order by a.status,a.create_date desc
+        <if test="startPage!=null">
+            LIMIT #{startPage},#{endPage}
+        </if>
+    </select>
+
+    <select id="getMySubmitTask" resultType="com.maoding.mytask.dto.TaskDataDTO" parameterType="com.maoding.core.base.dto.QueryDTO">
+        SELECT a.id, a.task_title as taskTitle,a.task_content as taskContent,a.deadline,
+        if(a.status = 1,3,if(a.status=0 and a.deadline is null,1,if(a.status= 0 and a.deadline is not null and datediff(a.deadline,now())>=0,1,2))) as taskState,
+        if(a.status = 1,0,if(a.status= 0 and datediff(a.deadline,now())>=0,(datediff(a.deadline,now())+1),datediff(now(),a.deadline))) as overTime,
+        a.complete_date as completeDate,a.task_type as taskType,b.user_name as handlerName
+        from maoding_web_my_task a
+        LEFT JOIN maoding_web_company_user b on a.handler_id = b.id
+        where param4 = '0'
+        and a.task_type = 100
+        and a.create_by = #{accountId}
+        and a.company_id = #{companyId}
+        <if test="startPage!=null">
+            LIMIT #{startPage},#{endPage}
+        </if>
+    </select>
+
+    <select id="getMySubmitTaskById" resultType="com.maoding.mytask.dto.TaskDetailDTO" parameterType="java.lang.String">
+        SELECT a.id, a.task_title as taskTitle,a.task_content as taskContent,a.deadline,a.create_date as createDate,a.start_date as startDate,
+        if(a.status = 1,3,if(a.status=0 and a.deadline is null,1,if(a.status= 0 and a.deadline is not null and datediff(a.deadline,now())>=0,1,2))) as taskState,
+        if(a.status = 1,0,if(a.status= 0 and datediff(a.deadline,now())>=0,(datediff(a.deadline,now())+1),datediff(now(),a.deadline))) as overTime,
+        a.complete_date as completeDate,a.task_type as taskType,
+        a.handler_id as handlerId,b.user_name as handlerName,
+        c.id as submitId,c.user_name as submitName,
+        a.project_id as projectId,d.project_name as projectName,
+        ua.oss_file_path as createHeadImg,ua2.oss_file_path as handlerHeadImg
+        from maoding_web_my_task a
+        LEFT JOIN maoding_web_company_user b on a.handler_id = b.id
+        LEFT JOIN maoding_web_company_user c on a.create_by = c.user_id and c.company_id = a.company_id
+        LEFT JOIN maoding_web_project d on a.project_id = d.id
+        LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) ua ON ua.user_id = a.create_by AND ua.attach_type = 5
+        LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) ua2 ON ua2.user_id = b.user_id AND ua2.attach_type = 5
+        where  a.id = #{id}
+    </select>
+
+    <select id="listMyTask" resultType="com.maoding.mytask.dto.MyTaskSimpleDTO" parameterType="com.maoding.mytask.dto.QueryMyTaskDTO">
+        SELECT mytask.id,mytask.task_content as taskContent,mytask.deadline,
+        if(mytask.status = 1,3,if(mytask.status=0 and mytask.deadline is null,1,if(mytask.status= 0 and mytask.deadline is not null and datediff(mytask.deadline,now())>=0,1,2))) as taskState,
+        if(mytask.status = 1,0,if(mytask.status= 0 and datediff(mytask.deadline,now())>=0,(datediff(mytask.deadline,now())+1),datediff(now(),mytask.deadline))) as overTime,
+        mytask.complete_date as completeDate,mytask.task_type as taskType,company_user.user_name as handlerName,project.project_name,
+        if(mytask.task_type = 100,mytask.task_title,task.task_name) as taskTitle,
+        task.task_name,task.start_time,task.end_time,
+        if(mytask.task_type = 100,1,0) as is_light_task,
+        if(mytask.task_type = 3,mytask.task_content,if(mytask.task_type in (12,13),'任务负责人','')) as roleName
+        from maoding_web_my_task mytask
+        left join maoding_web_project project on (project.pstatus = '0' and mytask.project_id = project.id)
+        inner join maoding_web_company_user company_user on (mytask.handler_id = company_user.id)
+        left join maoding_web_project_task task on (task.task_status = '0' and if(mytask.task_type=3,mytask.param1,mytask.target_id) = task.id)
+        <where>
+            <if test="companyUserId != null">
+                and find_in_set(mytask.handler_id,#{companyUserId})
+            </if>
+            <if test="taskType != null">
+                and find_in_set(mytask.task_type,#{taskType})
+            </if>
+            <if test="deleted != null">
+                and find_in_set(mytask.param4,#{deleted})
+            </if>
+            <if test="createBy != null">
+                and find_in_set(mytask.create_by,#{createBy})
+            </if>
+            <if test="companyId != null">
+                and find_in_set(mytask.company_id,#{companyId})
+            </if>
+            <choose>
+                <when test="minCompleteDate != null">
+                    and (mytask.complete_date >= #{minCompleteDate})
+                </when>
+                <otherwise>
+                    and (mytask.complete_date is null)
+                </otherwise>
+            </choose>
+        </where>
+        <if test="startPage!=null">
+            LIMIT #{startPage},#{endPage}
+        </if>
+    </select>
+
 </mapper>

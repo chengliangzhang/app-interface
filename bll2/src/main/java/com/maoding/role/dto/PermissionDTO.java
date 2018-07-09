@@ -22,6 +22,12 @@ public class PermissionDTO {
      * 父权限ID
      */
     private String pid;
+    /**
+     * 描述
+     */
+    private String description;
+
+    private int isSingle;
 
     /**
      * 权限中对应的人员
@@ -67,5 +73,21 @@ public class PermissionDTO {
 
     public void setCompanyUserList(List<CompanyUserAppDTO> companyUserList) {
         this.companyUserList = companyUserList;
+    }
+
+    public int getIsSingle() {
+        return isSingle;
+    }
+
+    public void setIsSingle(int isSingle) {
+        this.isSingle = isSingle;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

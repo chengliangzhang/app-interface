@@ -80,12 +80,21 @@ public class NoticeDTO extends BaseDTO {
      * 发布日期
      */
     private String noticePublishdate;
+    /**
+     * 发布日期(只显示日)
+     */
+    private String noticePublishDay;
+    /**
+     * 发布日期(只显示年月)
+     */
+    private String noticePublishYearMonth;
 
     /**
      * 发布日期全格式
      */
     private Date createDate;
 
+    private String fileFullPath;//组织logo
 
     /**
      * 获取单条数据的时候，取的发送的组织信息
@@ -94,6 +103,13 @@ public class NoticeDTO extends BaseDTO {
 
     /**发布范围*/
     private String noticeOrgNames;
+
+    private Integer noticeType;
+
+    /**
+     * 附近地址
+     */
+    private List<String> attachList = new ArrayList<>();
 
     public String getNoticeTitle() {
         return noticeTitle;
@@ -221,5 +237,45 @@ public class NoticeDTO extends BaseDTO {
 
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
+    }
+
+    public String getNoticePublishDay() {
+        return noticePublishDay;
+    }
+
+    public void setNoticePublishDay(String noticePublishDay) {
+        this.noticePublishDay = noticePublishDay;
+    }
+
+    public String getNoticePublishYearMonth() {
+        return noticePublishYearMonth;
+    }
+
+    public void setNoticePublishYearMonth(String noticePublishYearMonth) {
+        this.noticePublishYearMonth = noticePublishYearMonth;
+    }
+
+    public List<String> getAttachList() {
+        return attachList;
+    }
+
+    public void setAttachList(List<String> attachList) {
+        this.attachList = attachList;
+    }
+
+    public String getFileFullPath() {
+        return fileFullPath;
+    }
+
+    public void setFileFullPath(String fileFullPath) {
+        this.fileFullPath = fileFullPath;
+    }
+
+    public Integer getNoticeType() {
+        return noticeType;
+    }
+
+    public void setNoticeType(Integer noticeType) {
+        this.noticeType = noticeType;
     }
 }

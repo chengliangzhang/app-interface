@@ -1,6 +1,7 @@
 package com.maoding.mytask.dto;
 
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -36,6 +37,12 @@ public class MyTaskDTO{
 
     private String projectId;
 
+
+    /**
+     * 项目相关的项目名称
+     */
+    private String projectName;
+
     /**
      * 是否可以转发,0:只能内部下发，1：可以下发or外包
      */
@@ -51,6 +58,29 @@ public class MyTaskDTO{
 
     private String status;//1:完成，其他未完成（0,3）
 
+    private String money;//报销审批 金额
+
+    private String expNo;//报销审批 单号
+
+    private String versionNum;//报销审批 版本控制
+
+    private String endDate;//结束时间
+
+    private String overTime;//超时时间
+
+    /*****************财务******************/
+    private BigDecimal unPayFee; //应收未收、应付未付
+
+    private BigDecimal planFee ;// 计划金额(计划收款，或许付款)
+
+    /**
+     * 截止日期
+     */
+    private Date deadline;
+
+    private String handlerName;
+
+    private Date completeDate;
 
     public String getTaskTitle() {
         return taskTitle;
@@ -164,4 +194,91 @@ public class MyTaskDTO{
         this.role = role;
     }
 
+    public String getMoney() {
+        return money;
+    }
+
+    public void setMoney(String money) {
+        this.money = money;
+    }
+
+    public String getExpNo() {
+        return expNo;
+    }
+
+    public void setExpNo(String expNo) {
+        this.expNo = expNo;
+    }
+
+    public String getVersionNum() {
+        return versionNum;
+    }
+
+    public void setVersionNum(String versionNum) {
+        this.versionNum = versionNum;
+    }
+
+    public String getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(String endDate) {
+        this.endDate = endDate;
+    }
+
+    public String getOverTime() {
+        return overTime;
+    }
+
+    public void setOverTime(String overTime) {
+        this.overTime = overTime;
+    }
+
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
+    }
+
+    public BigDecimal getUnPayFee() {
+        return unPayFee;
+    }
+
+    public void setUnPayFee(BigDecimal unPayFee) {
+        this.unPayFee = unPayFee;
+    }
+
+    public BigDecimal getPlanFee() {
+        return planFee;
+    }
+
+    public void setPlanFee(BigDecimal planFee) {
+        this.planFee = planFee;
+    }
+
+    public Date getDeadline() {
+        return deadline;
+    }
+
+    public void setDeadline(Date deadline) {
+        this.deadline = deadline;
+    }
+
+    public String getHandlerName() {
+        return handlerName;
+    }
+
+    public void setHandlerName(String handlerName) {
+        this.handlerName = handlerName;
+    }
+
+    public Date getCompleteDate() {
+        return completeDate;
+    }
+
+    public void setCompleteDate(Date completeDate) {
+        this.completeDate = completeDate;
+    }
 }

@@ -256,7 +256,7 @@ public class CompanyDTO extends BaseDTO{
      */
     private List<Map<String,String>> serverTypeList = new ArrayList<Map<String,String>>();
 
-    private List<DepartDTO> departList = new ArrayList<DepartDTO>();
+    private List<DepartDataDTO> departList = new ArrayList<>();
 
     private List<RoleDTO> roleList = new ArrayList<RoleDTO>();
     
@@ -525,11 +525,11 @@ public class CompanyDTO extends BaseDTO{
         this.orgPid = orgPid;
     }
 
-    public List<DepartDTO> getDepartList() {
+    public List<DepartDataDTO> getDepartList() {
         return departList;
     }
 
-    public void setDepartList(List<DepartDTO> departList) {
+    public void setDepartList(List<DepartDataDTO> departList) {
         this.departList = departList;
     }
 

@@ -1,11 +1,14 @@
 package com.maoding.hxIm.service.impl;
 
+import com.beust.jcommander.internal.Lists;
 import com.google.common.collect.Maps;
 import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.core.base.service.NewBaseService;
 import com.maoding.core.bean.ApiResult;
 import com.maoding.core.bean.ResponseBean;
+import com.maoding.core.constant.SystemParameters;
 import com.maoding.core.util.JsonUtils;
+import com.maoding.core.util.MD5Helper;
 import com.maoding.core.util.OkHttpUtils;
 import com.maoding.core.util.StringUtil;
 import com.maoding.hxIm.constDefine.*;
@@ -17,9 +20,15 @@ import com.maoding.hxIm.entity.ImAccountEntity;
 import com.maoding.hxIm.entity.ImGroupEntity;
 import com.maoding.hxIm.service.ImQueueProducer;
 import com.maoding.hxIm.service.ImService;
+import com.maoding.message.dto.SendMessageDataDTO;
+import com.maoding.notice.constDefine.NotifyDestination;
+import com.maoding.notice.service.NoticeService;
+import com.maoding.org.dao.CompanyDao;
 import com.maoding.org.dao.DepartDao;
 import com.maoding.org.dto.CompanyUserGroupDTO;
 import com.maoding.org.entity.DepartEntity;
+import com.maoding.project.dao.ProjectDao;
+import com.maoding.project.entity.ProjectEntity;
 import okhttp3.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +68,17 @@ public class ImServiceImpl extends NewBaseService implements ImService {
     @Autowired
     private ImAccountDao imAccountDao;
 
+    @Autowired
+    private ProjectDao projectDao;
+
+    @Autowired
+    private ImServer imServer;
+
+    @Autowired
+    private NoticeService noticeService;
+
+    @Autowired
+    private CompanyDao companyDao;
     /**
      * 创建im账号
      */
@@ -67,7 +87,7 @@ public class ImServiceImpl extends NewBaseService implements ImService {
         ImAccountDTO dto = new ImAccountDTO();
         dto.setAccountId(userId);
         dto.setAccountName(userName);
-        dto.setPassword(password);
+        dto.setPassword("759D11D6CA510C3E8AAEDE52BC968129");
         ((ImService) AopContextCurrentProxy()).insertImAccount(dto);
         imQueueProducer.account_create(dto);
     }
@@ -77,15 +97,21 @@ public class ImServiceImpl extends NewBaseService implements ImService {
      */
     @Override
     public void updateImAccount(String userId, String password) throws Exception {
-        ImAccountDTO dto = new ImAccountDTO();
-        dto.setAccountId(userId);
-        dto.setPassword(password);
-        imQueueProducer.account_modifyPassword(dto);
+//        ImAccountDTO dto = new ImAccountDTO();
+//        dto.setAccountId(userId);
+//        dto.setPassword(password);
+//        imQueueProducer.account_modifyPassword(dto);
     }
 
     /****************************************************************************************/
 
-
+    private void notify(String content,List<String> userIds){
+        SendMessageDataDTO notifyMsg = new SendMessageDataDTO();
+        notifyMsg.setMessageType(SystemParameters.ORG_TYPE);
+        notifyMsg.setReceiverList(userIds);
+        notifyMsg.setContent(content);
+        this.noticeService.notify(NotifyDestination.APP, notifyMsg);
+    }
     /**
      * 方法描述：创建群组
      * 作者：MaoSF
@@ -93,6 +119,9 @@ public class ImServiceImpl extends NewBaseService implements ImService {
      * param：此处的groupId是组织id
      */
     public void createImGroup(String groupId, String admin, String companyName, Integer groupType) throws Exception {
+        if(groupType==null || groupType== ImGroupType.DEPARTMENT){
+            return;
+        }
         ImGroupDTO dto = new ImGroupDTO();
         dto.setGroupOwner(admin);
         dto.setGroupName(companyName);
@@ -101,6 +130,7 @@ public class ImServiceImpl extends NewBaseService implements ImService {
         dto.setGroupId(groupId);//由于orgId在im_group中是唯一的，所有用orgId设置为id，方便查找,
         insertImGroup(dto);
         imQueueProducer.group_create(dto);
+        notify("你加入了"+companyDao.getCompanyName(groupId),Lists.newArrayList(admin));
     }
 
     /**
@@ -139,6 +169,9 @@ public class ImServiceImpl extends NewBaseService implements ImService {
         dto.setGroupId(groupId);
         dto.setMembers(Arrays.asList(new ImGroupMemberDTO(userId, null)));
         imQueueProducer.group_addMembers(dto);
+
+        //推送给web端
+        notify("你加入了"+companyDao.getCompanyName(groupId),Lists.newArrayList(userId));
     }
 
     @Override
@@ -148,74 +181,31 @@ public class ImServiceImpl extends NewBaseService implements ImService {
         dto.setGroupId(groupId);
         dto.setMembers(Arrays.asList(new ImGroupMemberDTO(userId, null)));
         imQueueProducer.group_deleteMembers(dto);
+
+        //推送给web端
+        notify("你退出了"+companyDao.getCompanyName(groupId),Lists.newArrayList(userId));
     }
 
     /****************************************************************************************/
 
     @Override
     public ImGroupDataDTO imGroupInfo(ImGroupQuery query) throws Exception {
-        Integer type = query.getType();
         query.setUrl(this.fastdfsUrl);
         query.setFastdfsUrl(this.fastdfsUrl);
         ImGroupMemberQuery memberQuery = null;
         ImGroupDataDTO data = new ImGroupDataDTO();
-        //部门
-        if (type == ImGroupType.DEPARTMENT) {
-            query.setOrgIdGroupId(query.getOrgId());
-            List<ImGroupDataDTO> departGroupList = this.imGroupDao.selectDepartGroupList(query);
-            if (departGroupList != null && departGroupList.size() > 0) {
-                data = departGroupList.get(0);
-                DepartEntity departEntity = departDao.selectById(data.getOrgId());
-                if (departEntity != null) {
-                    memberQuery = new ImGroupMemberQuery();
-                    memberQuery.setOrgId(data.getOrgId());
-                    memberQuery.setUrl(this.fastdfsUrl);
-                    memberQuery.setCompanyId(departEntity.getCompanyId());
-                    List<ImGroupMemberDataDTO> listDepartMemebers = imGroupMemberDao.selectNewDepartGroupMembers(memberQuery);
-                    data.setMemberInfo(listDepartMemebers);
-                }
-            }
-        }
-        //公司
-        if (type == ImGroupType.COMPANY) {
-            query.setUserId(query.getAccountId());
-            List<ImGroupDataDTO> ls = imGroupDao.selectCompanyGroupByParameter(query);
-            if (ls != null && ls.size() > 0) {
-                data = ls.get(0);
-                memberQuery = new ImGroupMemberQuery();
-                memberQuery.setOrgId(data.getOrgId());
-                memberQuery.setUrl(this.fastdfsUrl);
-                List<ImGroupMemberDataDTO> members = imGroupMemberDao.selectNewGroupMembers(memberQuery);
-                data.setMemberInfo(members);
-            }
-        }
-        //项目群
-        if (type == ImGroupType.PROJECT) {
-            List<ImGroupDataDTO> ls = imGroupDao.selectProjectGroupByParameter(query);
-            if (ls != null && ls.size() > 0) {
-                data = ls.get(0);
-                memberQuery = new ImGroupMemberQuery();
-                memberQuery.setOrgId(data.getOrgId());
-                memberQuery.setUrl(this.fastdfsUrl);
-                memberQuery.setProjectGroup("projectGroup");
-                //改变，不加company条件
-                List<ImGroupMemberDataDTO> members = imGroupMemberDao.selectNewGroupMembers(memberQuery);
-                data.setMemberInfo(members);
-            }
-        }
-        //自定义群
-        if (type == ImGroupType.CUSTOM) {
-            query.setCompanyId(null);//customGroupList需要把所有的自定义群组都查询出来，所有需要移除companyId（如果有的话）
-            List<ImGroupDataDTO> ls = imGroupDao.selectCustomGroupByParameter(query);
-            if (ls != null && ls.size() > 0) {
-                data = ls.get(0);
-                memberQuery = new ImGroupMemberQuery();
-                memberQuery.setUrl(this.fastdfsUrl);
-                memberQuery.setGroupId(query.getGroupId());
-                //改变，不加company条件
-                List<ImGroupMemberDataDTO> members = imGroupMemberDao.selectCustomGroupMembers(memberQuery);
-                data.setMemberInfo(members);
-            }
+        query.setCompanyId(null);//customGroupList需要把所有的自定义群组都查询出来，所有需要移除companyId（如果有的话）
+        List<ImGroupDataDTO> ls = selectCustomGroupByParameter(query);
+        if (ls != null && ls.size() ==1 ) {
+            data = ls.get(0);
+            memberQuery = new ImGroupMemberQuery();
+            memberQuery.setUrl(this.fastdfsUrl);
+            memberQuery.setGroupId(query.getGroupId());
+            //改变，不加company条件
+            List<ImGroupMemberDataDTO> members = imGroupMemberDao.selectCustomGroupMembers(memberQuery);
+            data.setMemberInfo(members);
+        }else {
+            return null;
         }
         return data;
     }
@@ -236,6 +226,13 @@ public class ImServiceImpl extends NewBaseService implements ImService {
         memberQuery.setFastdfsUrl(this.fastdfsUrl);
         memberQuery.setGroupId(groupId);
         return imGroupMemberDao.listCustomerImGroupMember(memberQuery);
+    }
+
+    @Override
+    public List<ImGroupDataDTO> selectCustomGroupByParameter(ImGroupQuery query) {
+        query.setFastdfsUrl(this.fastdfsUrl);
+        query.setUrl(this.fastdfsUrl);
+        return this.imGroupDao.selectCustomGroupByParameter(query);
     }
 
     @Override
@@ -297,6 +294,15 @@ public class ImServiceImpl extends NewBaseService implements ImService {
     }
 
     @Override
+    public List<ImGroupListDTO> listGroupByUserIdAndCompanyId(ImGroupQuery query) throws Exception {
+        query.setFastdfsUrl(this.fastdfsUrl);
+        query.setUrl(this.fastdfsUrl);
+        query.setUserId(query.getAccountId());
+        List<ImGroupListDTO> list = this.imGroupDao.listGroupByUserIdAndCompanyId(query);
+        return list;
+    }
+
+    @Override
     public ResponseBean saveCustomGroup(ImGroupCustomerDTO dto) throws Exception {
         //新增
         if (null == dto.getOrgId()) {
@@ -308,6 +314,10 @@ public class ImServiceImpl extends NewBaseService implements ImService {
             group.setGroupOwner(dto.getAccountId());
             group.setGroupName(dto.getName());
             group.setGroupType(ImGroupType.CUSTOM);
+            if(!StringUtil.isNullOrEmpty(dto.getNodeId())){//如果前端传递了nodeId过来，说明是项目群组
+                group.setGroupType(ImGroupType.PROJECT);
+            }
+            group.setNodeId(dto.getNodeId());
             List<ImGroupCustomerUserDTO> list = dto.getImGroupCustomerUserList();
             for (int i = 0; i < list.size(); i++) {
                 ImGroupCustomerUserDTO imGroupCustomerUserDTO = list.get(i);
@@ -374,9 +384,15 @@ public class ImServiceImpl extends NewBaseService implements ImService {
     public ResponseBean deleteGroup(ImGroupCustomerDTO dto) throws Exception {
         // TODO 查询表，获取orgId
         Map<String, Object> map = Maps.newHashMap();
-        map.put("groupNo", dto.getGroupId());// (新表中的group_no,环信id)
+      /**  map.put("groupNo", dto.getGroupId());// (新表中的group_no,环信id) */
+        map.put("orgId", dto.getOrgId());// (新表中的group_no,环信id)
+        /*******下面代码用于老版本兼容*******/
+        if(!StringUtil.isNullOrEmpty(dto.getGroupId()) && dto.getGroupId().length()<32){ //由于前端传递的是groupNo，用的字段为groupId，所有此处做兼任处理
+            map.put("groupNo", dto.getGroupId());
+        }
+        /*******老版本兼容end*******/
         List<ImGroupEntity> groupList = imGroupDao.getImGroupsByParam(map);
-        if (!CollectionUtils.isEmpty(groupList)) {
+        if (!CollectionUtils.isEmpty(groupList) && groupList.size()!=1) {
             ImGroupDTO group = new ImGroupDTO();
             group.setGroupId(groupList.get(0).getOrgId());//im_group表中，id=orgId，groupId表示的是im_group中的id
             group.setOrgId(groupList.get(0).getOrgId());
@@ -416,6 +432,7 @@ public class ImServiceImpl extends NewBaseService implements ImService {
         queueDTO.setQueueNo(imQueueProducer.generateQueueNo());
         queueDTO.setRetry(0);
         return imServerRequest(queueDTO, "addMemberToGroup");
+      //  return ResponseBean.responseSuccess();
     }
 
     @Override
@@ -439,20 +456,21 @@ public class ImServiceImpl extends NewBaseService implements ImService {
         queueDTO.setQueueNo(imQueueProducer.generateQueueNo());
         queueDTO.setRetry(0);
         return imServerRequest(queueDTO, "deleteMemberFromGroup");
+     //   return ResponseBean.responseSuccess();
     }
 
 
     private ResponseBean imServerRequest(ImQueueDTO queueDTO, String method) throws Exception {
         Response res = null;
         try {
-            logger.info("ImServiceImpl {} {} {}", method, ImServer.URL_GROUP_HANDLE, JsonUtils.obj2json(queueDTO));
-            res = OkHttpUtils.postJson(ImServer.URL_GROUP_HANDLE, queueDTO);
+            logger.info("ImServiceImpl {} {} {}", method, imServer.get_URL_GROUP_HANDLE(), JsonUtils.obj2json(queueDTO));
+            res = OkHttpUtils.postJson(imServer.get_URL_GROUP_HANDLE(), queueDTO);
         } catch (IOException e) {
             logger.error("imServerRequest 请求发生异常", e);
-            return ResponseBean.responseError("自定义群失败");
+            return ResponseBean.responseError("操作失败");
         } catch (Exception e) {
             logger.error("imServerRequest 请求发生异常", e);
-            return ResponseBean.responseError("自定义群失败");
+            return ResponseBean.responseError("操作失败");
         }
         if (res.isSuccessful()) {
             try {
@@ -467,10 +485,13 @@ public class ImServiceImpl extends NewBaseService implements ImService {
         } else {
             logger.info("自定义群失败：" + res.message());
         }
-        return ResponseBean.responseError("自定义群失败");
+        return ResponseBean.responseError("操作失败");
     }
 
     private void insertAccount(ImAccountDTO dto) throws Exception {
+        if(imAccountDao.selectById(dto.getAccountId())!=null){
+            return;
+        }
         ImAccountEntity imAccount = new ImAccountEntity();
         BaseDTO.copyFields(dto, imAccount);
         imAccount.initEntity();
@@ -498,8 +519,10 @@ public class ImServiceImpl extends NewBaseService implements ImService {
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
     public void insertImAccountBatch(List<ImAccountDTO> list) throws Exception {
-        for (ImAccountDTO dto : list)
+        for (ImAccountDTO dto : list){
             insertAccount(dto);
+        }
+
     }
 
     /**
@@ -508,16 +531,18 @@ public class ImServiceImpl extends NewBaseService implements ImService {
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
     public void insertImGroup(ImGroupDTO dto) throws Exception {
-        ImGroupEntity imGroup = new ImGroupEntity();
-        BaseDTO.copyFields(dto, imGroup);
-        imGroup.initEntity();
-        imGroup.setId(dto.getGroupId());
-        if (StringUtil.isNullOrEmpty(dto.getGroupStatus())) {
-            imGroup.setGroupStatus(ImGroupStatus.WAIT_CREATE);
+        if(imGroupDao.selectById(dto.getGroupId())==null) {
+            ImGroupEntity imGroup = new ImGroupEntity();
+            BaseDTO.copyFields(dto, imGroup);
+            imGroup.initEntity();
+            imGroup.setId(dto.getGroupId());
+            if (StringUtil.isNullOrEmpty(dto.getGroupStatus())) {
+                imGroup.setGroupStatus(ImGroupStatus.WAIT_CREATE);
+            }
+            imGroup.setUpVersion(0L);
+            imGroup.setDeleted(false);
+            imGroup.setLastQueueNo(0L);
+            imGroupDao.insert(imGroup);
         }
-        imGroup.setUpVersion(0L);
-        imGroup.setDeleted(false);
-        imGroup.setLastQueueNo(0L);
-        imGroupDao.insert(imGroup);
     }
 }

@@ -21,36 +21,29 @@ public interface RolePermissionDao extends BaseDao<RolePermissionEntity> {
      * 作者：MaoSF
      * 日期：2016/11/2
      * @param:roleId,companyId
-     * @return:
      */
-    public int deleteByRoleId(Map<String,Object> map);
+    int deleteByRoleId(Map<String,Object> map);
 
     /**
      * 方法描述：获取所有默认权限（用于创建组织配置权限）
      * 作者：MaoSF
      * 日期：2016/11/2
-     * @param:
-     * @return:
      */
-    public List<RolePermissionEntity> getAllDefaultPermission();
+    List<RolePermissionEntity> getAllDefaultPermission();
 
     /**
      * 方法描述：
      * 作者：MaoSF
      * 日期：2016/11/2
-     * @param:
-     * @return:
      */
-    public int deleteByCompanyId(String companyId);
+    int deleteByCompanyId(String companyId);
 
     /**
      * 方法描述：获取当前角色下所有的权限关系（用于给用户添加角色的时候，把权限赋给用户）
      * 作者：MaoSF
      * 日期：2016/11/10
-     * @param:
-     * @return:
      */
-    public List<RolePermissionEntity> getPermissionByRole(String roleId,String companyId);
+    List<RolePermissionEntity> getPermissionByRole(String roleId,String companyId);
 
 
 }

@@ -1,5 +1,6 @@
 package com.maoding.org.dto;
 
+import com.maoding.attach.dto.FilePathDTO;
 import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.projectmember.dto.UserPositionDTO;
 
@@ -13,7 +14,7 @@ import java.util.List;
  * 作    者：MaoSF
  * 日    期：2016年7月6日-下午5:38:15
  */
-public class ImUserInfoDTO {
+public class ImUserInfoDTO extends FilePathDTO {
 
 	/**
 	 * 公司id
@@ -51,23 +52,9 @@ public class ImUserInfoDTO {
     private String email;
 
     /**
-     * app要求头像地址
-     */
-    private String img;
-
-    /**
      * 在项目中的职位（暂无使用）
      */
     List<UserPositionDTO> taskRoleList = new ArrayList<>();
-
-
-    public String getImg() {
-        return img;
-    }
-
-    public void setImg(String img) {
-        this.img = img;
-    }
 
     public String getCompanyId() {
         return companyId;

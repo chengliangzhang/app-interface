@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetCompanyUserByOrgIdMapper">
+
+    <resultMap id="departListMap" type="com.maoding.org.dto.UserDepartDTO">
+        <result column="depart_id" property="departId"/>
+        <result column="depart_name" property="departName"/>
+        <result column="server_station" property="serverStation"/>
+        <result column="role" property="role"/>
+        <result column="org_roles" property="orgRoles"/>
+    </resultMap>
+
+    <resultMap id="BaseResultMap2" type="com.maoding.org.dto.CompanyUserDataDTO">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="company_id" property="companyId" jdbcType="VARCHAR"/>
+        <result column="user_id" property="userId" jdbcType="VARCHAR"/>
+        <result column="user_name" property="userName" jdbcType="VARCHAR"/>
+        <result column="account_name" property="accountName" jdbcType="VARCHAR"/>
+        <result column="cellphone" property="cellphone" jdbcType="VARCHAR"/>
+        <result column="file_full_path" property="fileFullPath" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+    id, company_id, user_id, user_name,sex, relation_type, audit_status, employee_type, employee_status, 
+    entry_time, departure_time, illustration, phone, email, departure_reason, create_date, 
+    create_by, update_date, update_by
+  </sql>
+
+    <!-- 根据orgId查询当前组织所有人员-->
+    <select id="getUserByOrgId" resultMap="BaseResultMap2" parameterType="java.util.Map">
+        select DISTINCT a.id, a.user_id , a.company_id ,a.user_name,c.user_name as account_name,c.cellphone,
+        ua.oss_file_path AS 'file_full_path'
+        from maoding_web_company_user a
+        <if test="orgId!=null and orgId!=''">
+          INNER join maoding_web_org_user b on a.id = b.cu_id
+        </if>
+        INNER JOIN maoding_web_account c on a.user_id = c.id
+        LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) ua ON ua.user_id = a.user_id AND ua.attach_type = 5
+        where 1 = 1
+        <if test="orgId!=null and orgId!=''">
+            AND b.org_id = #{orgId}
+        </if>
+        <if test="companyId!=null and companyId!=''">
+            AND a.company_id = #{companyId}
+        </if>
+    </select>
+
+    <select id="getDepartAllUser" resultMap="BaseResultMap2" parameterType="java.util.Map">
+        select DISTINCT a.id, a.user_id , a.company_id ,a.user_name,c.user_name as account_name,c.cellphone,
+        ua.oss_file_path AS 'file_full_path'
+        FROM maoding_web_company_user a
+        <if test="departPath!=null">
+        INNER JOIN maoding_web_org_user b ON a.id = b.cu_id
+        INNER JOIN maoding_web_depart d on b.org_id = d.id
+        </if>
+        INNER JOIN maoding_web_account c ON a.user_id = c.id
+        LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) ua ON ua.user_id = a.user_id AND ua.attach_type = 5
+        WHERE 1 = 1
+        <if test="departPath!=null">
+          AND POSITION(#{departPath} IN d.depart_path)
+        </if>
+        <if test="companyId!=null and companyId!=''">
+            AND a.company_id = #{companyId}
+        </if>
+    </select>
+
+    <!-- 获取抄送人 -->
+    <select id="getCopyUser" resultMap="BaseResultMap2" parameterType="com.maoding.commonModule.dto.QueryCopyRecordDTO">
+        select DISTINCT a.id, a.user_id , a.company_id ,a.user_name,c.user_name as account_name,c.cellphone,
+        ua.oss_file_path AS 'file_full_path',d.aliasName as company_name
+        FROM maoding_web_company_user a
+        INNER JOIN maoding_copy_record b ON a.id = b.company_user_id
+        INNER JOIN maoding_web_account c ON a.user_id = c.id
+        INNER JOIN (<include refid="CompanyEntityMapper.getAliasNameSql" /> ) d on a.company_id = d.id
+        LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) ua ON ua.user_id = a.user_id AND ua.attach_type = 5
+        WHERE 1 = 1 and b.deleted = 0
+        <if test="targetId!=null">
+            AND b.target_id = #{targetId}
+        </if>
+    </select>
+
+    <select id="getCompanyUserDepartRole" resultMap="departListMap" parameterType="java.util.Map">
+
+		SELECT a2.id, b2.id as depart_id,
+		if(p2.nick_name is null or p2.nick_name='',b2.company_name,p2.nick_name) as depart_name,
+		a2.server_station ,GROUP_CONCAT(d2.name) as role,GROUP_CONCAT(d2.id) as org_roles
+		FROM maoding_web_org_user  a2
+			LEFT JOIN maoding_web_company b2 on a2.org_id=b2.id
+			LEFT JOIN maoding_web_business_partner p2 on p2.company_id=b2.id
+			LEFT JOIN maoding_web_role_user c2 on a2.org_id=c2.org_id and c2.user_id=a2.user_id
+			LEFT JOIN maoding_web_role d2 on c2.role_id=d2.id
+		WHERE a2.user_id = #{userId}
+			  and a2.company_id= #{companyId}
+			  and a2.org_id=a2.company_id
+		GROUP BY a2.org_id,a2.user_id
+		UNION
+		(
+			SELECT * from (
+				SELECT a1.id,  b1.id as depart_id,b1.depart_name, a1.server_station ,GROUP_CONCAT(d1.name) as role,GROUP_CONCAT(d1.id) as org_roles
+				FROM maoding_web_org_user  a1
+				LEFT JOIN maoding_web_depart b1 on a1.org_id=b1.id
+				LEFT JOIN maoding_web_role_user c1 on a1.org_id=c1.org_id and c1.user_id=a1.user_id
+				LEFT JOIN maoding_web_role d1 on c1.role_id=d1.id
+				WHERE a1.user_id = #{userId}
+					  and a1.company_id= #{companyId}
+					  and a1.org_id!=a1.company_id
+				GROUP BY a1.org_id,a1.user_id
+				order by a1.seq
+			)a
+		)
+	</select>
+
+    <select id="getCompanyUserDepartRoleInterface" resultMap="departListMap" parameterType="java.util.Map">
+		SELECT a2.id, b2.id as depart_id,
+		if(p2.nick_name is null or p2.nick_name='',b2.company_name,p2.nick_name) as depart_name,
+		a2.server_station
+		-- ,GROUP_CONCAT(d2.name) as role,GROUP_CONCAT(d2.id) as org_roles
+		FROM maoding_web_org_user  a2
+		LEFT JOIN maoding_web_company b2 on a2.org_id=b2.id
+		LEFT JOIN maoding_web_business_partner p2 on p2.company_id=b2.id
+-- 		LEFT JOIN maoding_web_role_user c2 on a2.org_id=c2.org_id and c2.user_id=a2.user_id
+-- 		LEFT JOIN maoding_web_role d2 on c2.role_id=d2.id
+		WHERE a2.user_id = #{userId}
+		and a2.company_id= #{companyId}
+		and a2.org_id=a2.company_id
+		GROUP BY a2.org_id,a2.user_id
+		UNION
+		(
+		SELECT a1.id,  b1.id as depart_id,b1.depart_name, a1.server_station
+		 -- ,GROUP_CONCAT(d1.name) as role,GROUP_CONCAT(d1.id) as org_roles
+		FROM maoding_web_org_user  a1
+		LEFT JOIN maoding_web_depart b1 on a1.org_id=b1.id
+-- 		LEFT JOIN maoding_web_role_user c1 on a1.org_id=c1.org_id and c1.user_id=a1.user_id
+-- 		LEFT JOIN maoding_web_role d1 on c1.role_id=d1.id
+		WHERE a1.user_id = #{userId}
+		and a1.company_id= #{companyId}
+		and a1.org_id!=a1.company_id
+		GROUP BY a1.org_id,a1.user_id
+		)
+	</select>
+
+
+    <select id="getCompanyUser" resultType="com.maoding.org.dto.CompanyUserAppDTO" parameterType="java.util.Map">
+        SELECT company_user.id,company_user.user_id as userId,company_user.user_name as userName,company_user.email,company_user.company_id as companyId,
+        user_attach.oss_file_path as fileFullPath,account.cellphone
+        <if test="needUserStatus != null and needUserStatus == '1'.toString()">
+            ,
+            group_concat(ifnull(leave_detail.leave_type,'0')) as workStatusString,
+            group_concat(ifnull(unix_timestamp(leave_detail.start_time),0)) as startTimeString,
+            group_concat(ifnull(unix_timestamp(leave_detail.end_time),0)) as endTimeString,
+            count(distinct mytask.id) as taskCount
+        </if>
+        from  maoding_web_company_user company_user
+        LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) user_attach on company_user.user_id = user_attach.user_id AND user_attach.attach_type=5
+        LEFT JOIN maoding_web_account account on company_user.user_id = account.id
+        <if test="needUserStatus != null and needUserStatus == '1'.toString()">
+            left join maoding_web_exp_main exp_main on ((exp_main.approve_status is null or exp_main.approve_status = '1')
+                                                      and exp_main.company_user_id = company_user.id)
+            left join maoding_web_leave_detail leave_detail on (exp_main.id = leave_detail.main_id
+                                                      and leave_detail.end_time > now())
+            left join maoding_web_my_task mytask on (mytask.param4 = '0'
+                                                      and mytask.handler_id = company_user.id
+                                                      and mytask.complete_date is null
+                                                      and mytask.task_type in (3,13,100))
+        </if>
+        where company_user.audit_status='1'
+        and company_user.company_id = #{companyId}
+    <if test="needUserStatus != null and needUserStatus == '1'.toString()">
+        group by company_user.id
+    </if>
+    </select>
+
+    <select id="getCompanyUserExceptMe" resultType="com.maoding.org.dto.CompanyUserAppDTO"
+            parameterType="com.maoding.org.dto.QueryCompanyUserDTO">
+        SELECT a.id,a.user_id as userId,a.user_name as userName,a.email,a.company_id as companyId,b.oss_file_path as fileFullPath,c.cellphone
+        from  maoding_web_company_user a
+        LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) b on a.user_id = b.user_id AND b.attach_type=5
+        LEFT JOIN maoding_web_account c on a.user_id = c.id
+        where a.audit_status='1'
+        and a.company_id = #{companyId}
+        <if test="isExceptMe!=null">
+            and a.user_id != #{accountId}
+        </if>
+        <if test="ignoreUserId != null">
+            and not find_in_set(a.user_id,#{ignoreUserId})
+        </if>
+        <if test="ignoreCompanyUserId != null">
+            and not find_in_set(a.id,#{ignoreCompanyUserId})
+        </if>
+    </select>
+
+    <select id="listCompanyUser" resultType="com.maoding.org.dto.CompanyUserAppDTO"
+            parameterType="com.maoding.org.dto.QueryCompanyUserDTO">
+        select x.*
+        from (
+        SELECT company_user.id,company_user.user_id as userId,company_user.user_name as
+        userName,company_user.email,company_user.company_id as companyId,img_list.oss_file_path as
+        fileFullPath,account.cellphone,company.company_name
+        from maoding_web_company_user company_user
+        left join (<include refid="UserAttachEntityMapper.getHeadImg"/>
+        ) img_list on company_user.user_id = img_list.user_id AND img_list.attach_type=5
+        INNER join maoding_web_account account on company_user.user_id = account.id
+        inner join (SELECT  c.company_user_id,  b.audit_person, b.submit_audit_id,b.create_date
+        FROM  maoding_web_exp_audit b INNER JOIN maoding_web_exp_main c on b.main_id = c.id
+        WHERE b.submit_audit_id=#{companyUserId}
+        and (c.type = 1 or  c.type =2)
+        ) exp_main on (exp_main.audit_person = company_user.id)
+        inner join maoding_web_company company on (company_user.company_id = company.id)
+        where company_user.audit_status='1'
+        <if test="ignoreUserId != null">
+            and not find_in_set(company_user.user_id,#{ignoreUserId})
+        </if>
+        <if test="orderCondition != null">
+            order by
+            <foreach collection="orderCondition" index="fieldName" item="direct" open="" close="" separator=",">
+                <if test='fieldName == "lastTime"'>
+                    exp_main.create_date
+                    <if test='direct == 1'>
+                        desc
+                    </if>
+                </if>
+            </foreach>
+        </if>
+        ) x
+        group by x.id
+    </select>
+
+    <select id="getCompanyUserByUserId" resultType="com.maoding.org.dto.CompanyUserAppDTO"
+            parameterType="java.util.Map">
+		SELECT a.id,a.user_id as userId,a.user_name as userName,a.email,b.oss_file_path as fileFullPath,
+		c.cellphone,c.user_name as accountName,d.aliasName as companyName
+		from  maoding_web_company_user a
+		LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) b on a.user_id = b.user_id AND b.attach_type=5
+		LEFT JOIN maoding_web_account c on a.user_id = c.id
+        LEFT JOIN (<include refid="CompanyEntityMapper.getAliasNameSql" /> ) d on a.company_id = d.id
+		where a.audit_status='1'
+		and a.company_id = #{companyId} and a.user_id= #{userId}
+	</select>
+
+    <select id="getCompanyUserDataById" resultType="com.maoding.org.dto.CompanyUserAppDTO"
+            parameterType="java.util.Map">
+        SELECT a.id,a.user_id as userId,a.user_name as userName,a.email,b.oss_file_path as fileFullPath,
+        c.cellphone,c.user_name as accountName,d.aliasName as companyName
+        from  maoding_web_company_user a
+        LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) b on a.user_id = b.user_id AND b.attach_type=5
+        LEFT JOIN maoding_web_account c on a.user_id = c.id
+        LEFT JOIN (<include refid="CompanyEntityMapper.getAliasNameSql" /> ) d on a.company_id = d.id
+        where a.id = #{companyUserId}
+    </select>
+
+</mapper>

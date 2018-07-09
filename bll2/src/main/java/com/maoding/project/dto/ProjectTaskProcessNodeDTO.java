@@ -15,6 +15,14 @@ public class ProjectTaskProcessNodeDTO {
 
     List<CompanyUserAppDTO> userList = new ArrayList<>();
 
+    public ProjectTaskProcessNodeDTO(){
+
+    }
+    public ProjectTaskProcessNodeDTO(String nodeName,Integer memberType){
+        this.nodeName = nodeName;
+        this.memberType = memberType;
+    }
+
     public Integer getMemberType() {
         return memberType;
     }

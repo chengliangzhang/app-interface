@@ -9,17 +9,12 @@ import com.maoding.core.util.StringUtil;
 import com.maoding.dynamic.service.DynamicService;
 import com.maoding.message.entity.MessageEntity;
 import com.maoding.message.service.MessageService;
-import com.maoding.mytask.dao.MyTaskDao;
-import com.maoding.mytask.service.MyTaskService;
 import com.maoding.org.dao.CompanyUserDao;
 import com.maoding.org.entity.CompanyUserEntity;
 import com.maoding.project.dao.ProjectDao;
-import com.maoding.project.dao.ProjectTaskResponsibleDao;
 import com.maoding.project.entity.ProjectEntity;
-import com.maoding.project.service.ProjectService;
 import com.maoding.projectmember.entity.ProjectMemberEntity;
 import com.maoding.projectmember.service.ProjectMemberService;
-import com.maoding.task.dao.ProjectManagerDao;
 import com.maoding.task.dao.ProjectTaskDao;
 import com.maoding.task.dto.ProjectTaskDTO;
 import com.maoding.task.dto.TransferTaskDesignerDTO;
@@ -41,34 +36,10 @@ import java.util.Map;
  * 日    期：2016年12月28日-下午5:28:54
  */
 @Service("projectManagerService")
-public class ProjectManagerServiceImpl extends GenericService<ProjectManagerEntity>  implements ProjectManagerService {
-
-    @Autowired
-    private ProjectManagerDao projectManagerDao;
+public class ProjectManagerServiceImpl implements ProjectManagerService {
 
     @Autowired
     private DynamicService dynamicService;
-
-    @Autowired
-    private ProjectDao projectDao;
-
-    @Autowired
-    private MyTaskService myTaskService;
-
-    @Autowired
-    private ProjectTaskResponsibleDao projectTaskResponsibleDao;
-
-    @Autowired
-    private MyTaskDao myTaskDao;
-
-    @Autowired
-    private ProjectService projectService;
-
-    @Autowired
-    private ProjectTaskDao projectTaskDao;
-
-    @Autowired
-    private MessageService messageService;
 
     @Autowired
     private CompanyUserDao companyUserDao;
@@ -76,8 +47,9 @@ public class ProjectManagerServiceImpl extends GenericService<ProjectManagerEnti
     @Autowired
     private ProjectMemberService projectMemberService;
 
-//    @Autowired
-//    private DynamicService dynamicService;
+    @Autowired
+    private MessageService messageService;
+
     /**
      * 方法描述：移交经营负责人，项目负责人
      * 作者：MaoSF
@@ -95,13 +67,13 @@ public class ProjectManagerServiceImpl extends GenericService<ProjectManagerEnti
         String companyId = (String)map.get("appOrgId");
         String accountId = (String)map.get("accountId");
         String type = (String)map.get("type");
+        ProjectMemberEntity pmOld = null;
         ProjectMemberEntity projectMember = null;
         CompanyUserEntity userEntity = this.companyUserDao.getCompanyUserByUserIdAndCompanyId(accountId,companyId);
         boolean isSendMessage = true;
         if(userEntity!=null && userEntity.getId().equals(companyUserId)){
             isSendMessage = false;
         }
-
         if("1".equals(type)){
             projectMember = this.projectMemberService.getProjectMember(projectId,companyId, ProjectMemberType.PROJECT_OPERATOR_MANAGER,null);
         }else {
@@ -114,21 +86,23 @@ public class ProjectManagerServiceImpl extends GenericService<ProjectManagerEnti
                 return ResponseBean.responseError("请移交给其他人");
             }
             //添加项目动态
-            ProjectMemberEntity pmOld = new ProjectMemberEntity();
+            pmOld = new ProjectMemberEntity();
             BeanUtilsEx.copyProperties(projectMember,pmOld);
-            this.projectMemberService.updateProjectMember(projectMember,companyUserId,null,accountId,isSendMessage);
+            this.projectMemberService.updateProjectMember(projectMember,companyUserId,null,accountId,false);
             //添加项目动态
             projectMember.setCompanyUserId(companyUserId);
             //dynamicService.addDynamic(dynamicService.createDynamicFrom(pmOld,projectMember));
-
         }else {
             //添加设计负责人
-            ProjectMemberEntity memberEntity = this.projectMemberService.saveProjectMember(projectId,companyId,companyUserId,Integer.parseInt(type),accountId,isSendMessage);
+            this.projectMemberService.saveProjectMember(projectId,companyId,companyUserId,Integer.parseInt(type),accountId,false,companyId);
 //            //添加项目动态
             //dynamicService.addDynamic(dynamicService.createDynamicFrom(memberEntity));
+            //添加项目动态
+            dynamicService.addDynamic(pmOld,projectMember,projectId,companyId,accountId);
         }
-
-
+        if(isSendMessage){
+            sendMessage(projectMember,accountId);
+        }
         return ResponseBean.responseSuccess("处理成功");
     }
 
@@ -137,10 +111,6 @@ public class ProjectManagerServiceImpl extends GenericService<ProjectManagerEnti
      * 方法描述：移交设计负责人
      * 作者：MaoSF
      * 日期：2017/3/22
-     *
-     * @param dto
-     * @param:
-     * @return:
      */
     @Override
     public ResponseBean transferTaskDesinger(TransferTaskDesignerDTO dto) throws Exception {
@@ -182,11 +152,6 @@ public class ProjectManagerServiceImpl extends GenericService<ProjectManagerEnti
      * 方法描述：删除经营负责人和设计负责人
      * 作者：MaoSF
      * 日期：2017/4/12
-     *
-     * @param projectId
-     * @param companyId
-     * @param:
-     * @return:
      */
     @Override
     public ResponseBean deleteProjectManage(String projectId, String companyId) throws Exception {
@@ -195,50 +160,31 @@ public class ProjectManagerServiceImpl extends GenericService<ProjectManagerEnti
         return null;
     }
 
-
-    /**
-     * 方法描述：给companyUser发送成为设计负责人消息
-     * 作者：ZCL
-     * 日期：2017/5/20
-     */
-    public void sendMessageTaskDesigner(String projectId,String companyUserId,String companyId) throws Exception{
-        ProjectEntity projectEntity = this.projectDao.selectById(projectId);
-        CompanyUserEntity companyUserEntity = this.companyUserDao.selectById(companyUserId);
-        if(projectEntity!=null && companyUserEntity!=null) {
-            MessageEntity messageEntity = new MessageEntity();
-            messageEntity.setProjectId(projectId);
-            messageEntity.setTargetId(projectId);
-            messageEntity.setCompanyId(companyId);
-            messageEntity.setUserId(companyUserEntity.getUserId());
-            messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_4);
-            Map<String,Object> map = new HashMap<>();
-            map.put("projectId",projectId);
-            map.put("companyId",companyId);
-            List<ProjectTaskDTO> taskList = projectTaskDao.getProjectTaskByCompanyId(map);
-            if ((taskList == null) || (taskList.size() == 0)) {
-                messageEntity.setMessageContent(projectEntity.getProjectName());
-                this.messageService.sendMessage(messageEntity);
-            } else {
-                for (ProjectTaskDTO task : taskList){
-                    messageEntity.setMessageContent(projectEntity.getProjectName() + " - " + projectTaskDao.getTaskParentName(task.getId()));
-                    this.messageService.sendMessage(messageEntity);
-                }
+    private void sendMessage(ProjectMemberEntity member,String accountId) throws Exception{
+        if(!member.getAccountId().equals(accountId)){
+            Integer messageType = 0;
+            switch (member.getMemberType()){
+                case 1:
+                    messageType = SystemParameters.MESSAGE_TYPE_3;
+                    break;
+                case 2:
+                    messageType = SystemParameters.MESSAGE_TYPE_4;
+                    break;
+                case 7:
+                    messageType = SystemParameters.MESSAGE_TYPE_305;
+                    break;
+                case 8:
+                    messageType = SystemParameters.MESSAGE_TYPE_410;
+                    break;
             }
+            MessageEntity m = new MessageEntity();
+            m.setProjectId(member.getProjectId());
+            m.setCompanyId(member.getCompanyId());
+            m.setSendCompanyId(member.getCompanyId());
+            m.setUserId(member.getAccountId());
+            m.setCreateBy(accountId);
+            m.setMessageType(messageType);
+            messageService.sendMessage(m);
         }
-
-//        ProjectEntity projectEntity = this.projectDao.selectById(projectId);
-//        CompanyUserEntity companyUserEntity = this.companyUserDao.selectById(companyUserId);
-//        if(projectEntity!=null && companyUserEntity!=null) {
-//            MessageEntity messageEntity = new MessageEntity();
-//            messageEntity.setProjectId(projectId);
-//            messageEntity.setTargetId(projectId);
-//            messageEntity.setCompanyId(companyId);
-//            messageEntity.setMessageContent(projectEntity.getProjectName());
-//            messageEntity.setUserId(companyUserEntity.getUserId());
-//            messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_4);
-//            this.messageService.sendMessage(messageEntity);
-//        }
     }
-
-
 }

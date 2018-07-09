@@ -42,55 +42,6 @@ public class RoleController extends BaseWSController {
 
 
     /**
-     * 方法描述  获取公司角色
-     * 作        者：TangY
-     * 日        期：2015年12月3日-下午3:20:20
-     */
-    @RequestMapping("/get_companyrole")
-    @ResponseBody
-    public ResponseBean getCompanyRole(@RequestBody Map<String, Object> paraMap) throws Exception {
-        String companyId = "";
-        if (null == paraMap.get("companyId") || "".equals(paraMap.get("companyId"))) {
-            companyId = paraMap.get("appOrgId").toString();
-        } else {
-            companyId = paraMap.get("companyId").toString();
-        }
-        return responseSuccess().addData("roleList", roleService.getCompanyRole(companyId));
-    }
-
-    /**
-     * 方法描述：根据查找角色权限列表
-     * 作   者：wrb
-     * 日   期：2016/8/9 16:18
-     */
-    @RequestMapping("/get_permissionList")
-    @ResponseBody
-    public ResponseBean getPermissionList(@RequestBody Map<String, Object> paraMap) throws Exception {
-        Map<String, Object> map = new HashMap<String, Object>();
-        map.put("roleId", paraMap.get("roleId"));
-        map.put("companyId", paraMap.get("companyId"));
-        List<PermissionDTO> permissionList = permissionService.getPermissionByRole(map);
-
-        return responseSuccess().addData("permissionList", permissionList);
-    }
-
-    /**
-     * 方法描述：根据角色获取人员
-     * 作者：MaoSF
-     * 日期：2016/11/2
-     * @param:
-     * @return:
-     */
-    @RequestMapping("/get_companyUserByRoleId")
-    @ResponseBody
-    public ResponseBean getCompanyUserByRoleId(@RequestBody Map<String, Object> paraMap) throws Exception {
-        Map<String, Object> map = new HashMap<String, Object>();
-        map.put("roleId", paraMap.get("roleId"));
-        map.put("companyId", paraMap.get("companyId"));
-        return responseSuccess().addData("companyUserList", companyUserService.getCompanyUserByRoleId(map));
-    }
-
-    /**
      * 方法描述：根据权限获取人员
      * 作者：MaoSF
      * 日期：2016/11/2
@@ -313,26 +264,6 @@ public class RoleController extends BaseWSController {
         }
     }
 
-    /**
-     * 方法描述：人员－保存角色权限
-     * 作者：wrb
-     * 日期：2016/11/4
-     * @param:
-     * @return:
-     */
-    @RequestMapping("save_user_role_permission")
-    @ResponseBody
-    public ResponseBean saveUserRolePermission(@RequestBody Map<String, Object> paraMap) throws Exception {
-
-
-        AjaxMessage ajaxMessage = userPermissionService.saveUserRolePermission(paraMap);
-
-        if ("0".equals(ajaxMessage.getCode())) {
-            return ResponseBean.responseSuccess("保存成功");
-        } else {
-            return ResponseBean.responseError("保存失败");
-        }
-    }
 
     /**
      * 方法描述：保存角色权限

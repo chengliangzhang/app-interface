@@ -1,14 +1,21 @@
 package com.maoding.org.service.impl;
 
+import com.maoding.commonModule.dto.QueryCopyRecordDTO;
 import com.maoding.conllaboration.service.CollaborationService;
 import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.core.base.service.GenericService;
 import com.maoding.core.bean.AjaxMessage;
 import com.maoding.core.component.sms.SmsSender;
 import com.maoding.core.component.sms.bean.Sms;
+import com.maoding.core.constant.PermissionConst;
 import com.maoding.core.constant.SystemParameters;
+import com.maoding.core.util.DateUtils;
 import com.maoding.core.util.SecretUtil;
 import com.maoding.core.util.StringUtil;
+import com.maoding.core.util.StringUtils;
+import com.maoding.financial.dto.LeaveSimpleDTO;
+import com.maoding.financial.entity.ExpMainEntity;
+import com.maoding.financial.service.ExpMainService;
 import com.maoding.hxIm.dao.ImGroupDao;
 import com.maoding.hxIm.entity.ImGroupEntity;
 import com.maoding.hxIm.service.ImService;
@@ -16,12 +23,12 @@ import com.maoding.org.dao.*;
 import com.maoding.org.dto.*;
 import com.maoding.org.entity.*;
 import com.maoding.org.service.CompanyUserService;
+import com.maoding.project.service.ProjectSkyDriverService;
 import com.maoding.projectmember.service.ProjectMemberService;
-
 import com.maoding.role.dao.UserPermissionDao;
+import com.maoding.role.service.PermissionService;
 import com.maoding.user.dao.AccountDao;
 import com.maoding.user.entity.AccountEntity;
-import com.maoding.user.entity.UserEntity;
 import com.maoding.user.service.AccountService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,8 +36,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 深圳市设计同道技术有限公司
@@ -80,10 +91,19 @@ public class CompanyUserServiceImpl extends GenericService<CompanyUserEntity>  i
 	private CollaborationService collaborationService;
 
 	@Autowired
+	private PermissionService permissionService;
+
+	@Autowired
 	private ImService imService;
 
 	@Autowired
 	private ImGroupDao imGroupDao;
+
+	@Autowired
+	private ExpMainService expMainService;
+
+	@Autowired
+	private ProjectSkyDriverService projectSkyDriverService;
 
 	@Value("${server.url}")
 	protected String serverUrl;
@@ -107,6 +127,7 @@ public class CompanyUserServiceImpl extends GenericService<CompanyUserEntity>  i
 	 * 作        者：MaoSF
 	 * 日        期：2016年7月8日-下午4:24:08
 	 */
+	@Override
 	public List<CompanyUserEntity> getCompanyUserByCompanyId(String companyId){
 		return companyUserDao.getCompanyUserByCompanyId(companyId);
 	}
@@ -118,70 +139,73 @@ public class CompanyUserServiceImpl extends GenericService<CompanyUserEntity>  i
 	 * 日        期：2016年7月8日-下午4:24:08
 	 */
 	@Override
-	public CompanyUserTableDTO getCompanyUserById(String id) throws Exception {
-		CompanyUserTableDTO dto = companyUserDao.getCompanyUserById(id);
+	public CompanyUserDetailDTO getCompanyUserById(String id) throws Exception {
+		CompanyUserDetailDTO dto = companyUserDao.getCompanyUserById(id);
 		List<UserDepartDTO> departList = companyUserDao.getCompanyUserDepartRole(dto.getUserId(),dto.getCompanyId());
 		dto.setDepartList(departList);
 		return dto;
 	}
 
-	/**
-	 * 方法描述：根据id查询数据
-	 * 作        者：MaoSF
-	 * 日        期：2016年7月8日-下午4:24:08
-	 */
 	@Override
-	public CompanyUserTableDTO getCompanyUserByIdInterface(String id) throws Exception {
-		CompanyUserTableDTO dto = companyUserDao.getCompanyUserById(id);
+	public CompanyUserDetailDTO selectCompanyUserById(String id) throws Exception {
+		CompanyUserDetailDTO dto = new CompanyUserDetailDTO();
+		CompanyUserEntity user = companyUserDao.selectById(id);
+		if(user!=null){
+			BaseDTO.copyFields(user,dto);
+			dto.setCompanyName(companyDao.getCompanyName(user.getCompanyId()));
+		}
+		return dto;
+	}
+
+	@Override
+	public CompanyUserDetailDTO getCompanyUserByIdInterface(String id,String needUserStatus) throws Exception {
+		CompanyUserDetailDTO dto;
+		if (!ObjectUtils.isEmpty(needUserStatus)) {
+			dto = companyUserDao.getCompanyUserWithStatusById(id);
+			Integer workStatus = getWorkStatus(dto.getLeaveList(),dto.getWorkoutList());
+			dto.setWorkStatus(workStatus);
+		} else {
+			dto = companyUserDao.getCompanyUserById(id);
+		}
 		List<UserDepartDTO> departList = companyUserDao.getCompanyUserDepartRoleInterface(dto.getUserId(),dto.getCompanyId());
 		dto.setDepartList(departList);
 		return dto;
 	}
 
+	private Integer getWorkStatus(List<LeaveSimpleDTO> leaveList, List<LeaveSimpleDTO> workoutList){
+		final Integer WORK_STATUS_WORKING = 0;
+		final Integer WORK_STATUS_WORKING_TO_LEAVING = 1;
+		final Integer WORK_STATUS_WORKING_TO_OUT = 2;
+		final Integer WORK_STATUS_LEAVING = 3;
+		final Integer WORK_STATUS_OUT = 4;
 
-	/**
-	 * 方法描述：组织人员查询（分页查询）
-	 * 作        者：MaoSF
-	 * 日        期：2016年7月9日-下午2:28:06
-	 */
-	@Override
-	public List<CompanyUserTableDTO> getCompanyUserByOrgIdOfAdmin(Map<String, Object> param) throws Exception {
-		if(null!=param.get("pageNumber")){
-			int page=(Integer)param.get("pageNumber");
-			int pageSize=(Integer) param.get("pageSize");
-			param.put("startPage",page*pageSize);
-			param.put("endPage",pageSize);
+		Date nowTime = new Date();
+		Date minStartTime = null;
+		Integer workStatus = WORK_STATUS_WORKING;
+
+		if (!ObjectUtils.isEmpty(leaveList)) {
+			for (LeaveSimpleDTO dto : leaveList) {
+				if (dto.getStartTime() == null) {
+					dto.setStartTime(new Date());
+				}
+				if ((minStartTime == null) || (dto.getStartTime().getTime() < minStartTime.getTime())) {
+					minStartTime = dto.getStartTime();
+					workStatus = (dto.getStartTime().getTime() > nowTime.getTime()) ? WORK_STATUS_WORKING_TO_LEAVING : WORK_STATUS_LEAVING;
+				}
+			}
 		}
-		List<CompanyUserTableDTO> list = companyUserDao.getCompanyUserByOrgIdOfAdmin(param);
-
-		for(CompanyUserTableDTO c:list){
-			List<UserDepartDTO> departList = companyUserDao.getCompanyUserDepartRole(c.getUserId(),c.getCompanyId());
-			c.setDepartList(departList);
+		if (!ObjectUtils.isEmpty(workoutList)) {
+			for (LeaveSimpleDTO dto : workoutList) {
+				if (dto.getStartTime() == null) {
+					dto.setStartTime(new Date());
+				}
+				if ((minStartTime == null) || (dto.getStartTime().getTime() < minStartTime.getTime())) {
+					minStartTime = dto.getStartTime();
+					workStatus = (dto.getStartTime().getTime() > nowTime.getTime()) ? WORK_STATUS_WORKING_TO_OUT : WORK_STATUS_OUT;
+				}
+			}
 		}
-		return list;
-	}
-
-
-	/**
-	 * 方法描述：组织人员查询（分页查询）
-	 * 作        者：MaoSF
-	 * 日        期：2016年7月9日-下午2:28:06
-	 */
-	@Override
-	public List<CompanyUserTableDTO> getCompanyUserByOrgIdOfWork(Map<String, Object> param) throws Exception {
-		if(null!=param.get("pageNumber")){
-			int page=(Integer)param.get("pageNumber");
-			int pageSize=(Integer) param.get("pageSize");
-			param.put("startPage",page*pageSize);
-			param.put("endPage",pageSize);
-		}
-		List<CompanyUserTableDTO> list = companyUserDao.getCompanyUserByOrgIdOfWork(param);
-
-		for(CompanyUserTableDTO c:list){
-			List<UserDepartDTO> departList = companyUserDao.getCompanyUserDepartRole(c.getUserId(),c.getCompanyId());
-			c.setDepartList(departList);
-		}
-		return list;
+		return workStatus;
 	}
 
 	/**
@@ -190,22 +214,40 @@ public class CompanyUserServiceImpl extends GenericService<CompanyUserEntity>  i
 	 * 日        期：2016年7月9日-下午2:28:06
 	 * @param param(orgId)【orgId组织Id，companyId 公司Id】
 	 */
+	@Override
 	public List<CompanyUserDataDTO> getUserByOrgId (Map<String,Object> param) throws Exception{
 		return companyUserDao.getUserByOrgId(param);
 	}
 
 	/**
-	 * 方法描述：组织人员条数（分页查询）
-	 * 作        者：MaoSF
-	 * 日        期：2016年7月9日-下午2:28:06
-	 *
-	 * @param param (orgId,keyword)【orgId必传】
-	 * @return
-	 * @throws Exception
+	 * 方法描述：得到当前公司和当前组织下面人员
+	 * 作   者：LY
+	 * 日   期：2016/8/3 17:17
+	 * @param companyId 公司Id  orgId 组织Id
 	 */
 	@Override
-	public int getCompanyUserByOrgIdCountOfWork(Map<String, Object> param) throws Exception {
-		return companyUserDao.getCompanyUserByOrgIdCountOfWork(param);
+	public List<CompanyUserDataDTO> getUserList(String companyId, String orgId) throws Exception {
+		Map<String, Object> mapParams = new HashMap<String, Object>();
+		mapParams.put("companyId", companyId);
+		if(orgId!=null){
+			mapParams.put("orgId", orgId);
+		}
+		return this.getUserByOrgId(mapParams);
+	}
+
+	@Override
+	public List<CompanyUserDataDTO> getDepartAllUser(String companyId, String departPath) throws Exception {
+		Map<String, Object> mapParams = new HashMap<String, Object>();
+		mapParams.put("companyId", companyId);
+		if(departPath!=null ){
+			mapParams.put("departPath", departPath);
+		}
+		return this.companyUserDao.getDepartAllUser(mapParams);
+	}
+
+	@Override
+	public List<CompanyUserDataDTO> getCopyUser(QueryCopyRecordDTO query) {
+		return this.companyUserDao.getCopyUser(query);
 	}
 
 	/**
@@ -253,6 +295,7 @@ public class CompanyUserServiceImpl extends GenericService<CompanyUserEntity>  i
 		String cellphone=dto.getCellphone();
 		CompanyUserEntity cUser =null;
 		/************如果没有存公司，首先胖的是否已经注册，若没有注册，先注册，然后加入公司，如果注册，直接加入公司*************/
+		boolean isSave = false;
 		if(dto.getId()==null){//新增人
 			account=accountDao.getAccountByCellphoneOrEmail(cellphone);
 			boolean isNewUser=false;
@@ -260,8 +303,8 @@ public class CompanyUserServiceImpl extends GenericService<CompanyUserEntity>  i
 			if(account==null){
 				account = this.register(dto);
 				isNewUser= true;
-			}//账号已经存在
-
+			}
+			//账号已经存在
 			cUser = this.getCompanyUserByUserIdAndCompanyId(account.getId(), dto.getCompanyId());
 
 			if(cUser !=null){//判断是否已经存在公司
@@ -286,11 +329,14 @@ public class CompanyUserServiceImpl extends GenericService<CompanyUserEntity>  i
 				cUser.setRelationType("2");//受邀请
 				cUser.setCreateBy(dto.getAccountId());
 				this.saveCompanyUser(cUser,dto.getCellphone());
+				isSave = true;
 			}
 			//处理部门
 			this.handleDepartForAdd(dto,cUser);
-			//新增的时候才发送短信
-			this.sendMsg(isNewUser,dto.getCompanyName(),dto.getCellphone(),dto.getAccountId(),dto.getCompanyId());
+			if(isSave){
+				//新增的时候才发送短信
+				this.sendMsg(isNewUser,dto.getCompanyName(),dto.getCellphone(),dto.getAccountId(),dto.getCompanyId());
+			}
 		}else{
 			/****************修改公司人员信息*****************/
 			cUser = new CompanyUserEntity();
@@ -301,14 +347,13 @@ public class CompanyUserServiceImpl extends GenericService<CompanyUserEntity>  i
 			this.handleDepartForEdit(dto,cUser);
 		}
 		//处理人员在群组的信息
-		this.sendCompanyUserMessageFun(cUser.getCompanyId(),cUser.getUserId(),cUser.getAuditStatus());
-
+		if(isSave){
+			this.sendCompanyUserMessageFun(cUser.getCompanyId(),cUser.getUserId(),cUser.getAuditStatus());
+		}
 		//删除没有成员的一级部门群
 		this.handleDeleteNoMemberGroup(dto.getCompanyId());
-
 		//通知协同
 		this.collaborationService.pushSyncCMD_CU(dto.getCompanyId());
-
 		return new AjaxMessage().setCode("0").setInfo("保存成功").setData(this.getCompanyUserById(cUser.getId()));
 	}
 
@@ -488,26 +533,26 @@ public class CompanyUserServiceImpl extends GenericService<CompanyUserEntity>  i
 	 */
 	private void handleDepartGroup(UserDepartDTO userDepartDTO,CompanyUserEntity cUser) throws Exception{
 		//查询部门
-		DepartEntity departEntity = departDao.selectById(userDepartDTO.getDepartId());
-		//存在
-		if(null != departEntity){
-			String oneDepartId = departEntity.getDepartPath();
-			String[] oneDepartIds = oneDepartId.split("-");
-			//查询出一级部门群
-			departEntity = departDao.selectById(oneDepartIds[0]);
-			Map<String,Object> map = new HashMap<String,Object>();
-			map.put("orgId",departEntity.getId());
-			map.put("groupType","1");
-			//查询是否已经存在一级部门群
-			List<ImGroupEntity> listDepartGroup = imGroupDao.getImGroupsByParam(map);
-			if(listDepartGroup.size()==0){
-				//创建部门群组
-				this.createGroupIm(departEntity.getId(),cUser.getUserId(),departEntity.getDepartName(),1,true);
-			}else{
-				//添加人到一级部门群组(String userId,String groupId,String departId)
-				addUserToGroup(cUser.getUserId(),departEntity.getId(),departEntity.getId());
-			}
-		}
+//		DepartEntity departEntity = departDao.selectById(userDepartDTO.getDepartId());
+//		//存在
+//		if(null != departEntity){
+//			String oneDepartId = departEntity.getDepartPath();
+//			String[] oneDepartIds = oneDepartId.split("-");
+//			//查询出一级部门群
+//			departEntity = departDao.selectById(oneDepartIds[0]);
+//			Map<String,Object> map = new HashMap<String,Object>();
+//			map.put("orgId",departEntity.getId());
+//			map.put("groupType","1");
+//			//查询是否已经存在一级部门群
+//			List<ImGroupEntity> listDepartGroup = imGroupDao.getImGroupsByParam(map);
+//			if(listDepartGroup.size()==0){
+//				//创建部门群组
+//				this.createGroupIm(departEntity.getId(),cUser.getUserId(),departEntity.getDepartName(),1,true);
+//			}else{
+//				//添加人到一级部门群组(String userId,String groupId,String departId)
+//				addUserToGroup(cUser.getUserId(),departEntity.getId(),departEntity.getId());
+//			}
+//		}
 	}
 
 	/**
@@ -526,17 +571,6 @@ public class CompanyUserServiceImpl extends GenericService<CompanyUserEntity>  i
 	 */
 	public AccountEntity register(CompanyUserTableDTO dto) throws Exception{
 		AccountEntity account= this.accountService.createAccount(dto.getUserName(),SecretUtil.MD5("123456"),dto.getCellphone());
-
-		if(!StringUtil.isNullOrEmpty(dto.getSex()))
-		{
-			if("男".equals(dto.getSex().trim()) || "女".equals(dto.getSex().trim()))
-			{
-				UserEntity user=new UserEntity();
-				user.setId(account.getId());
-				user.setSex(dto.getSex().trim());
-			}
-		}
-
 		dto.setUserId(account.getId());
 		return account;
 	}
@@ -565,7 +599,7 @@ public class CompanyUserServiceImpl extends GenericService<CompanyUserEntity>  i
 		//imGroupService.addUserToGroup(entity.getUserId(), entity.getCompanyId());
 		return entity;
 	}
-	
+
 	/**
 	 * 方法描述：发送短信【此方法不是接口】
 	 * 作        者：MaoSF
@@ -590,7 +624,7 @@ public class CompanyUserServiceImpl extends GenericService<CompanyUserEntity>  i
 		}
 		smsSender.send(sms);
 	}
-	
+
 
 	@Override
 	public AjaxMessage quit(String id) throws Exception{
@@ -660,54 +694,12 @@ public class CompanyUserServiceImpl extends GenericService<CompanyUserEntity>  i
 		}
 	}
 
-	/**
-     * 方法描述：
-     * 作者：MaoSF
-     * 日期：2016/8/5
-     */
-    @Override
-    public AjaxMessage orderCompanyUser(CompanyUserTableDTO dto1,CompanyUserTableDTO dto2,String orgId) throws Exception {
-
-        Map<String,Object> map = new HashMap<String,Object>();
-        map.put("cuId",dto1.getId());
-        map.put("orgId",orgId);
-        List<OrgUserEntity> orgUserEntityList1 = orgUserDao.selectByParam(map);
-        map.clear();
-        map.put("cuId",dto2.getId());
-        map.put("orgId",orgId);
-        List<OrgUserEntity> orgUserEntityList2 = orgUserDao.selectByParam(map);
-        if(orgUserEntityList1.isEmpty() || orgUserEntityList1.size()>1 || orgUserEntityList2.isEmpty() || orgUserEntityList2.size()>1){
-            return new AjaxMessage().setCode("1").setInfo("操作失败");
-        }
-        OrgUserEntity orgUserEntity1 = orgUserEntityList1.get(0);
-        OrgUserEntity orgUserEntity2 = orgUserEntityList2.get(0);
-		int seq2= orgUserEntity2.getSeq();
-		int seq1= orgUserEntity1.getSeq();
-        orgUserEntity1.setSeq(seq2);
-        orgUserEntity2.setSeq(seq1);
-        orgUserDao.updateById(orgUserEntity1);
-        orgUserDao.updateById(orgUserEntity2);
-        return new AjaxMessage().setCode("0").setInfo("操作成功");
-    }
-
     @Override
     public List<Map<String, Object>>selectPersonalInGroupAndInfo(Map<String, Object>map)throws Exception{
         return companyUserDao.selectPersonalInGroupAndInfo(map);
     }
 
-	/**
-	 * 方法描述：根据id集合查询人员名字（任务分解--负责人，设计人）使用
-	 * 作        者：MaoSF
-	 * 日        期：2016年4月23日-下午6:02:15
-	 * @param param
-	 * @return
-	 */
 	@Override
-	public List<CompanyUserEntity> getPersonByIds(Map<String,Object> param){
-		return companyUserDao.getPersonByIds(param);
-	}
-
-
 	public void addUserToGroup(String userId,String groupId,String departId) throws Exception{
 
 		AccountEntity account = accountDao.selectById(userId);
@@ -719,43 +711,19 @@ public class CompanyUserServiceImpl extends GenericService<CompanyUserEntity>  i
 
 
 	/**
-	 * 方法描述：根据角色id查询公司人员
-	 * 作者：MaoSF
-	 * 日期：2016/11/3
-	 */
-	@Override
-	public List<CompanyUserTableDTO> getCompanyUserByRoleId(Map<String, Object> param) {
-		if(null!=param.get("pageNumber")){
-			int page=(Integer)param.get("pageNumber");
-			int pageSize=(Integer) param.get("pageSize");
-			param.put("startPage",page*pageSize);
-			param.put("endPage",pageSize);
-		}
-		List<CompanyUserTableDTO> list = this.companyUserDao.getCompanyUserByRoleId(param);
-		if(!CollectionUtils.isEmpty(list)){
-			for(CompanyUserTableDTO c:list){
-				List<UserDepartDTO> departList = companyUserDao.getCompanyUserDepartRole(c.getUserId(),c.getCompanyId());
-				c.setDepartList(departList);
-			}
-		}
-		return list;
-	}
-
-	/**
 	 * 方法描述：根据权限id查询公司人员
 	 * 作者：MaoSF
 	 * 日期：2016/11/3
 	 */
 	@Override
-	public List<CompanyUserTableDTO> getCompanyUserByPermissionId(Map<String, Object> param) {
+	public List<CompanyUserDataDTO> getCompanyUserByPermissionId(Map<String, Object> param) {
 		if(null!=param.get("pageNumber")){
 			int page=(Integer)param.get("pageNumber");
 			int pageSize=(Integer) param.get("pageSize");
 			param.put("startPage",page*pageSize);
 			param.put("endPage",pageSize);
 		}
-		List<CompanyUserTableDTO> list = this.companyUserDao.getCompanyUserByPermissionId(param);
-		return list;
+		return this.companyUserDao.getCompanyUserByPermissionId(param);
 	}
 
 
@@ -766,28 +734,100 @@ public class CompanyUserServiceImpl extends GenericService<CompanyUserEntity>  i
 	 */
 	@Override
 	public List<CompanyUserAppDTO> getCompanyUser(String companyId) throws Exception{
-		Map<String,Object> map = new HashMap<String,Object>();
-		map.put("companyId",companyId);
-		map.put("fastdfsUrl",fastdfsUrl);
-		List<CompanyUserAppDTO> dtoList = this.companyUserDao.getCompanyUser(map);
-		return dtoList;
+		return getCompanyUser(companyId,null);
 	}
+
 	/**
-	 * 方法描述：查找当前公司所有人员排除自己
+	 * 方法描述：查找当前公司所有人员
 	 * 作        者：MaoSF
 	 * 日        期：2016年7月8日-下午4:24:08
-	 *
-	 * @param companyId
-	 * @return
 	 */
 	@Override
-	public List<CompanyUserAppDTO> getCompanyUserExceptMe(String companyId,String accountId) throws Exception{
+	public List<CompanyUserAppDTO> getCompanyUser(String companyId,String needUserStatus) throws Exception{
 		Map<String,Object> map = new HashMap<String,Object>();
 		map.put("companyId",companyId);
-		map.put("userId",accountId);
 		map.put("fastdfsUrl",fastdfsUrl);
-		List<CompanyUserAppDTO> dtoList = this.companyUserDao.getCompanyUserExceptMe(map);
+		if (!StringUtils.isEmpty(needUserStatus)) {
+			map.put("needUserStatus", needUserStatus);
+		}
+		List<CompanyUserAppDTO> dtoList = this.companyUserDao.getCompanyUser(map);
+		if (!StringUtils.isEmpty(needUserStatus)) {
+			final Integer WORK_STATUS_WORKING = 0;
+			final Integer WORK_STATUS_WORKING_TO_LEAVING = 1;
+			final Integer WORK_STATUS_WORKING_TO_OUT = 2;
+			final Integer WORK_STATUS_LEAVING = 3;
+			final Integer WORK_STATUS_OUT = 4;
+			for (CompanyUserAppDTO dto : dtoList) {
+				if (!StringUtils.isEmpty(dto.getStartTimeString())) {
+					String[] workStatusArray = dto.getWorkStatusString().split(",");
+					String[] startTimeArray = dto.getStartTimeString().split(",");
+					String[] endTimeArray = dto.getEndTimeString().split(",");
+					long nowTime = (new Date()).getTime();
+					long minStartTime = 0;
+					for (int i=0; i<startTimeArray.length; i++){
+						long st = Long.parseLong(startTimeArray[i]) * 1000;
+						if ((st > 0) && ((st < minStartTime) || (minStartTime <= 0))) {
+							minStartTime = st;
+							dto.setStartTime(DateUtils.getDate(st));
+							dto.setEndTime(DateUtils.getDate(Long.parseLong(endTimeArray[i]) * 1000));
+							if (isLeaveTypeWorkOut(workStatusArray[i])) {
+								dto.setWorkStatus((st < nowTime) ? WORK_STATUS_OUT : WORK_STATUS_WORKING_TO_OUT);
+							} else {
+								dto.setWorkStatus((st < nowTime) ? WORK_STATUS_LEAVING : WORK_STATUS_WORKING_TO_LEAVING);
+							}
+						}
+					}
+				}
+
+				if (isLeaveOff(dto.getWorkStatus())) {
+					dto.setStatusText(DateUtils.getTimeText(dto.getStartTime(),dto.getEndTime(),DateUtils.leaveOffFormat));
+				} else if (isWorkOut(dto.getWorkStatus())) {
+					dto.setStatusText(DateUtils.getTimeText(dto.getStartTime(),dto.getEndTime(),DateUtils.workOutFormat));
+				} else if (dto.getTaskCount() > 0) {
+					dto.setStatusText(dto.getTaskCount() + "个任务进行中");
+				} else {
+					dto.setStatusText("暂无进行中任务");
+				}
+			}
+		}
 		return dtoList;
+	}
+
+	private boolean isLeaveTypeWorkOut(String leaveType){
+		return (leaveType != null) && ("10".equals(leaveType));
+	}
+
+	private boolean isLeaveOff(Integer workStatus){
+		return (workStatus != null) && (workStatus == 3);
+	}
+
+	private boolean isWorkOut(Integer workStatus){
+		return (workStatus != null) && (workStatus == 4);
+	}
+
+	/**
+	 * 方法描述：查找当前公司所有人员排除自己（也排除指定人员）
+	 * 作        者：zcl
+	 * 日        期：2018/4/23
+	 * @return 查询出的人员列表
+	 */
+	@Override
+	public List<CompanyUserAppDTO> getCompanyUserExceptMe(QueryCompanyUserDTO query) throws Exception {
+		List<CompanyUserAppDTO> dtoList = this.companyUserDao.getCompanyUserExceptMe(query);
+		return dtoList;
+	}
+
+	/**
+	 * 方法描述：查找指定人员
+	 * 作        者：zcl
+	 * 日        期：2018/4/23
+	 *
+	 * @param query 查询条件
+	 * @return 查询出的人员列表
+	 */
+	@Override
+	public List<CompanyUserAppDTO> listCompanyUser(QueryCompanyUserDTO query) throws Exception {
+		return companyUserDao.listCompanyUser(query);
 	}
 
 	/**
@@ -802,7 +842,21 @@ public class CompanyUserServiceImpl extends GenericService<CompanyUserEntity>  i
 	@Override
 	public List<CompanyRoleDataDTO> getCompanyRole(Map<String, Object> param) throws Exception {
 		param.put("fastdfsUrl",fastdfsUrl);
-		return this.companyUserDao.getCompanyRole(param);
+		List<CompanyRoleDataDTO> list =  this.companyUserDao.getCompanyRole(param);
+		for(CompanyRoleDataDTO dto:list){
+			//查询权限
+			Map<String,Object> map = new HashMap<>();
+			map.put("companyId",dto.getCompanyId());
+			map.put("userId",param.get("userId"));
+			map.put("companyUserId",dto.getCompanyUserId());
+			map.put("typeId",dto.getTypeId());
+			dto.setRoleCodes(permissionService.getPermissionCodeByUserId(map));
+			map.put("roleCodes",dto.getRoleCodes());
+			dto.setOperatorRole(permissionService.getPermissionOperator(map));
+			dto.setFilePath(projectSkyDriverService.getCompanyLogo(dto.getCompanyId()));
+
+		}
+		return list;
 	}
 
 	@Override
@@ -813,5 +867,119 @@ public class CompanyUserServiceImpl extends GenericService<CompanyUserEntity>  i
 			imUserInfoDTO.setTaskRoleList(this.projectMemberService.listUserPositionForProject(query.getProjectId(),query.getCompanyId(),query.getUserId()));
 		}
 		return imUserInfoDTO;
+	}
+
+	@Override
+	public List<CompanyUserExpMemberDTO> getExpTaskMembers(Map<String, Object> paraMap) throws Exception {
+		return this.companyUserDao.getExpTaskMembers(paraMap);
+	}
+
+	@Override
+	public List<CompanyUserExpMemberDTO> getApplyExpUserForCopy(Map<String, Object> paraMap) throws Exception {
+		return this.companyUserDao.getApplyExpUserForCopy(paraMap);
+	}
+
+	@Override
+	public List<CompanyUserDataDTO> getOperatorManager(String companyId) {
+		Map<String, Object> map = new HashMap<>();
+		map.put("permissionId", SystemParameters.OPERATOR_MANAGER_PERMISSION_ID);//经营总监权限id
+		map.put("companyId", companyId);
+		return this.companyUserDao.getCompanyUserByPermissionId(map);
+	}
+	@Override
+	public List<CompanyUserDataDTO> getFinancialManagerPayForTechnical(String companyId) {
+		//return this.getCompanyUserByPermissionCode(companyId, PermissionConst.TECHNICAL_PAY);
+		return getFinancialManagerForPay(companyId);
+	}
+
+	@Override
+	public List<CompanyUserDataDTO> getFinancialManagerPayForCooperation(String companyId) {
+		//return this.getCompanyUserByPermissionCode(companyId, PermissionConst.COOPERATION_PAY);
+		return getFinancialManagerForPay(companyId);
+	}
+
+	@Override
+	public List<CompanyUserDataDTO> getFinancialManagerPayForOther(String companyId) {
+		//return this.getCompanyUserByPermissionCode(companyId, PermissionConst.OTHER_PAY);
+		return getFinancialManagerForPay(companyId);
+	}
+
+	@Override
+	public List<CompanyUserDataDTO> getFinancialManagerPayForExp(String companyId) {
+		//return this.getCompanyUserByPermissionCode(companyId, PermissionConst.EXP_ALLOCATE);
+		return getFinancialManagerForPay(companyId);
+	}
+
+	@Override
+	public List<CompanyUserDataDTO> getFinancialManagerPayForCost(String companyId) {
+		//return this.getCompanyUserByPermissionCode(companyId, PermissionConst.COST_ALLOCATE);
+		return getFinancialManagerForPay(companyId);
+	}
+
+	@Override
+	public List<CompanyUserDataDTO> getFinancialManagerReceiveForContract(String companyId) {
+		//return this.getCompanyUserByPermissionCode(companyId, PermissionConst.CONTRACT_RECEIVE);
+		return getFinancialManagerForReceive(companyId);
+	}
+
+	@Override
+	public List<CompanyUserDataDTO> getFinancialManagerReceiveForTechnical(String companyId) {
+		//return this.getCompanyUserByPermissionCode(companyId, PermissionConst.TECHNICAL_RECEIVE);
+		return getFinancialManagerForReceive(companyId);
+	}
+
+	@Override
+	public List<CompanyUserDataDTO> getFinancialManagerReceiveForCooperation(String companyId) {
+		//return this.getCompanyUserByPermissionCode(companyId, PermissionConst.COOPERATION_RECEIVE);
+		return getFinancialManagerForReceive(companyId);
+	}
+
+	@Override
+	public List<CompanyUserDataDTO> getFinancialManagerReceiveForOther(String companyId) {
+		//return this.getCompanyUserByPermissionCode(companyId, PermissionConst.OTHER_RECEIVE);
+		return getFinancialManagerForReceive(companyId);
+	}
+
+	@Override
+	public List<CompanyUserDataDTO> getFinancialManagerForReceive(String companyId) {
+		Map<String, Object> map = new HashMap<>();
+		map.put("permissionId", SystemParameters.FINANCIAL_RECEIVE_PERMISSION_ID);//项目费用收款权限
+		map.put("companyId", companyId);
+		return this.companyUserDao.getCompanyUserByPermissionId(map);
+	}
+
+	@Override
+	public List<CompanyUserDataDTO> getFinancialManagerForPay(String companyId) {
+		Map<String, Object> map = new HashMap<>();
+		map.put("permissionId", SystemParameters.FINANCIAL_PERMISSION_ID);//项目费用付款权限
+		map.put("companyId", companyId);
+		return this.companyUserDao.getCompanyUserByPermissionId(map);
+	}
+
+	@Override
+	public List<CompanyUserDataDTO> getDesignManager(String companyId) {
+		Map<String, Object> map = new HashMap<>();
+		map.put("permissionId", SystemParameters.DESIGN_MANAGER_PERMISSION_ID);//设计总监权限id
+		map.put("companyId", companyId);
+		return this.companyUserDao.getCompanyUserByPermissionId(map);
+	}
+
+	@Override
+	public CompanyUserDataDTO getOrgManager(String companyId) {
+		Map<String, Object> map = new HashMap<>();
+		map.put("permissionId", SystemParameters.ORG_MANAGER_PERMISSION_ID);//经营总监权限id
+		map.put("companyId", companyId);
+		List<CompanyUserDataDTO> list = this.companyUserDao.getCompanyUserByPermissionId(map);
+		if(!CollectionUtils.isEmpty(list)){
+			return list.get(0);
+		}
+		return null;
+	}
+
+	public List<CompanyUserDataDTO> getCompanyUserByPermissionCode(String companyId,String code) {
+		Map<String, Object> map = new HashMap<>();
+		map.put("code", code);
+		map.put("companyId", companyId);
+		return this.companyUserDao.getCompanyUserByPermissionCode(map);
 	}
 }

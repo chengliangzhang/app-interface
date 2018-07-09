@@ -29,7 +29,7 @@ public class ProjectCostEntity extends BaseEntity {
     private String toCompanyId;
 
     /**
-     * 类型1:合同总金额，2：技术审查费,3合作设计费付款
+     * 类型1:合同总金额，2：技术审查费,3合作设计费付款 ，4：其他费用付款，5.其他费用收款
      */
     private String type;
 

@@ -2,10 +2,11 @@ package com.maoding.projectcost.dao.impl;
 
 import com.maoding.core.base.dao.GenericDao;
 import com.maoding.projectcost.dao.ProjectCostDao;
-import com.maoding.projectcost.dto.ProjectCostDTO;
+import com.maoding.projectcost.dto.*;
 import com.maoding.projectcost.entity.ProjectCostEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,5 +36,26 @@ public class ProjectCostDaoImpl extends GenericDao<ProjectCostEntity> implements
     @Override
     public int updateHasNoChildPoint() {
         return this.sqlSession.update("ProjectCostEntityMapper.updateHasNoChildPoint");
+    }
+
+    @Override
+    public ProjectAmountFee getProjectAmountFee(String projectId, String companyId) {
+        Map<String,Object> map = new HashMap<>();
+        map.put("projectId",projectId);
+        map.put("companyId",companyId);
+        return this.sqlSession.selectOne("GetProjectCostMapper.getProjectAmountFee", map);
+    }
+
+    @Override
+    public List<ProjectCostSummaryDTO> getProjectCostSummary(ProjectCostQueryDTO query) {
+        return this.sqlSession.selectList("GetProjectCostSummaryMapper.getProjectCostSummary", query);
+    }
+
+    @Override
+    public List<ProjectCooperatorCostDTO> getProjectCooperatorFee(String projectId, String companyId) {
+        Map<String,Object> map = new HashMap<>();
+        map.put("projectId",projectId);
+        map.put("companyId",companyId);
+        return this.sqlSession.selectList("GetProjectCostMapper.getProjectTechAmountFee", map);
     }
 }

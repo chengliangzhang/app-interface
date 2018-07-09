@@ -7,9 +7,7 @@ import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,6 +48,12 @@ public class DateUtils extends PropertyEditorSupport {
 	public static final  SimpleDateFormat datetimeFormat = new SimpleDateFormat(
 	"yyyy-MM-dd HH:mm:ss");
 
+	public static final  SimpleDateFormat leaveOffFormat = new SimpleDateFormat(
+	"yyyy/MM/dd HH:mm");
+
+	public static final  SimpleDateFormat workOutFormat = new SimpleDateFormat(
+	"yyyy/MM/dd a",Locale.CHINESE);
+
 	public static final String date_sdf2_string="yyyy/MM/dd";
 	// 以毫秒表示的时间
 	private static final long DAY_IN_MILLIS = 24 * 3600 * 1000;
@@ -61,6 +65,20 @@ public class DateUtils extends PropertyEditorSupport {
 		return new SimpleDateFormat(pattern);
 	}
 
+	/** 获取起始时间到终止时间的字符串 */
+	public static String getTimeText(Date startTime, Date endTime, SimpleDateFormat fmt){
+		String s = "";
+		if (startTime != null) {
+			s = DateUtils.date2Str(startTime, fmt);
+		}
+		if ((startTime != null) || (endTime != null)) {
+			s += " — ";
+		}
+		if (endTime != null) {
+			s += DateUtils.date2Str(endTime, fmt);
+		}
+		return s;
+	}
 	/**
 	 * 当前日历，这里用中国时间表示
 	 * 
@@ -151,6 +169,60 @@ public class DateUtils extends PropertyEditorSupport {
 	}
 
 	/**
+	 * 字符串转换成日期
+	 */
+	public static Date str2Date(String str) {
+		if (StringUtil.isNullOrEmpty(str)) {
+			return null;
+		}
+		Date date = null;
+		SimpleDateFormat df = null;
+		if(str.contains(".")){
+			df = DateUtils.date_sdf3;
+		}
+		else if(str.contains("-")){
+			if (str.contains(":")){
+				df = DateUtils.time_sdf;
+			} else {
+				df = DateUtils.date_sdf;
+			}
+		}
+		else if(str.contains("/")){
+			df = DateUtils.date_sdf2;
+		}else {
+			df = DateUtils.yyyyMMdd;
+		}
+		try {
+			date = df.parse(str);
+			return date;
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public static String formatDateString(String str){
+		if (StringUtil.isNullOrEmpty(str)){
+			return null;
+		}
+		str = str.replaceAll("/","-");
+		String[] date = str.split("-");
+		Integer y = Integer.parseInt(date[0]);
+		Integer m = 0 ;
+		Integer d = 0;
+		str = y+"";
+		if(date.length>1){
+			m = Integer.parseInt(date[1]);
+			str = str+"-" +((m < 10) ? "0" + m : m);
+		}
+		if(date.length>2){
+			d = Integer.parseInt(date[2]);
+			str = str+"-" +((d < 10) ? "0" + d : d);
+		}
+		return str;
+	}
+
+	/**
 	 * 日期转换为字符串
 	 * 
 	 *            日期
@@ -164,27 +236,7 @@ public class DateUtils extends PropertyEditorSupport {
 		}
 		return date_sdf.format(date);
 	}
-	/**
-	 * 格式化时间
-	 * @param date
-	 * @param format
-	 * @return
-	 */
-	public static String dateformat(String date,String format)
-	{
-		SimpleDateFormat sformat = new SimpleDateFormat(format);
-		Date _date=null;
-		if(StringUtil.isNullOrEmpty(date)){
-			return "";
-		}
-		try {
-			 _date= date_sdf.parse(date);
-		} catch (ParseException e) {
-			//e.printStackTrace();
-			return "";
-		}
-		return sformat.format(_date);
-	}
+
 	/**
 	 * 日期转换为字符串
 	 * 
@@ -798,6 +850,42 @@ public class DateUtils extends PropertyEditorSupport {
 	    }
 
 	/**
+	 * 方法描述：获取两个日期之间的日期数
+	 * 作        者：MaoSF
+	 * 日        期：2015年12月9日-上午11:18:55
+	 * @return
+	 */
+	public static List<String> getBetweenDates(Date d1,Date d2) {
+		List<String> dateList = new ArrayList<>();
+		try {
+			String startDate = null;
+			String endDate = null;
+			if(!StringUtil.isNullOrEmpty(d1)){
+				 startDate = DateUtils.formatDate(d1);
+				 dateList.add(startDate);
+			}
+			if(!StringUtil.isNullOrEmpty(d2)){
+				endDate = DateUtils.formatDate(d2);
+				if(!dateList.contains(endDate)){
+					dateList.add(endDate);
+				}
+			}
+			//如果存在d2>d1的情形
+			if(!StringUtil.isNullOrEmpty(startDate) && !StringUtil.isNullOrEmpty(endDate) && DateUtils.datecompareDate(startDate,endDate)<0){
+				String currentDate = startDate;
+				while (!getDateAfter(currentDate,1).equals(endDate)){
+					currentDate = getDateAfter(currentDate,1);
+					dateList.add(currentDate);
+				}
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return dateList;
+	}
+
+	/**
 	 * 方法描述：当前天的后面几天(ay)
 	 * 作        者：MaoSF
 	 * 日        期：2015年12月9日-上午11:18:55
@@ -982,11 +1070,56 @@ public class DateUtils extends PropertyEditorSupport {
 	}
 
 
+	/**
+	 * 只使用与yyyy-MM格式
+	 */
+	public static String getLastMonth(String month) {
+		if (StringUtil.isNullOrEmpty(month)) {
+			return date_sdf_ym.format(Calendar.getInstance().getTime());
+		} else {
+			if (month.contains("-")) {
+				int year = Integer.parseInt(month.substring(0, 4));
+				int mon = Integer.parseInt(month.substring(5));
+				if (mon == 1) {
+					return (year - 1) + "-12";
+				}
+				return year + "-" + String.format("%2d", (mon - 1)).replace(" ", "0");
+			}
+		}
+		return null;
+	}
+
+	public static String getLastMonth(){
+		return getLastMonth(null);
+	}
+
+
+	//判断选择的日期是否是本月
+	public static boolean isThisMonth(Date date)
+	{
+		return isThisTime(date,"yyyy-MM");
+	}
+	private static boolean isThisTime(Date date,String pattern) {
+		SimpleDateFormat sdf = new SimpleDateFormat(pattern);
+		String param = sdf.format(date);//参数时间
+		String now = sdf.format(new Date());//当前时间
+		if(param.equals(now)){
+			return true;
+		}
+		return false;
+	}
 
 	public static void main(String[] args) throws Exception{
-		String afterDate = DateUtils.getDateAfter("2017-3-1",31);
+		List<String> afterDate = DateUtils.getBetweenDates(DateUtils.str2Date("2018-01-05"),DateUtils.str2Date("2018-01-07"));
 
-		System.out.print(afterDate);
+		System.out.println(afterDate);
+//
+		System.out.println(DateUtils.workOutFormat.format(DateUtils.getDate()));
+//		System.out.println(DateUtils.str2Date("2017-03-01"));
+//		System.out.println(DateUtils.str2Date("2017.03.01"));
+//		System.out.println(DateUtils.str2Date("2017/03/01"));
+//		System.out.println(DateUtils.str2Date("2017/4/1"));
+//		System.out.println(DateUtils.str2Date("2017-3-1"));
 	}
 
 	public static String addDate(String day, int x)

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetCompanyUserByIdMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.org.dto.CompanyUserDetailDTO" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="user_id" property="userId" jdbcType="VARCHAR" />
+    <result column="user_name" property="userName" jdbcType="VARCHAR" />
+    <result column="cellphone" property="cellphone" jdbcType="VARCHAR" />
+    <result column="relation_type" property="relationType" jdbcType="VARCHAR" />
+    <result column="audit_status" property="auditStatus" jdbcType="VARCHAR" />
+    <result column="employee_type" property="employeeType" jdbcType="VARCHAR" />
+    <result column="employee_status" property="employeeStatus" jdbcType="VARCHAR" />
+    <result column="entry_time" property="entryTime" jdbcType="DATE" />
+    <result column="departure_time" property="departureTime" jdbcType="DATE" />
+    <result column="illustration" property="illustration" jdbcType="VARCHAR" />
+    <result column="phone" property="phone" jdbcType="VARCHAR" />
+    <result column="email" property="email" jdbcType="VARCHAR" />
+     <result column="sex" property="sex" jdbcType="VARCHAR" />
+    <result column="departure_reason" property="departureReason" jdbcType="VARCHAR" />
+    <result column="occupation_registration" property="occupationRegistration" jdbcType="VARCHAR" />
+    <result column="positional_title" property="positionalTitle" jdbcType="VARCHAR" />
+	<result column="org_server_station" property="orgServerStation" jdbcType="VARCHAR" />
+    <result column="role_ids" property="roleIds" jdbcType="VARCHAR" />
+    <result column="role_names" property="roleNames" jdbcType="VARCHAR" />
+	<result column="admin_flag" property="adminFlag" jdbcType="VARCHAR" />
+	<result column="account_name" property="accountName" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <sql id="Base_Column_List" >
+    id, company_id, user_id, user_name,sex, relation_type, audit_status, employee_type, employee_status, 
+    entry_time, departure_time, illustration, phone, email, departure_reason, create_date, 
+    create_by, update_date, update_by
+  </sql>
+  
+  <!-- 查找公司或部门下所有人员 -->
+	<select id="getCompanyUserById" resultMap="BaseResultMap" parameterType="java.lang.String">
+		SELECT
+		a.*,
+		b.cellphone,
+		b.user_name as account_name,
+		c.sex,
+		f.server_station as org_server_station,
+		g.role_names,
+		g.role_ids,
+		h.id as admin_flag
+		FROM maoding_web_company_user a
+		LEFT JOIN maoding_web_account b ON b.id=a.user_id
+		LEFT JOIN maoding_web_user c ON a.user_id=c.id
+-- 		LEFT JOIN ( SELECT uq.user_id,dd.name as occupation_registration FROM maoding_web_user_qualifications uq,maoding_data_dictionary dd where dd.id=uq.reg_certificate_level)d ON d.user_id=a.user_id
+-- 		LEFT JOIN ( SELECT utn.user_id,dd.name as positional_title FROM maoding_web_user_technical utn,maoding_data_dictionary dd where dd.id=utn.technical_level)e ON e.user_id=a.user_id
+		LEFT JOIN maoding_web_org_user f  on a.id = f.cu_id
+		LEFT JOIN (SELECT ru.user_id,ru.company_id,ru.org_id,GROUP_CONCAT(r.name) as role_names,GROUP_CONCAT(r.id) as role_ids
+					FROM maoding_web_role_user ru,maoding_web_role r
+					where ru.role_id = r.id GROUP by ru.org_id,ru.user_id)  g on  a.company_id = g.org_id and a.user_id = g.user_id
+		LEFT JOIN maoding_web_team_operater h on a.company_id=h.company_id and a.user_id = h.user_id
+		where a.id =#{id,jdbcType=VARCHAR}
+		GROUP BY a.id
+	</select>
+
+<!-- 查找公司或部门下所有人员(带状态） -->
+    <resultMap id="CompanyUserDetailMap" type="com.maoding.org.dto.CompanyUserDetailDTO" autoMapping="true">
+        <id column="id" property="id" jdbcType="VARCHAR" />
+        <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+        <result column="user_id" property="userId" jdbcType="VARCHAR" />
+        <result column="user_name" property="userName" jdbcType="VARCHAR" />
+        <result column="cellphone" property="cellphone" jdbcType="VARCHAR" />
+        <result column="relation_type" property="relationType" jdbcType="VARCHAR" />
+        <result column="audit_status" property="auditStatus" jdbcType="VARCHAR" />
+        <result column="employee_type" property="employeeType" jdbcType="VARCHAR" />
+        <result column="employee_status" property="employeeStatus" jdbcType="VARCHAR" />
+        <result column="entry_time" property="entryTime" jdbcType="DATE" />
+        <result column="departure_time" property="departureTime" jdbcType="DATE" />
+        <result column="illustration" property="illustration" jdbcType="VARCHAR" />
+        <result column="phone" property="phone" jdbcType="VARCHAR" />
+        <result column="email" property="email" jdbcType="VARCHAR" />
+        <result column="sex" property="sex" jdbcType="VARCHAR" />
+        <result column="departure_reason" property="departureReason" jdbcType="VARCHAR" />
+        <result column="occupation_registration" property="occupationRegistration" jdbcType="VARCHAR" />
+        <result column="positional_title" property="positionalTitle" jdbcType="VARCHAR" />
+        <result column="org_server_station" property="orgServerStation" jdbcType="VARCHAR" />
+        <result column="role_ids" property="roleIds" jdbcType="VARCHAR" />
+        <result column="role_names" property="roleNames" jdbcType="VARCHAR" />
+        <result column="admin_flag" property="adminFlag" jdbcType="VARCHAR" />
+        <result column="account_name" property="accountName" jdbcType="VARCHAR" />
+        <collection property="leaveList" ofType="com.maoding.financial.dto.LeaveSimpleDTO" select="GetLeaveMapper.listLeave" fetchType="eager"
+                    column="{approveStatus=approveStatus,companyUserId=id,minLeaveEndTime=minLeaveEndTime,expType=leaveType}"/>
+        <collection property="workoutList" ofType="com.maoding.financial.dto.LeaveSimpleDTO" select="GetLeaveMapper.listLeave" fetchType="eager"
+                    column="{approveStatus=approveStatus,companyUserId=id,minLeaveEndTime=minLeaveEndTime,expType=workoutType}"/>
+        <collection property="lightTaskList" ofType="com.maoding.mytask.dto.MyTaskSimpleDTO" select="GetMyTaskByPageMapper.listMyTask" fetchType="eager"
+                    column="{deleted=taskDeleted,companyUserId=id,taskType=lightTaskType}"/>
+        <collection property="taskList" ofType="com.maoding.mytask.dto.MyTaskSimpleDTO" select="GetMyTaskByPageMapper.listMyTask" fetchType="eager"
+                    column="{deleted=taskDeleted,companyUserId=id,taskType=taskType}"/>
+    </resultMap>
+
+
+    <select id="getCompanyUserWithStatusById" resultMap="CompanyUserDetailMap" parameterType="java.lang.String">
+		SELECT
+		company_user.*,
+		account_list.cellphone,
+		account_list.user_name as account_name,
+		user_list.sex,
+		org_user.server_station as org_server_station,
+		g.role_names,
+		g.role_ids,
+		team_operator.id as admin_flag,
+        1 as approveStatus,
+        now() as minLeaveEndTime,
+        0 as taskDeleted,
+        '100' as lightTaskType,
+        '3,13' as taskType,
+        '3' as leaveType,
+        '4' as workoutType
+
+        FROM maoding_web_company_user company_user
+		LEFT JOIN maoding_web_account account_list ON account_list.id=company_user.user_id
+		LEFT JOIN maoding_web_user user_list ON company_user.user_id=user_list.id
+		LEFT JOIN maoding_web_org_user org_user  on company_user.id = org_user.cu_id
+		LEFT JOIN (SELECT ru.user_id,ru.company_id,ru.org_id,GROUP_CONCAT(r.name) as role_names,GROUP_CONCAT(r.id) as role_ids
+					FROM maoding_web_role_user ru,maoding_web_role r
+					where ru.role_id = r.id GROUP by ru.org_id,ru.user_id)  g on  company_user.company_id = g.org_id and company_user.user_id = g.user_id
+		LEFT JOIN maoding_web_team_operater team_operator on company_user.company_id=team_operator.company_id and company_user.user_id = team_operator.user_id
+		where company_user.id =#{id,jdbcType=VARCHAR}
+		GROUP BY company_user.id
+	</select>
+
+</mapper>

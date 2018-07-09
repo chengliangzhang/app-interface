@@ -1,6 +1,7 @@
 package com.maoding.task.dto;
 
 import com.maoding.core.base.dto.BaseDTO;
+import com.maoding.core.util.StringUtil;
 
 /**
  * 深圳市设计同道技术有限公司
@@ -23,6 +24,10 @@ public class QueryProjectTaskDTO extends BaseDTO {
      */
     private int isCooperator;//是否是立项方
 
+    /**
+     * 父任务id（查询该节点下面的子任务。taskPid为null.则查询根任务）
+     */
+    private String taskPid;
 
      public Integer getPageIndex() {
         return pageIndex;
@@ -62,5 +67,13 @@ public class QueryProjectTaskDTO extends BaseDTO {
 
     public void setIsCooperator(int isCooperator) {
         this.isCooperator = isCooperator;
+    }
+
+    public String getTaskPid() {
+        return taskPid;
+    }
+
+    public void setTaskPid(String taskPid) {
+        this.taskPid = taskPid;
     }
 }

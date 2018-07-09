@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetCompanyUserByRoleIdMapper" >
+	<resultMap id="BaseResultMap" type="com.maoding.org.dto.CompanyUserDataDTO">
+		<id column="id" property="id" jdbcType="VARCHAR"/>
+		<result column="company_id" property="companyId" jdbcType="VARCHAR"/>
+		<result column="user_id" property="userId" jdbcType="VARCHAR"/>
+		<result column="user_name" property="userName" jdbcType="VARCHAR"/>
+		<result column="cellphone" property="cellphone" jdbcType="VARCHAR"/>
+		<result column="file_full_path" property="fileFullPath" jdbcType="VARCHAR"/>
+	</resultMap>
+
+	<!-- 根据权限id查询相应的人员-->
+	<select id="getCompanyUserByPermissionId" resultMap="BaseResultMap" parameterType="java.util.Map">
+		SELECT
+		a.id, a.company_id, a.user_id, a.user_name,b.cellphone,oss_file_path as file_full_path
+		FROM maoding_web_company_user a
+		LEFT JOIN maoding_web_account b ON b.id=a.user_id
+		LEFT JOIN maoding_web_user_permission d on  a.company_id = d.company_id and a.user_id = d.user_id
+		LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) ua ON ua.user_id = a.user_id AND ua.attach_type = 5
+		WHERE 1=1 and a.audit_status='1'
+		<if test="companyId!=null">
+			and a.company_id = #{companyId,jdbcType=VARCHAR}
+		</if>
+		<if test="permissionId!=null">
+			and d.permission_id = #{permissionId,jdbcType=VARCHAR}
+		</if>
+		<if test="userId!=null">
+			and d.user_id = #{userId,jdbcType=VARCHAR}
+		</if>
+		<if test="companyUserId!=null">
+			and a.id = #{companyUserId,jdbcType=VARCHAR}
+		</if>
+		--	group by a.id
+		<if test="startPage!=null">
+			LIMIT #{startPage},#{endPage}
+		</if>
+		order by d.seq
+	</select>
+
+	<select id="getCompanyUserByPermissionCode" resultMap="BaseResultMap" parameterType="java.util.Map">
+		SELECT DISTINCT e.id, e.company_id, e.user_id, e.user_name,f.cellphone
+		from maoding_operate_permission a
+		INNER JOIN maoding_operate_permission b on a.id = b.pid
+		INNER JOIN maoding_role_permission c on a.code = c.permission_code
+		INNER JOIN maoding_org_role d on c.role_code = d.role_code
+		INNER JOIN maoding_web_company_user e on d.org_id = e.id
+		INNER JOIN maoding_web_account f on e.user_id = f.id
+		where 1=1
+		and a.code = #{code}
+		and e.company_id = #{companyId}
+		group by a.id
+	</select>
+</mapper>

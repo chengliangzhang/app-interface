@@ -70,5 +70,14 @@ public class NoticeDaoImpl extends GenericDao<NoticeEntity> implements NoticeDao
         return this.sqlSession.selectList("GetNoticeByParamMapper.getNoticeByCompanyId2",param);
     }
 
+    @Override
+    public List<NoticeDTO> getNotReadNotice(Map<String, Object> param) {
+        return this.sqlSession.selectList("GetNoticeByParamMapper.getNotReadNotice",param);
+    }
+
+    @Override
+    public int getNotReadNoticeCount(Map<String, Object> param) {
+        return this.sqlSession.selectOne("GetNoticeByParamMapper.getNotReadNoticeCount", param);
+    }
 
 }

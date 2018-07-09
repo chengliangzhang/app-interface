@@ -27,8 +27,7 @@
 		from maoding_app_version
 		where id = #{id,jdbcType=VARCHAR}
 	</select>
-	<select id="selectByPlatform" resultMap="BaseResultMap"
-		parameterType="java.util.Map">
+	<select id="selectByPlatform" resultMap="BaseResultMap" parameterType="java.util.Map">
 		select v.versionName,
 		v.versionCode,
 		v.versionDesc,
@@ -36,8 +35,10 @@
 		v.mandatory_update,
 		v.updateUrl AS 'updateUrl'
 		from maoding_app_version v
-		where v.versionCode=(SELECT MAX(versionCode) FROM maoding_app_version m where m.platform=#{platform,jdbcType=VARCHAR})
-		and v.platform=#{platform,jdbcType=VARCHAR}
+		where 1=1
+		and v.platform=#{platform}
+		ORDER BY versionCode desc
+		LIMIT 1
 	</select>
 
 	<delete id="deleteByPrimaryKey" parameterType="java.lang.String">

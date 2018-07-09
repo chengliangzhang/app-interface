@@ -63,6 +63,8 @@ public class CompanyRelationDTO extends BaseDTO{
      * 0:小b，1：大B，2：大B分公司
      */
     private String ctype;//公司的类型（CompanyEntity 中的companyType）
+
+	private String typeId;
     
     public String getOrgId() {
         return orgId;
@@ -184,5 +186,13 @@ public class CompanyRelationDTO extends BaseDTO{
 
 	public void setAuditStatus(String auditStatus) {
 		this.auditStatus = auditStatus;
+	}
+
+	public String getTypeId() {
+		return typeId;
+	}
+
+	public void setTypeId(String typeId) {
+		this.typeId = typeId;
 	}
 }

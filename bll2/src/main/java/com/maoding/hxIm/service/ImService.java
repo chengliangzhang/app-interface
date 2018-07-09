@@ -77,10 +77,20 @@ public interface ImService {
     /**
      * 获取自定义群组的成员并按照公司分组
      */
+    List<ImGroupListDTO> listGroupByUserIdAndCompanyId(ImGroupQuery query) throws Exception;
+
+    /**
+     * 获取自定义群组的成员并按照公司分组
+     */
     List<CompanyUserGroupDTO> listCustomerImGroupMember(String groupId) throws Exception;
 
 
     /************************************自定义群组创建（远程接口调用，为了兼容旧版本）****************************************************/
+
+    /**
+     * 查询群组
+     */
+    List<ImGroupDataDTO> selectCustomGroupByParameter(ImGroupQuery query);
 
     /**
      * 新建自定义群

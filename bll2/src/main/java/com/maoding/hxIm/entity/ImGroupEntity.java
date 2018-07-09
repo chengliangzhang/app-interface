@@ -32,6 +32,11 @@ public class ImGroupEntity extends BaseEntity {
     /** 组织ID */
     private String orgId;
 
+    /**
+     * 项目群组（关联项目id）
+     */
+    private String nodeId;
+
     /** 置顶 */
     private Boolean topHold;
 
@@ -139,5 +144,13 @@ public class ImGroupEntity extends BaseEntity {
 
     public void setDeleted(Boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public String getNodeId() {
+        return nodeId;
+    }
+
+    public void setNodeId(String nodeId) {
+        this.nodeId = nodeId;
     }
 }

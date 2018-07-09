@@ -5,14 +5,15 @@ import com.maoding.core.bean.AjaxMessage;
 import com.maoding.core.bean.ResponseBean;
 import com.maoding.core.util.StringUtil;
 import com.maoding.financial.dto.*;
+import com.maoding.financial.service.ExpCategoryService;
 import com.maoding.financial.service.ExpDetailService;
 import com.maoding.financial.service.ExpMainService;
 import com.maoding.org.dto.CompanyDTO;
 import com.maoding.org.dto.DepartDTO;
+import com.maoding.org.dto.DepartDataDTO;
 import com.maoding.org.service.CompanyService;
 import com.maoding.org.service.CompanyUserService;
 import com.maoding.org.service.DepartService;
-import com.maoding.project.dto.ProjectDTO;
 import com.maoding.system.annotation.AuthorityCheckable;
 import com.maoding.system.controller.BaseWSController;
 import com.maoding.v2.financial.dto.V2ExpMainDTO;
@@ -54,7 +55,8 @@ public class V2FinancialController extends BaseWSController {
     private DepartService departService;
     @Autowired
     private ExpDetailService expDetailService;
-
+    @Autowired
+    private ExpCategoryService expCategoryService;
 
     /**
      * 方法描述：自定义报销类别查询
@@ -68,7 +70,7 @@ public class V2FinancialController extends BaseWSController {
         try {
             String companyId = paraMap.get("appOrgId");
             String userId = paraMap.get("accountId");
-            AjaxMessage ajax = expMainService.getCategoryBaseData(companyId, userId);
+            AjaxMessage ajax = expCategoryService.getCategoryBaseData(companyId, userId);
             Map<String, Object> map = (Map<String, Object>) ajax.getData();
             return ResponseBean.responseSuccess("查询成功").addData("expTypeList", map.get("expTypeList"));
         } catch (Exception e) {
@@ -88,7 +90,7 @@ public class V2FinancialController extends BaseWSController {
     public ResponseBean saveOrUpdateExpCategory(@RequestBody ExpTypeOutDTO dto) {
         try {
             String companyId = dto.getAppOrgId();
-            AjaxMessage ajax = expMainService.saveOrUpdateCategoryBaseData(dto, companyId);
+            AjaxMessage ajax = expCategoryService.saveOrUpdateCategoryBaseData(dto, companyId);
             if ("0".equals(ajax.getCode())) {
                 return ResponseBean.responseSuccess("保存成功");
             }
@@ -111,7 +113,8 @@ public class V2FinancialController extends BaseWSController {
     public ResponseBean getExpTypeList(@RequestBody Map<String, String> paraMap) {
         try {
             String companyId = paraMap.get("appOrgId");
-            List<ExpTypeDTO> expType = expMainService.getExpTypeList(companyId);
+            String accountId = paraMap.get("accountId");
+            List<ExpTypeDTO> expType = expCategoryService.getExpCategoryTypeList(companyId,accountId);
             return ResponseBean.responseSuccess("查询成功").addData("expTypeList", expType);
         } catch (Exception e) {
             log.error("=======V2FinancialController.getExpTypeList()方法出现异常=========", e);
@@ -130,20 +133,10 @@ public class V2FinancialController extends BaseWSController {
     @RequestMapping("/getProjectList")
     @AuthorityCheckable
     @ResponseBody
-    public ResponseBean getProjectList(@RequestBody Map<String, String> paraMap) {
+    public ResponseBean getProjectList(@RequestBody Map<String, Object> paraMap) {
         try {
-            String companyId = paraMap.get("appOrgId");
-            String searchVal = paraMap.get("searchVal");
-            Map<String, Object> map = new HashMap<String, Object>();
-            ProjectDTO projectDTO = new ProjectDTO();
-            projectDTO.setCompanyId(companyId);
-            //  projectDTO.setSearchVal(searchVal);
-            map.put("companyId", companyId);
-            if (!StringUtil.isNullOrEmpty(searchVal)) {
-                map.put("searchVal", searchVal);
-            }
-            map.put("projectList", expMainService.getProjectListWS(map));
-            return ResponseBean.responseSuccess("查询成功").addData(map);
+            paraMap.put("projectList", expMainService.getProjectListWS(paraMap));
+            return ResponseBean.responseSuccess("查询成功").addData(paraMap);
         } catch (Exception e) {
             log.error("=======V2FinancialController.getProjectList()方法出现异常=========", e);
             return ResponseBean.responseError("查询失败");
@@ -192,8 +185,8 @@ public class V2FinancialController extends BaseWSController {
             mapParams.put("companyId", companyId);
             mapParams.put("userId", userId);
             CompanyDTO company = companyService.getCompanyById(companyId);
-            List<DepartDTO> list = departService.getDepartByCompanyId(mapParams);
-            DepartDTO dto = new DepartDTO();
+            List<DepartDataDTO> list = departService.getDepartByCompanyId(mapParams);
+            DepartDataDTO dto = new DepartDataDTO();
             dto.setId(companyId);
             dto.setDepartName(company.getCompanyShortName());
             list.add(0, dto);
@@ -249,7 +242,10 @@ public class V2FinancialController extends BaseWSController {
         try {
             String companyId = paraMap.get("appOrgId");
             String orgId = paraMap.get("orgId");
-            return ResponseBean.responseSuccess("查询成功").addData("userList", expMainService.getUserList(companyId, orgId));
+            if (companyId.equals(orgId)) {//此处的功能是，如果orgId= companyId ，则查询所有成员
+                orgId = null;
+            }
+            return ResponseBean.responseSuccess("查询成功").addData("userList", companyUserService.getUserList(companyId, orgId));
         } catch (Exception e) {
             log.error("=======V2FinancialController.getUserList()方法出现异常=========", e);
             return ResponseBean.responseError("查询失败");
@@ -434,16 +430,11 @@ public class V2FinancialController extends BaseWSController {
     @RequestMapping("/agreeExpMain")
     @AuthorityCheckable
     @ResponseBody
-    public ResponseBean agreeExpMain(@RequestBody ExpMainDTO expMainDTO) {
-        try {
-            int i = expMainService.agreeExpMain(expMainDTO.getId(), expMainDTO.getCompanyUserId(), expMainDTO.getVersionNum() + "");
-            if (i > 0) {
-                return ResponseBean.responseSuccess("操作成功");
-            } else {
-                return ResponseBean.responseError("操作失败");
-            }
-        } catch (Exception e) {
-            log.error("=======V2FinancialController.agreeExpMain()方法出现异常=========", e);
+    public ResponseBean agreeExpMain(@RequestBody SaveExpMainDTO expMainDTO) throws Exception{
+        int i = expMainService.agreeExpMain(expMainDTO);
+        if (i > 0) {
+            return ResponseBean.responseSuccess("操作成功");
+        } else {
             return ResponseBean.responseError("操作失败");
         }
     }
@@ -456,17 +447,12 @@ public class V2FinancialController extends BaseWSController {
     @RequestMapping("/agreeAndTransAuditPerExpMain")
     @AuthorityCheckable
     @ResponseBody
-    public ResponseBean agreeAndTransAuditPerExpMain(@RequestBody ExpMainDTO expMainDTO) {
-        try {
-            int i = expMainService.agreeAndTransAuditPerExpMain(expMainDTO.getId(), expMainDTO.getCompanyUserId(), expMainDTO.getAuditPerson(), expMainDTO.getVersionNum() + "",expMainDTO.getAccountId());
-            if (i > 0) {
-                return ResponseBean.responseSuccess("转发成功");
-            } else {
-                return ResponseBean.responseError("报销转发失败");
-            }
-        } catch (Exception e) {
-            log.error("=======V2FinancialController.agreeAndTransAuditPerExpMain()方法出现异常=========", e);
-            return ResponseBean.responseError("操作失败");
+    public ResponseBean agreeAndTransAuditPerExpMain(@RequestBody SaveExpMainDTO expMainDTO) throws Exception{
+        int i = expMainService.agreeAndTransAuditPerExpMain(expMainDTO);
+        if (i > 0) {
+            return ResponseBean.responseSuccess("转发成功");
+        } else {
+            return ResponseBean.responseError("报销转发失败");
         }
     }
 
@@ -651,24 +637,19 @@ public class V2FinancialController extends BaseWSController {
     @RequestMapping("/v2SaveOrUpdateExpMainAndDetail")
     @AuthorityCheckable
     @ResponseBody
-    public ResponseBean v2SaveOrUpdateExpMainAndDetail(@RequestBody V2ExpMainDTO dto) {
-        try {
-            String userId = dto.getAccountId();
-            String companyId = dto.getAppOrgId();
-            dto.setAppOrgId(null);
-            dto.setAccountId(null);
-            AjaxMessage ajax = expMainService.v2SaveOrUpdateExpMainAndDetail(dto, userId, companyId);
-            if (ajax.getCode().equals("0")) {
-                V2ExpMainDTO v2dto = (V2ExpMainDTO) ajax.getData();
-                Map<String, Object> map = new HashedMap();
-                map.put("expNo", v2dto.getExpNo());
-                return ResponseBean.responseSuccess("报销保存成功").setData(map);
-            }
-            return ResponseBean.responseError("报销保存失败");
-        } catch (Exception e) {
-            log.error("=========V2FinancialController.saveOrUpdateExpMainAndDetail()方法出现异常==========", e);
-            return ResponseBean.responseError("操作失败");
+    public ResponseBean v2SaveOrUpdateExpMainAndDetail(@RequestBody V2ExpMainDTO dto) throws Exception{
+        String userId = dto.getAccountId();
+        String companyId = dto.getAppOrgId();
+        dto.setAppOrgId(null);
+        dto.setAccountId(null);
+        AjaxMessage ajax = expMainService.v2SaveOrUpdateExpMainAndDetail(dto, userId, companyId);
+        if (ajax.getCode().equals("0")) {
+            V2ExpMainDTO v2dto = (V2ExpMainDTO) ajax.getData();
+            Map<String, Object> map = new HashedMap();
+            map.put("expNo", v2dto.getExpNo());
+            return ResponseBean.responseSuccess("报销保存成功").setData(map);
         }
+        return ResponseBean.responseError("报销保存失败");
     }
 
     /**
@@ -679,15 +660,9 @@ public class V2FinancialController extends BaseWSController {
     @RequestMapping("/v2GetExpMainDetail")
     @AuthorityCheckable
     @ResponseBody
-    public ResponseBean v2GetExpMainDetail(@RequestBody ExpMainDTO expMainDTO) {
-        try {
-            Map<String, Object> map = expMainService.getExpMainDetail(expMainDTO.getId());
-
-            return ResponseBean.responseSuccess("查询成功").addData(map);
-        } catch (Exception e) {
-            log.error("=======V2FinancialController.v2GetExpMainDetail()方法出现异常=========", e);
-            return ResponseBean.responseError("查询失败");
-        }
+    public ResponseBean v2GetExpMainDetail(@RequestBody ExpMainDTO expMainDTO) throws Exception{
+        Map<String, Object> map = expMainService.getExpMainDetail2(expMainDTO);
+        return ResponseBean.responseSuccess("查询成功").addData(map);
     }
 
     /**
@@ -706,6 +681,67 @@ public class V2FinancialController extends BaseWSController {
             log.error("=======V2FinancialController.getMaxExpNo()方法出现异常=========", e);
             return ResponseBean.responseError("查询失败");
         }
+    }
+
+    /**
+     * 方法描述：审批记录
+     * 作   者：MaoSF
+     * 日   期：2016/12/22
+     */
+    @RequestMapping("/getAuditData")
+    @AuthorityCheckable
+    @ResponseBody
+    public ResponseBean getAuditDataDTO(@RequestBody QueryAuditDTO query) throws Exception{
+        return ResponseBean.responseSuccess("查询成功").addData("auditList", expMainService.getAuditDataDTO(query));
+    }
+
+       /**
+     * 方法描述：抄送给我记录
+     * 作   者：MaoSF
+     * 日   期：2016/12/22
+     */
+    @RequestMapping("/getCcAuditData")
+    @AuthorityCheckable
+    @ResponseBody
+    public ResponseBean getCcAuditData(@RequestBody  QueryAuditDTO query) throws Exception{
+        return ResponseBean.responseSuccess("查询成功").addData("auditList", expMainService.getCcAuditData(query));
+    }
+
+    /**
+     * 方法描述：审核通过的记录（不包含退回的）
+     * 作   者：MaoSF
+     * 日   期：2016/12/22
+     */
+    @RequestMapping("/getPassAuditData")
+    @AuthorityCheckable
+    @ResponseBody
+    public ResponseBean getPassAuditData(@RequestBody  QueryAuditDTO query) throws Exception{
+        return ResponseBean.responseSuccess("查询成功").addData("auditList", expMainService.getPassAuditData(query));
+    }
+
+    /**
+     * 方法描述：首页数据-审核统计
+     * 作   者：MaoSF
+     * 日   期：2016/12/22
+     */
+    @RequestMapping("/getApproveDataForHome")
+    @AuthorityCheckable
+    @ResponseBody
+    public ResponseBean getApproveDataForHome(@RequestBody Map<String,Object> map) throws Exception{
+        return ResponseBean.responseSuccess("查询成功").addData("homeData", expMainService.getApproveDataForHome(map));
+    }
+
+
+    /**
+     * 方法描述：审批统计数据
+     * 作   者：MaoSF
+     * 日   期：2016/12/22
+     */
+    @RequestMapping("/getAuditStaticData")
+    @AuthorityCheckable
+    @ResponseBody
+    public ResponseBean getAuditStaticData(@RequestBody QueryAuditDTO query) throws Exception{
+        return ResponseBean.responseSuccess("查询成功").addData("auditStaticData", expMainService.getAuditStaticData(query));
     }
 
 }

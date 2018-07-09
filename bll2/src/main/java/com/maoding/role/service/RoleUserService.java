@@ -19,23 +19,6 @@ import java.util.Map;
  */
 public interface RoleUserService  extends BaseService<RoleUserEntity>{
 
-	/**
-	 * 方法描述：获取当前用户所在组织（包含独立部门）的所有权限
-	 * 作        者：MaoSF
-	 * 日        期：2016年7月11日-下午3:33:39
-	 * @param param（companyId,departType=1）
-	 * @return
-	 */
-	public List<UserOrgRoleDTO> getOrgUserRoles(Map<String,Object> param);
-	
-	/**
-	 * 方法描述：保存用户权限
-	 * 作        者：MaoSF
-	 * 日        期：2016年7月11日-下午5:23:51
-	 * @param dto
-	 * @return
-	 */
-	public Object saveOrUserRoles(RoleUserDTO dto);
 
 	/**
 	 * 方法描述：保存用户权限
@@ -47,6 +30,13 @@ public interface RoleUserService  extends BaseService<RoleUserEntity>{
 	public AjaxMessage saveOrUserRole(SaveRoleUserDTO dto)  throws Exception;
 
 	/**
+	 * 方法描述：企业负责人，系统管理员 移交调用接口
+	 * 作者：MaoSF
+	 * 日期：2016/11/3
+	 */
+	AjaxMessage saveOrgManager(SaveRoleUserDTO dto) throws Exception;
+
+	/**
 	 * 方法描述：删除用户角色（根据userId，companyId，roleId）
 	 * 作者：MaoSF
 	 * 日期：2016/11/3
@@ -55,13 +45,6 @@ public interface RoleUserService  extends BaseService<RoleUserEntity>{
 	 */
 	public AjaxMessage deleteRoleUser(Map<String,Object> param) throws Exception;
 
-	/**
-	 * 方法描述：初始化用户角色对应的权限 2011-11-11 （数据迁移使用）
-	 * 作者：MaoSF
-	 * 日期：2016/11/3
-	 * @param:
-	 * @return:
-	 */
-	public AjaxMessage initRoleUserPermission() throws Exception;
-
+	void sendMessageForRole(List<String> userIdList, String companyId,String accountId) throws Exception;
+	void sendMessageForRole(List<String> userIdList, String companyId) throws Exception;
 }

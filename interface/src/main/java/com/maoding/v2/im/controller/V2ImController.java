@@ -54,7 +54,11 @@ public class V2ImController extends BaseWSController {
     @AuthorityCheckable
     @ResponseBody
     public ResponseBean imGroupInfo(@RequestBody ImGroupQuery query) throws Exception {
-        return ResponseBean.responseSuccess().addDataFromObject(this.imService.imGroupInfo(query));
+        ImGroupDataDTO imGroupDataDTO = this.imService.imGroupInfo(query);
+        if(imGroupDataDTO==null){
+            return ResponseBean.responseError("参数错误");
+        }
+        return ResponseBean.responseSuccess().addDataFromObject(imGroupDataDTO);
     }
 
     /**
@@ -72,15 +76,13 @@ public class V2ImController extends BaseWSController {
         if (personal == null) {
             personal = new UserEntity();
         } else {
-            Map<String, Object> param = new HashMap<String, Object>();
-            param.put("userId", map.get("uid"));
-            param.put("attachType", "5");//个人头像
-            List<UserAttachEntity> userAttachList = userAttachService.getAttachByType(param);
-            headImg = userAttachList.size() > 0 ? (fastdfsUrl + userAttachList.get(0).getFileGroup() + "/" + userAttachList.get(0).getAttachPath()) : "";
+            //headImg =userAttachList.size()>0? userAttachList.get(0).getOssFilePath():"";
+            headImg =userAttachService.getHeadImgUrl((String)map.get("uid")) ;
         }
         return responseSuccess()
                 .addData("name", personal.getUserName())
                 .addData("img", headImg)
+                .addData("fileFullPath", headImg)
                 .addData("sex", personal.getSex());
     }
 
@@ -200,6 +202,19 @@ public class V2ImController extends BaseWSController {
     @ResponseBody
     public ResponseBean getAllImGroupByUserId(@RequestBody ImGroupQuery query) throws Exception {
         return ResponseBean.responseSuccess().addData("groupList",this.imService.listAllGroupByUserId(query));
+    }
+
+
+    /**
+     * 方法描述：获取当前人所有群组及群组成员（按类型分组）
+     * 作    者 : MaoSF
+     * 日    期 : 2017/05/23
+     */
+    @RequestMapping("/getUserIdAllImGroup")
+    @AuthorityCheckable
+    @ResponseBody
+    public ResponseBean listGroupByUserIdAndCompanyId(@RequestBody ImGroupQuery query) throws Exception {
+        return ResponseBean.responseSuccess().addData("imGroupList",this.imService.listGroupByUserIdAndCompanyId(query));
     }
 
 }

@@ -1,6 +1,9 @@
 package com.maoding.v2.mytask.controller;
 
+import com.maoding.core.base.dto.QueryDTO;
 import com.maoding.core.bean.ResponseBean;
+import com.maoding.mytask.dto.HandleMyTaskDTO;
+import com.maoding.mytask.dto.SaveMyTaskDTO;
 import com.maoding.mytask.service.MyTaskService;
 import com.maoding.system.annotation.AuthorityCheckable;
 import com.maoding.system.controller.BaseWSController;
@@ -79,7 +82,7 @@ public class V2MyTaskController extends BaseWSController {
      * @param:
      * @return:
      */
-    @RequestMapping("/getMyTaskDetail")
+    @RequestMapping("/getMyTaskDetailNew")
     @AuthorityCheckable
     @ResponseBody
     public ResponseBean getMyTaskDetail(@RequestBody Map<String, Object> paraMap) throws Exception {
@@ -87,21 +90,92 @@ public class V2MyTaskController extends BaseWSController {
     }
 
     /**
-     * 方法描述：处理任务
+     * 方法描述：获取任务详情
      * 作者：MaoSF
      * 日期：2017/1/11
      *
      * @param:
      * @return:
      */
+    @RequestMapping("/getMyTaskDetail")
+    @AuthorityCheckable
+    @ResponseBody
+    public ResponseBean getMyTaskDetail_old(@RequestBody Map<String, Object> paraMap) throws Exception {
+        return this.myTaskService.getMyTaskDetail_old((String) paraMap.get("id"), (String) paraMap.get("accountId"));
+    }
+
+    /**
+     * 方法描述：处理任务
+     * 作者：MaoSF
+     * 日期：2017/1/11
+     */
     @RequestMapping("/handleMyTask")
     @AuthorityCheckable
     @ResponseBody
-    public ResponseBean handleMyTask(@RequestBody Map<String, Object> paraMap) throws Exception {
-        if (paraMap.get("paidDate") != null) {
-            return this.myTaskService.handleMyTask((String) paraMap.get("id"), (String) paraMap.get("result"), (String) paraMap.get("status"), (String) paraMap.get("accountId"), (String) paraMap.get("paidDate"));
-        }
-        return this.myTaskService.handleMyTask((String) paraMap.get("id"), (String) paraMap.get("result"), (String) paraMap.get("status"), (String) paraMap.get("accountId"));
+    public ResponseBean handleMyTask(@RequestBody HandleMyTaskDTO dto) throws Exception {
+
+        return this.myTaskService.handleMyTask(dto);
+    }
+
+    /**
+     * 方法描述：保存轻量级任务
+     * 作者：MaoSF
+     * 日期：2017/1/11
+     */
+    @RequestMapping("/saveMyTask")
+    @AuthorityCheckable
+    @ResponseBody
+    public ResponseBean saveMyTask(@RequestBody SaveMyTaskDTO dto) throws Exception {
+        return this.myTaskService.saveMyTask(dto);
+    }
+
+    /**
+     * 方法描述：删除轻量级任务
+     * 作者：MaoSF
+     * 日期：2017/1/11
+     */
+    @RequestMapping("/deleteMyTask")
+    @AuthorityCheckable
+    @ResponseBody
+    public ResponseBean deleteMyTask(@RequestBody SaveMyTaskDTO dto) throws Exception {
+        return this.myTaskService.deleteMyTask(dto);
+    }
+
+    /**
+     * 方法描述：我提交的任务列表(轻量型任务)
+     * 作者：MaoSF
+     * 日期：2017/1/11
+     */
+    @RequestMapping("/getMySubmitTask")
+    @AuthorityCheckable
+    @ResponseBody
+    public ResponseBean getMySubmitTask(@RequestBody QueryDTO dto) throws Exception {
+        return  ResponseBean.responseSuccess().addData("myTaskList",myTaskService.getMySubmitTask(dto));
+    }
+
+
+    /**
+     * 方法描述：首页-- 我的任务板块数据
+     * 作者：MaoSF
+     * 日期：2017/1/11
+     */
+    @RequestMapping("/getTaskForHome")
+    @AuthorityCheckable
+    @ResponseBody
+    public ResponseBean getTaskForHome(@RequestBody Map<String, Object> paraMap) throws Exception {
+        return  ResponseBean.responseSuccess().addData("homeData",myTaskService.getTaskForHome(paraMap));
+    }
+
+    /**
+     * 方法描述：首页-- 我的任务板块数据
+     * 作者：MaoSF
+     * 日期：2017/1/11
+     */
+    @RequestMapping("/myTaskCountForNotHandle")
+    @AuthorityCheckable
+    @ResponseBody
+    public ResponseBean myTaskCountForNotHandle(@RequestBody Map<String, Object> paraMap) throws Exception {
+        return  ResponseBean.responseSuccess().setData(myTaskService.myTaskCountForNotHandle(paraMap));
     }
 
 }

@@ -32,32 +32,12 @@ public class ProjectCostPaymentDetailDataDTO {
     private BigDecimal fee;
 
     /**
-     * 到款金额，已收金额
-     */
-    private BigDecimal paidFee;
-
-    /**
      * 发票信息
      */
     private String invoice;
 
 
     private String type;
-
-    /**
-     * 已收
-     */
-    private BigDecimal totalPaidFee;
-
-    /**
-     * 总金额
-     */
-    private BigDecimal totalFee;
-
-    /**
-     * 应收未收
-     */
-    private BigDecimal notReceiveFee;
 
     /**
      * 收款日期
@@ -89,6 +69,8 @@ public class ProjectCostPaymentDetailDataDTO {
      */
     private String userName3;
 
+    private String handlerName;
+
     /**
      * 权限map:
      * 4.付款（技术审查费-确认付款款（经营负责人）），
@@ -102,22 +84,6 @@ public class ProjectCostPaymentDetailDataDTO {
     */
     private Map<String,Object> roleMap = new HashMap<String,Object>();
 
-
-    public BigDecimal getTotalPaidFee() {
-        return totalPaidFee;
-    }
-
-    public void setTotalPaidFee(BigDecimal totalPaidFee) {
-        this.totalPaidFee = totalPaidFee;
-    }
-
-    public BigDecimal getTotalFee() {
-        return totalFee;
-    }
-
-    public void setTotalFee(BigDecimal totalFee) {
-        this.totalFee = totalFee;
-    }
 
     public String getProjectId() {
         return projectId;
@@ -143,14 +109,6 @@ public class ProjectCostPaymentDetailDataDTO {
         this.fee = fee;
     }
 
-    public BigDecimal getPaidFee() {
-        return paidFee;
-    }
-
-    public void setPaidFee(BigDecimal paidFee) {
-        this.paidFee = paidFee;
-    }
-
     public String getInvoice() {
         return invoice;
     }
@@ -168,13 +126,6 @@ public class ProjectCostPaymentDetailDataDTO {
         this.type = type;
     }
 
-    public BigDecimal getNotReceiveFee() {
-        return notReceiveFee;
-    }
-
-    public void setNotReceiveFee(BigDecimal notReceiveFee) {
-        this.notReceiveFee = notReceiveFee;
-    }
 
     public String getId() {
         return id;
@@ -238,5 +189,13 @@ public class ProjectCostPaymentDetailDataDTO {
 
     public void setPayDate(String payDate) {
         this.payDate = payDate;
+    }
+
+    public String getHandlerName() {
+        return handlerName;
+    }
+
+    public void setHandlerName(String handlerName) {
+        this.handlerName = handlerName;
     }
 }

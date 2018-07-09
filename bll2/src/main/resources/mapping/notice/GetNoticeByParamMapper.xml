@@ -14,6 +14,10 @@
     <result column="notice_publisher_name" property="noticePublisherName" jdbcType="VARCHAR" />
     <result column="company_name" property="companyName" jdbcType="VARCHAR" />
     <result column="company_short_name" property="companyShortName" jdbcType="VARCHAR" />
+    <result column="notice_publishday" property="noticePublishDay" jdbcType="VARCHAR" />
+    <result column="notice_publishyearmonth" property="noticePublishYearMonth" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="notice_type" property="noticeType" jdbcType="INTEGER" />
 
   </resultMap>
 
@@ -34,6 +38,7 @@
         <result column="company_name" property="companyName" jdbcType="VARCHAR" />
         <result column="company_short_name" property="companyShortName" jdbcType="VARCHAR" />
         <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+        <result column="notice_type" property="noticeType" jdbcType="INTEGER" />
       </collection>
     </resultMap>
 
@@ -47,7 +52,11 @@
       a.company_id,
       notice_publisher,
       notice_content,
-      notice_publishdate,
+      a.create_date,
+      a.notice_type,
+      DATE_FORMAT(a.notice_publishdate,'%Y/%m/%d') as notice_publishdate,
+      DATE_FORMAT(a.notice_publishdate,'%d') as notice_publishday,
+      DATE_FORMAT(a.notice_publishdate,'%Y/%m') as notice_publishyearmonth,
       c.user_name AS notice_publisher_name,
       c2.company_name,
       c2.company_short_name
@@ -56,27 +65,22 @@
     LEFT JOIN maoding_web_notice_org b ON a.id = b.notice_id
     LEFT JOIN maoding_web_company_user c ON a.notice_publisher = c.id
     LEFT JOIN maoding_web_org d ON b.org_id = d.id
-    WHERE
-    1 = 1 AND a.notice_status!='1'
-    <if test="companyUserId == null" >
-    AND
-    (
-      (
-        d.org_type = 1
-        AND b.org_id IN  ( SELECT org_id FROM maoding_web_org_user ou WHERE ou.company_id = #{companyId,jdbcType=VARCHAR} AND ou.user_id =  #{userId,jdbcType=VARCHAR})
-      )
-      OR
-      (
-        d.org_type = 0
-        AND b.org_id IN (SELECT company_id FROM maoding_web_org_user ou WHERE ou.company_id =#{companyId,jdbcType=VARCHAR} AND ou.user_id =  #{userId,jdbcType=VARCHAR})
-      )
-    )
-    </if>
+      <if test="companyUserId == null and userId!=null" >
+    INNER JOIN maoding_web_org_user e on (d.org_type = 1 and b.org_id = e.org_id or d.org_type = 0 and b.org_id = e.company_id) and e.user_id = #{userId}
+      <if test="companyId != null" >
+         and e.company_id = #{companyId}
+      </if>
+      </if>
+    WHERE 1 = 1
+    AND a.notice_status!='1'
     <if test="companyUserId != null" >
       AND a.notice_publisher = #{companyUserId,jdbcType=VARCHAR}
     </if>
     GROUP BY a.id
     ORDER BY a.create_date DESC
+      <if test="lastMessage!=null">
+        limit 1
+      </if>
     <if test="_parameter.containsKey('startPage')">
       limit #{startPage},#{endPage}
     </if>
@@ -124,11 +128,15 @@
         notice_publisher,
         notice_content,
         notice_publishdate,
+        a.create_date,
         c.user_name AS notice_publisher_name
         FROM maoding_web_notice a
         LEFT JOIN maoding_web_company_user c ON a.notice_publisher = c.id
-        WHERE a.company_id =  #{companyId,jdbcType=VARCHAR} AND a.notice_status='0'
+        WHERE a.company_id =  #{companyId} AND a.notice_status='0'
         ORDER BY a.create_date DESC
+      <if test="lastMessage!=null">
+        limit 1
+      </if>
         <if test="_parameter.containsKey('startPage')">
           limit #{startPage},#{endPage}
         </if>
@@ -164,6 +172,7 @@
     a.company_id,
     notice_publisher,
     notice_content,
+    notice_type,
     notice_publishdate,
     c.user_name AS notice_publisher_name
     FROM maoding_web_notice a
@@ -173,6 +182,31 @@
     <if test="_parameter.containsKey('startPage')">
       limit #{startPage},#{endPage}
     </if>
+  </select>
+
+  <select id="getNotReadNotice" resultMap="BaseResultMap" parameterType="java.util.Map">
+    SELECT a.id,b.org_id as company_id
+    FROM maoding_web_notice a
+    INNER JOIN maoding_web_notice_org b ON a.id = b.notice_id
+    INNER JOIN maoding_web_org d ON b.org_id = d.id
+    INNER JOIN maoding_web_org_user e on (d.org_type = 1 and b.org_id = e.org_id or d.org_type = 0 and b.org_id = e.company_id) and e.user_id = #{accountId}
+    WHERE a.notice_status = '0' and e.user_id = #{accountId}
+    AND a.id NOT IN (SELECT notice_id
+    FROM maoding_web_notice_read
+    WHERE  user_id = #{accountId})
+    group by a.id
+  </select>
+
+  <select id="getNotReadNoticeCount" resultType="java.lang.Integer" parameterType="java.util.Map">
+    SELECT count(DISTINCT a.id)
+    FROM maoding_web_notice a
+    INNER JOIN maoding_web_notice_org b ON a.id = b.notice_id
+    INNER JOIN maoding_web_org d ON b.org_id = d.id
+    INNER JOIN maoding_web_org_user e on (d.org_type = 1 and b.org_id = e.org_id or d.org_type = 0 and b.org_id = e.company_id) and e.user_id = #{accountId}
+    WHERE a.notice_status = '0' and e.user_id = #{accountId}
+    AND a.id NOT IN (SELECT notice_id
+    FROM maoding_web_notice_read
+    WHERE  user_id = #{accountId})
   </select>
 
 </mapper>

@@ -3,6 +3,7 @@
 <mapper namespace="ProjectTaskEntityMapper" >
   <resultMap id="BaseResultMap" type="com.maoding.task.entity.ProjectTaskEntity" >
     <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="from_company_id" property="fromCompanyId" jdbcType="VARCHAR" />
     <result column="company_id" property="companyId" jdbcType="VARCHAR" />
     <result column="project_id" property="projectId" jdbcType="VARCHAR" />
     <result column="task_name" property="taskName" jdbcType="VARCHAR" />
@@ -23,13 +24,14 @@
     <result column="be_modify_id" property="beModifyId" jdbcType="VARCHAR" />
     <result column="start_time"  property="startTime" jdbcType="DATE"/>
     <result column="end_time" property="endTime" jdbcType="DATE"/>
+    <result column="end_status" property="endStatus" jdbcType="INTEGER" />
   </resultMap>
 
   <sql id="Base_Column_List" >
-    id, company_id, project_id, task_name, task_pid, task_type, task_level,
+    id, company_id,from_company_id,  project_id, task_name, task_pid, task_type, task_level,
     task_status,task_path,complete_date,
     task_remark, seq, create_date, create_by, update_date, update_by,
-    is_operater_task,org_id,be_modify_id,start_time,end_time
+    is_operater_task,org_id,be_modify_id,start_time,end_time,end_status
   </sql>
 
   <select id="selectById" resultMap="BaseResultMap" parameterType="java.lang.String" >
@@ -37,6 +39,22 @@
     <include refid="Base_Column_List" />
     from maoding_web_project_task
     where id = #{id,jdbcType=VARCHAR}
+  </select>
+
+  <select id="listUnCompletedTaskByCompany" resultMap="BaseResultMap" parameterType="java.util.Map" >
+    select
+    b.*
+    from
+    ( select t.task_path,t.complete_date from maoding_web_project_task t, maoding_web_project_task_relation r
+    where t.project_id = #{projectId}
+    and t.id = r.task_id and r.relation_status=0
+    and r.from_company_id = #{fromCompanyId}
+    <if test="toCompanyId!=null"> and r.to_company_id = #{toCompanyId}</if>
+    and t.task_status='0' and t.task_type!='3') a
+    INNER JOIN maoding_web_project_task b on (b.task_status='0' and b.task_type!='3' and position(concat(a.task_path) in b.task_path))
+    where 1=1
+    and (a.complete_date is null) and (b.complete_date is null)
+    and b.is_operater_task = 0
   </select>
 
   <select id="listUnCompletedTask" resultMap="BaseResultMap" parameterType="java.lang.String" >
@@ -80,15 +98,17 @@
   </update>
 
   <insert id="insert" parameterType="com.maoding.task.entity.ProjectTaskEntity" >
-    insert into maoding_web_project_task (id, company_id, project_id, org_id,
+    insert into maoding_web_project_task (id, company_id,from_company_id,
+    project_id, org_id,
       task_name, task_pid, task_type, complete_date,
       task_level, task_status, task_remark, 
       seq, create_date, create_by,
       update_date, update_by,
       is_operater_task,be_modify_id,
       start_time, end_time,
-      task_path)
-    values (#{id,jdbcType=VARCHAR}, #{companyId,jdbcType=VARCHAR}, #{projectId,jdbcType=VARCHAR}, #{orgId,jdbcType=VARCHAR},
+      task_path,end_status)
+    values (#{id,jdbcType=VARCHAR}, #{companyId,jdbcType=VARCHAR},#{fromCompanyId,jdbcType=VARCHAR},
+    #{projectId,jdbcType=VARCHAR}, #{orgId,jdbcType=VARCHAR},
       #{taskName,jdbcType=VARCHAR}, #{taskPid,jdbcType=VARCHAR}, #{taskType,jdbcType=INTEGER},#{completeDate,jdbcType=DATE},
       #{taskLevel,jdbcType=INTEGER},
       <choose>
@@ -104,7 +124,7 @@
       #{updateDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR},
       #{isOperaterTask,jdbcType=INTEGER},#{beModifyId,jdbcType=INTEGER},
       #{startTime,jdbcType=DATE}, #{endTime,jdbcType=DATE},
-      #{taskPath,jdbcType=LONGVARCHAR})
+      #{taskPath,jdbcType=LONGVARCHAR},'0')
   </insert>
 
   <update id="updateById" parameterType="com.maoding.task.entity.ProjectTaskEntity" >
@@ -112,6 +132,9 @@
     <set >
       <if test="companyId != null" >
         company_id = #{companyId,jdbcType=VARCHAR},
+      </if>
+      <if test="fromCompanyId != null" >
+        from_company_id = #{fromCompanyId,jdbcType=VARCHAR},
       </if>
       <if test="projectId != null" >
         project_id = #{projectId,jdbcType=VARCHAR},
@@ -170,6 +193,9 @@
       <if test="endTime != null">
         end_time = #{endTime,jdbcType=DATE},
       </if>
+      <if test="endStatus != null" >
+        end_status = #{endStatus,jdbcType=INTEGER},
+      </if>
     </set>
     where id = #{id,jdbcType=VARCHAR}
   </update>
@@ -180,6 +206,9 @@
     <set >
       <if test="companyId != null" >
         company_id = #{companyId,jdbcType=VARCHAR},
+      </if>
+      <if test="fromCompanyId != null" >
+        from_company_id = #{fromCompanyId,jdbcType=VARCHAR},
       </if>
       <if test="projectId != null" >
         project_id = #{projectId,jdbcType=VARCHAR},
@@ -220,6 +249,9 @@
       <if test="endTime != null">
         end_time = #{endTime,jdbcType=DATE},
       </if>
+      <if test="endStatus != null" >
+        end_status = #{endStatus,jdbcType=INTEGER},
+      </if>
     </set>
     where id = #{id,jdbcType=VARCHAR}
   </update>
@@ -230,6 +262,9 @@
     task_status='0'
     <if test="companyId != null" >
       AND  company_id = #{companyId,jdbcType=VARCHAR}
+    </if>
+    <if test="fromCompanyId != null" >
+      AND  from_company_id = #{fromCompanyId,jdbcType=VARCHAR}
     </if>
     <if test="projectId != null" >
       AND  project_id = #{projectId,jdbcType=VARCHAR}
@@ -264,6 +299,7 @@
   <update id="update" parameterType="com.maoding.task.entity.ProjectTaskEntity" >
     update maoding_web_project_task
     set company_id = #{companyId,jdbcType=VARCHAR},
+      from_company_id = #{fromCompanyId,jdbcType=VARCHAR},
       project_id = #{projectId,jdbcType=VARCHAR},
       task_name = #{taskName,jdbcType=VARCHAR},
       task_pid = #{taskPid,jdbcType=VARCHAR},
@@ -279,6 +315,7 @@
       update_by = #{updateBy,jdbcType=VARCHAR},
       start_time = #{startTime,jdbcType=DATE},
       end_time = #{endTime,jdbcType=DATE},
+      end_status = #{endStatus,jdbcType=INTEGER},
       task_path = #{taskPath,jdbcType=LONGVARCHAR}
     where id = #{id,jdbcType=VARCHAR}
   </update>
@@ -304,7 +341,7 @@
     select a.id,a.task_name,a.project_id,a.company_id
     from maoding_web_project_task a
     INNER JOIN maoding_web_project_member c on a.id = c.target_id and c.member_type=3 and c.deleted=0
-    where a.task_status='0' AND (a.task_type = 0 or a.task_type = 2)
+    where a.task_status='0' AND (a.task_type = 0 or a.task_type = 2 or a.task_type = 1)
     and a.project_id = #{projectId,jdbcType=VARCHAR}
     and a.company_id = #{companyId,jdbcType=VARCHAR}
     and c.company_user_id = #{companyUserId,jdbcType=VARCHAR}
@@ -346,7 +383,11 @@
     <if test="seq != null" >
       AND  seq = #{seq,jdbcType=INTEGER}
     </if>
+    <if test="notIncludeDesignTask != null" >
+      AND  task_Type!='5'
+    </if>
     <if test="notComplete != null" >
+      AND is_operater_task = 0
       AND  complete_date is NULL
     </if>
     <if test="syncDate != null">

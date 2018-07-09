@@ -21,16 +21,6 @@ import java.util.Map;
 @Service("projectConstructDetailDao")
 public class ProjectConstructDetailDaoImpl extends GenericDao<ProjectConstructDetailEntity> implements ProjectConstructDetailDao {
 
-
-    /**
-     * 根据建设单位Id删除其联系人
-     * @param constructId 建设单位Id
-     * @return
-     */
-    public int delConstructDetByConsId(String constructId){
-        return this.sqlSession.delete("ProjectConstructDetailEntityMapper.delConstructDetByConsId", constructId);
-    }
-
     /**
      * 方法描述：根据constructId查询详情
      * 作者：MaoSF
@@ -63,20 +53,6 @@ public class ProjectConstructDetailDaoImpl extends GenericDao<ProjectConstructDe
     }
 
     /**
-     * 方法描述：获取当前公司，当前项目的其他联系人（如果当前项目为新增，则projectId为空，则获取所有联系人）
-     * 作者：MaoSF
-     * 日期：2016/7/28
-     *
-     * @param map
-     * @param: map（companyId必传），projectId可以为空
-     * @return:
-     */
-    @Override
-    public List<ProjectConstructDetailEntity> getOtherConstructDetail(Map<String, Object> map) {
-        return this.sqlSession.selectList("ProjectConstructDetailEntityMapper.getOtherConstructDetail", map);
-    }
-
-    /**
      * 方法描述：获取当前公司，当前项目的其他联系人（如果当前项目为新增，则projectId为空，则获取所有联系人）（新版本，根据项目分组）
      * 作者：MaoSF
      * 日期：2016/7/28
@@ -90,17 +66,4 @@ public class ProjectConstructDetailDaoImpl extends GenericDao<ProjectConstructDe
         return this.sqlSession.selectList("GetProjectConstructDetailGroupByProjectMapper.getOtherConstructDetailGroupByProject", map);
     }
 
-    /**
-     * 方法描述：获取当前公司，当前项目的其他联系人（如果当前项目为新增，则projectId为空，则获取所有联系人）
-     * 作者：MaoSF
-     * 日期：2016/7/28
-     *
-     * @param map
-     * @param: map（companyId必传），projectId可以为空
-     * @return:
-     */
-    @Override
-    public List<ProjectConstructDetailEntity> getOtherConstructDetailInterface(Map<String, Object> map) {
-        return this.sqlSession.selectList("ProjectConstructDetailEntityMapper.getOtherConstructDetailInterface", map);
-    }
 }

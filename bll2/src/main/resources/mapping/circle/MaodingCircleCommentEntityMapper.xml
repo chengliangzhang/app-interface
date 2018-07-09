@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="MaodingCircleCommentEntityMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.circle.entity.MaodingCircleCommentEntity" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="circle_id" property="circleId" jdbcType="VARCHAR" />
+    <result column="reply_user_id" property="replyUserId" jdbcType="VARCHAR" />
+    <result column="reply_comment_id" property="replyCommentId" jdbcType="VARCHAR" />
+    <result column="comment_user_id" property="commentUserId" jdbcType="VARCHAR" />
+    <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="comment" property="comment" jdbcType="VARCHAR" />
+    <result column="comment_type" property="commentType" jdbcType="INTEGER" />
+    <result column="deleted" property="deleted" jdbcType="INTEGER" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, circle_id, reply_user_id,reply_comment_id, comment_user_id, company_id, comment, comment_type, deleted,
+    create_date, create_by, update_date, update_by
+  </sql>
+  <select id="selectById" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from maoding_circle_comment
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+
+  <select id="getCircleCommentByCircleId" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select
+    <include refid="Base_Column_List" />
+    from maoding_circle_comment
+    where circle_id = #{circleId,jdbcType=VARCHAR}
+  </select>
+
+  <delete id="deleteById" parameterType="java.lang.String" >
+    delete from maoding_circle_comment
+    where id = #{id,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.maoding.circle.entity.MaodingCircleCommentEntity" >
+    insert into maoding_circle_comment (id, circle_id, reply_user_id, reply_comment_id,
+      comment_user_id, company_id, comment, 
+      comment_type, deleted, create_date, 
+      create_by, update_date, update_by
+      )
+    values (#{id,jdbcType=VARCHAR}, #{circleId,jdbcType=VARCHAR}, #{replyUserId,jdbcType=VARCHAR},
+     #{replyCommentId,jdbcType=VARCHAR},
+      #{commentUserId,jdbcType=VARCHAR}, #{companyId,jdbcType=VARCHAR}, #{comment,jdbcType=VARCHAR}, 
+      #{commentType,jdbcType=INTEGER}, #{deleted,jdbcType=INTEGER}, #{createDate,jdbcType=TIMESTAMP}, 
+      #{createBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}
+      )
+  </insert>
+
+  <update id="updateById" parameterType="com.maoding.circle.entity.MaodingCircleCommentEntity" >
+    update maoding_circle_comment
+    <set >
+      <if test="circleId != null" >
+        circle_id = #{circleId,jdbcType=VARCHAR},
+      </if>
+      <if test="replyUserId != null" >
+        reply_user_id = #{replyUserId,jdbcType=VARCHAR},
+      </if>
+      <if test="replyCommentId != null" >
+        reply_comment_id = #{replyCommentId,jdbcType=VARCHAR},
+      </if>
+      <if test="commentUserId != null" >
+        comment_user_id = #{commentUserId,jdbcType=VARCHAR},
+      </if>
+      <if test="companyId != null" >
+        company_id = #{companyId,jdbcType=VARCHAR},
+      </if>
+      <if test="comment != null" >
+        comment = #{comment,jdbcType=VARCHAR},
+      </if>
+      <if test="commentType != null" >
+        comment_type = #{commentType,jdbcType=INTEGER},
+      </if>
+      <if test="deleted != null" >
+        deleted = #{deleted,jdbcType=INTEGER},
+      </if>
+      <if test="createDate != null" >
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createBy != null" >
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        update_date = #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+  <update id="update" parameterType="com.maoding.circle.entity.MaodingCircleCommentEntity" >
+    update maoding_circle_comment
+    set circle_id = #{circleId,jdbcType=VARCHAR},
+      reply_user_id = #{replyUserId,jdbcType=VARCHAR},
+      comment_user_id = #{commentUserId,jdbcType=VARCHAR},
+      reply_comment_id = #{replyCommentId,jdbcType=VARCHAR},
+      company_id = #{companyId,jdbcType=VARCHAR},
+      comment = #{comment,jdbcType=VARCHAR},
+      comment_type = #{commentType,jdbcType=INTEGER},
+      deleted = #{deleted,jdbcType=INTEGER},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+</mapper>

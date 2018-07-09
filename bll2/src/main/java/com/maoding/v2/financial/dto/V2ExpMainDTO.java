@@ -34,10 +34,7 @@ public class V2ExpMainDTO extends BaseDTO {
      * 支出类别父子名称
      */
     private String expAllName;
-    /**
-     * 用户id
-     */
-    private String userId;
+
     /**
      * 报销人
      */
@@ -90,6 +87,11 @@ public class V2ExpMainDTO extends BaseDTO {
      * 报销单号
      */
     private String expNo;
+
+    /**
+     * 类型（1：报销，2：费用申请）
+     */
+    private Integer type;
     /**
      * 报销明细
      */
@@ -152,8 +154,38 @@ public class V2ExpMainDTO extends BaseDTO {
     private String pid;
 
     private String companyUserId;
+
+    /** 收款方公司id */
+    private String enterpriseId;
+
+    /** 收款方公司名称 */
+    private String enterpriseName;
+
+    private List<String> deleteAttachList = new ArrayList<>();
+
     /***报销附件**/
-    private List<ExpAttachEntity> expAttachList = new ArrayList<>();
+    private List<ExpAttachEntity> attachList = new ArrayList<>();
+
+    /**
+     * 需要抄送人的companyUserId
+     */
+    private List<String> ccCompanyUserList = new ArrayList<>();
+
+    public String getEnterpriseId() {
+        return enterpriseId;
+    }
+
+    public void setEnterpriseId(String enterpriseId) {
+        this.enterpriseId = enterpriseId;
+    }
+
+    public String getEnterpriseName() {
+        return enterpriseName;
+    }
+
+    public void setEnterpriseName(String enterpriseName) {
+        this.enterpriseName = enterpriseName;
+    }
 
     public String getTargetId() {
         return targetId;
@@ -187,12 +219,12 @@ public class V2ExpMainDTO extends BaseDTO {
         this.expFlag = expFlag;
     }
 
-    public List<ExpAttachEntity> getExpAttachList() {
-        return expAttachList;
+    public List<ExpAttachEntity> getAttachList() {
+        return attachList;
     }
 
-    public void setExpAttachList(List<ExpAttachEntity> expAttachList) {
-        this.expAttachList = expAttachList;
+    public void setAttachList(List<ExpAttachEntity> attachList) {
+        this.attachList = attachList;
     }
 
     public Integer getVersionNum() {
@@ -244,13 +276,6 @@ public class V2ExpMainDTO extends BaseDTO {
         this.detailList = detailList;
     }
 
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId == null ? null : userId.trim();
-    }
 
 
     public Date getExpDate() {
@@ -436,5 +461,29 @@ public class V2ExpMainDTO extends BaseDTO {
 
     public void setCompanyUserId(String companyUserId) {
         this.companyUserId = companyUserId;
+    }
+
+    public Integer getType() {
+        return type;
+    }
+
+    public void setType(Integer type) {
+        this.type = type;
+    }
+
+    public List<String> getDeleteAttachList() {
+        return deleteAttachList;
+    }
+
+    public void setDeleteAttachList(List<String> deleteAttachList) {
+        this.deleteAttachList = deleteAttachList;
+    }
+
+    public List<String> getCcCompanyUserList() {
+        return ccCompanyUserList;
+    }
+
+    public void setCcCompanyUserList(List<String> ccCompanyUserList) {
+        this.ccCompanyUserList = ccCompanyUserList;
     }
 }

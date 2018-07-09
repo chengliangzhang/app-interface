@@ -2,6 +2,7 @@ package com.maoding.project.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.maoding.core.base.dto.BaseDTO;
+import com.maoding.core.constant.SystemParameters;
 import com.maoding.core.util.DateUtils;
 import com.maoding.core.util.StringUtil;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -10,6 +11,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 深圳市设计同道技术有限公司
@@ -23,6 +25,12 @@ public class ProjectDTO extends BaseDTO {
      * 项目名称
      */
     private String projectName;
+
+
+    /**
+     * 甲方(公司数据id）
+     */
+    private String enterpriseId;
 
     /**
      * 甲方
@@ -183,6 +191,10 @@ public class ProjectDTO extends BaseDTO {
     private String companyId;
 
     /**
+     * 立项组织
+     */
+    private String companyName;
+    /**
      * 企业所属省
      */
     private String province;
@@ -211,13 +223,19 @@ public class ProjectDTO extends BaseDTO {
     //标示（乙方是否能改变，1：不能改变）
     private String companyBidFlag;
 
-
+    /**
+     * 专业信息
+     */
+    private String professionalTypeName = "建筑";//目前默认是建筑
 
     /**
      *项目状态
      */
     private String status;
 
+    private String statusName;
+
+    private String createBy;
     /**
      * 设计阶段列表
      */
@@ -234,6 +252,7 @@ public class ProjectDTO extends BaseDTO {
      */
     private List<ProjectDesignBasisDTO> projectDesignBasisList = new ArrayList<ProjectDesignBasisDTO>();
 
+    private  List<Map<String,String>> contractAttachList = new ArrayList<>();
     /**
      * 合同签订日期
      */
@@ -241,12 +260,25 @@ public class ProjectDTO extends BaseDTO {
     @JsonFormat(pattern="yyyy-MM-dd",timezone = "GMT+8")
     private Date contractDate;
 
+    /**
+     * 自定义属性
+     */
+    private List<CustomProjectPropertyDTO> projectPropertyList = new ArrayList<>();
+
     public String getCompanyId() {
         return companyId;
     }
 
     public void setCompanyId(String companyId) {
         this.companyId = companyId;
+    }
+
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
     }
 
     public String getProjectName() {
@@ -581,5 +613,57 @@ public class ProjectDTO extends BaseDTO {
 
     public void setProjectCreateDate(Date projectCreateDate) {
         this.projectCreateDate = projectCreateDate;
+    }
+
+    public List<CustomProjectPropertyDTO> getProjectPropertyList() {
+        return projectPropertyList;
+    }
+
+    public void setProjectPropertyList(List<CustomProjectPropertyDTO> projectPropertyList) {
+        this.projectPropertyList = projectPropertyList;
+    }
+
+    public String getEnterpriseId() {
+        return enterpriseId;
+    }
+
+    public void setEnterpriseId(String enterpriseId) {
+        this.enterpriseId = enterpriseId;
+    }
+
+    public List<Map<String, String>> getContractAttachList() {
+        return contractAttachList;
+    }
+
+    public void setContractAttachList(List<Map<String, String>> contractAttachList) {
+        this.contractAttachList = contractAttachList;
+    }
+
+    public String getProfessionalTypeName() {
+        return professionalTypeName;
+    }
+
+    public void setProfessionalTypeName(String professionalTypeName) {
+        this.professionalTypeName = professionalTypeName;
+    }
+
+    public String getCreateBy() {
+        return createBy;
+    }
+
+    public void setCreateBy(String createBy) {
+        this.createBy = createBy;
+    }
+
+    public String getStatusName() {
+        if(!StringUtil.isNullOrEmpty(status)){
+            return SystemParameters.PROJECT_STATUS.get(status);
+        }
+
+        return statusName;
+    }
+
+    public void setStatusName(String statusName) {
+        this.statusName = statusName;
     }
 }

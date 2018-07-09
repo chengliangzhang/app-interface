@@ -78,8 +78,7 @@ public class UserController extends BaseWSController {
             } else {
                 newImg = firstStr + "_cut" + "." + lastStr;
             }
-
-            userInfoDTO.setHeadImg(newImg);
+            userInfoDTO.setFileFullPath(newImg);
         }
         return responseSuccess().addData("userInfo", userInfoDTO);
     }

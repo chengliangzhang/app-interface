@@ -166,11 +166,6 @@ public class ProjectTaskDetailDTO {
      *子任务
      */
     private List<ProjectTaskDetailDTO> childTaskList = new ArrayList<ProjectTaskDetailDTO>();
-//
-//    /**
-//     *子任务
-//     */
-//    private List<ProjectProcessShowDTO> processList = new ArrayList<ProjectProcessShowDTO>();
 
     private List<ProjectTaskProcessNodeDTO> designUserList = new ArrayList<>();
 

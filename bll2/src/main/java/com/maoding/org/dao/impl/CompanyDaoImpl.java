@@ -4,7 +4,6 @@ package com.maoding.org.dao.impl;
 import com.maoding.core.base.dao.GenericDao;
 import com.maoding.core.util.StringUtil;
 import com.maoding.org.dao.CompanyDao;
-import com.maoding.org.dao.CompanyInviteDao;
 import com.maoding.org.dto.CompanyDTO;
 import com.maoding.org.dto.CompanyDataDTO;
 import com.maoding.org.entity.CompanyEntity;
@@ -31,12 +30,8 @@ public class CompanyDaoImpl extends GenericDao<CompanyEntity> implements Company
 	@Autowired
 	private RolePermissionDao rolePermissionDao;
 
-	@Autowired
-	private CompanyInviteDao companyInviteDao;
-
 	@Override
 	public int insert(CompanyEntity entity){
-		this.rolePermissionDao.deleteByCompanyId(entity.getId());
 		List<RolePermissionEntity> initData = this.rolePermissionDao.getAllDefaultPermission();
 		if(!CollectionUtils.isEmpty(initData)){
 			for(RolePermissionEntity rolePermission:initData){
@@ -45,33 +40,7 @@ public class CompanyDaoImpl extends GenericDao<CompanyEntity> implements Company
 				this.rolePermissionDao.insert(rolePermission);
 			}
 		}
-
-
 		return  super.insert(entity);
-	}
-
-
-	@Override
-	public CompanyEntity getCompanyByCompanyName(String companyName) {
-		return this.sqlSession.selectOne("CompanyEntityMapper.getCompanyByCompanyName", companyName);
-	}
-
-	/**
-	 * 方法描述：根据公司简称查找公司
-	 * 作        者：MaoSF
-	 * 日        期：2016年7月7日-下午4:16:44
-	 *
-	 * @param companyShortName
-	 * @return
-	 */
-	@Override
-	public CompanyEntity getCompanyByCompanyShortName(String companyShortName) {
-		return this.sqlSession.selectOne("CompanyEntityMapper.getCompanyByCompanyShortName", companyShortName);
-	}
-
-	@Override
-	public List<CompanyDTO> getAdminOfCompanyByUserId(String userId) {
-		return this.sqlSession.selectList("GetAdminOfCompanyByUserIdMapper.getAdminOfCompanyByUserId", userId);
 	}
 
 	@Override
@@ -79,18 +48,10 @@ public class CompanyDaoImpl extends GenericDao<CompanyEntity> implements Company
 		return this.sqlSession.selectList("GetCompanyByUserIdMapper.getCompanyByUserId", userId);
 	}
 
-	@Override
-	public List<CompanyDTO> getCompanyByUserIdWS(String userId) {
-		return this.sqlSession.selectList("GetCompanyByUserIdWSMapper.getCompanyByUserId", userId);
-	}
-
 	/**
 	 * 方法描述：获取所有公司（全部公司注册环信群，手工操作）
 	 * 作者：MaoSF
 	 * 日期：2016/8/23
-	 *
-	 * @param:
-	 * @return:
 	 */
 	@Override
 	public List<CompanyEntity> selectAll() {
@@ -98,45 +59,9 @@ public class CompanyDaoImpl extends GenericDao<CompanyEntity> implements Company
 	}
 
 	/**
-	 * 方法描述：获取所有公司（全部公司注册环信群，手工操作）
-	 * 作者：MaoSF
-	 * 日期：2016/8/23
-	 *
-	 * @param:
-	 * @return:
-	 */
-	@Override
-	public List<CompanyEntity> selectAllIm() {
-		return this.sqlSession.selectList("CompanyEntityMapper.selectAllIm");
-	}
-
-	@Override
-	public List<CompanyEntity> getImAllCompany() {
-		return this.sqlSession.selectList("CompanyEntityMapper.getImAllCompany");
-	}
-
-	/**
-	 * 方法描述：获取挂靠的公司
-	 * 作者：MaoSF
-	 * 日期：2017/1/16
-	 *
-	 * @param id
-	 * @param:
-	 * @return:
-	 */
-	@Override
-	public CompanyEntity getParentCompanyById(String id) {
-		return this.sqlSession.selectOne("CompanyEntityMapper.getParentCompanyById",id);
-	}
-
-	/**
 	 * 方法描述：获取具有管理员权限的公司
 	 * 作者：MaoSF
 	 * 日期：2017/2/28
-	 *
-	 * @param map
-	 * @param:userId,fastDfs
-	 * @return:
 	 */
 	@Override
 	public List<CompanyDataDTO> getHasSystemManagerCompany(Map<String, Object> map) {
@@ -158,10 +83,6 @@ public class CompanyDaoImpl extends GenericDao<CompanyEntity> implements Company
 	 * 方法描述：查询从未挂靠的组织（包含被邀请没有同意的）
 	 * 作者：MaoSF
 	 * 日期：2017/1/17
-	 *
-	 * @param map
-	 * @param:
-	 * @return:
 	 */
 	@Override
 	public List<CompanyDTO> getCompanyFilterbyParamForInvit(Map<String, Object> map) {
@@ -172,10 +93,6 @@ public class CompanyDaoImpl extends GenericDao<CompanyEntity> implements Company
 	 * 方法描述：查询从未挂靠的组织（包含被邀请没有同意的）总条数
 	 * 作者：MaoSF
 	 * 日期：2017/1/17
-	 *
-	 * @param map
-	 * @param:
-	 * @return:
 	 */
 	@Override
 	public int getCompanyFilterbyParamForInvitCount(Map<String, Object> map) {
@@ -189,7 +106,7 @@ public class CompanyDaoImpl extends GenericDao<CompanyEntity> implements Company
 	}
 
 	@Override
-	public CompanyEntity getParentCompany(String id) throws Exception {
+	public CompanyEntity getParentCompany(String id) {
 		return this.sqlSession.selectOne("QueryOrgTreeEntityMapper.getParentCompany", id);
 	}
 
@@ -199,71 +116,9 @@ public class CompanyDaoImpl extends GenericDao<CompanyEntity> implements Company
 	}
 
 	/**
-	 * 方法描述：项目统计（新增合同，合同回款）统计，项目承接人查询
-	 * 作者：MaoSF
-	 * 日期：2016/8/15
-	 *
-	 * @param companyId
-	 * @param:
-	 * @return:
-	 */
-	@Override
-	public List<CompanyDTO> getCompanyForProjectStatics(String companyId) {
-		return this.sqlSession.selectList("GetCompanyForProjectStaticsMapper.getCompanyForProjectStatics", companyId);
-	}
-
-	/**
-	 * 方法描述： 技术审查费统计(付款方向），技术审查人选项
-	 * 作者：MaoSF
-	 * 日期：2016/8/15
-	 *
-	 * @param companyId
-	 * @param:
-	 * @return:
-	 */
-	@Override
-	public List<CompanyDTO> getCompanyForProjectStatics2(String companyId) {
-		return this.sqlSession.selectList("GetCompanyForProjectStaticsMapper.getCompanyForProjectStatics2", companyId);
-	}
-
-	/**
-	 * 方法描述：  合作设计费统计(付款方向）
-	 * 作者：MaoSF
-	 * 日期：2016/8/15
-	 *
-	 * @param companyId
-	 * @param:
-	 * @return:
-	 */
-	@Override
-	public List<CompanyDTO> getCompanyForProjectStatics3(String companyId) {
-		return this.sqlSession.selectList("GetCompanyForProjectStaticsMapper.getCompanyForProjectStatics3", companyId);
-	}
-
-
-
-	/**
-	 * 方法描述：  合作设计费统计(收款方向）
-	 * 作者：MaoSF
-	 * 日期：2016/8/15
-	 *
-	 * @param companyId
-	 * @param:
-	 * @return:
-	 */
-	@Override
-	public List<CompanyDTO> getCompanyForProjectStatics4(String companyId) {
-		return this.sqlSession.selectList("GetCompanyForProjectStaticsMapper.getCompanyForProjectStatics4", companyId);
-	}
-
-	/**
 	 * 方法描述：查询了公司信息及logo
 	 * 作者：MaoSF
 	 * 日期：2017/3/3
-	 *
-	 * @param id
-	 * @param:
-	 * @return:
 	 */
 	@Override
 	public CompanyEntity getCompanyMsgById(String id) {
@@ -274,11 +129,6 @@ public class CompanyDaoImpl extends GenericDao<CompanyEntity> implements Company
 	 * 方法描述：获取项目的外部团队
 	 * 作者：MaoSF
 	 * 日期：2017/5/8
-	 *
-	 * @param companyId
-	 * @param projectId
-	 * @param:int
-	 * @return:
 	 */
 	@Override
 	public List<CompanyEntity> getOuterCooperatorCompany(String companyId, String projectId) {
@@ -305,6 +155,10 @@ public class CompanyDaoImpl extends GenericDao<CompanyEntity> implements Company
 
 	@Override
 	public String getCompanyName(String id) {
-		return this.sqlSession.selectOne("CompanyEntityMapper.getAliasName",id);
+		List<String> names = this.sqlSession.selectList("CompanyEntityMapper.getAliasName",id);
+		if(names.size()>0){
+			return names.get(0);
+		}
+		return null;
 	}
 }

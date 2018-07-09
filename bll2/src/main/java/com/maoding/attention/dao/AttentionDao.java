@@ -4,6 +4,8 @@ package com.maoding.attention.dao;
 import com.maoding.attention.entity.AttentionEntity;
 import com.maoding.core.base.dao.BaseDao;
 
+import java.util.Map;
+
 /**
  * 深圳市设计同道技术有限公司
  * 类    名：AttentionDaoImpl
@@ -15,4 +17,6 @@ public interface AttentionDao extends BaseDao<AttentionEntity> {
 
 
     int cancelAttention(AttentionEntity dto);
+
+    public AttentionEntity getAttentionEntity(Map<String,Object> paraMap);
 }

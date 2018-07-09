@@ -14,19 +14,17 @@ import com.maoding.core.util.DateUtils;
 import com.maoding.core.util.MD5Helper;
 import com.maoding.core.util.StringUtil;
 import com.maoding.core.util.StringUtils;
+import com.maoding.financial.service.ExpAuditService;
 import com.maoding.hxIm.service.ImService;
 import com.maoding.org.dao.*;
 import com.maoding.org.dto.*;
 import com.maoding.org.entity.*;
 import com.maoding.org.service.*;
-import com.maoding.project.entity.ProjectSkyDriveEntity;
+import com.maoding.partner.dao.PartnerDao;
+import com.maoding.partner.entity.PartnerEntity;
+import com.maoding.project.dto.NetFileDTO;
 import com.maoding.project.service.ProjectSkyDriverService;
-import com.maoding.role.dao.RolePermissionDao;
-import com.maoding.role.dao.RoleUserDao;
-import com.maoding.role.dto.SaveRoleUserDTO;
-import com.maoding.role.entity.RolePermissionEntity;
-import com.maoding.role.entity.RoleUserEntity;
-import com.maoding.role.service.RoleUserService;
+import com.maoding.projectmember.service.ProjectMemberService;
 import com.maoding.system.dao.DataDictionaryDao;
 import com.maoding.system.entity.DataDictionaryEntity;
 import com.maoding.user.dao.AccountDao;
@@ -82,15 +80,11 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
     @Autowired
     private AccountService accountService;
     @Autowired
-    private RoleUserDao roleUserDao;
-    @Autowired
     private OrgUserDao orgUserDao;
     @Autowired
     private SmsSender smsSender;
     @Autowired
-    private RolePermissionDao rolePermissionDao;
-    @Autowired
-    private RoleUserService roleUserService;
+    private ExpAuditService expAuditService;
     @Autowired
     private TeamOperaterService teamOperaterService;
     @Autowired
@@ -115,6 +109,12 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
 
     @Autowired
     private ImService imService;
+
+    @Autowired
+    private ProjectMemberService projectMemberService;
+
+    @Autowired
+    private PartnerDao partnerDao;
 
 
     /**
@@ -176,15 +176,15 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
         this.orgAuthDao.insert(orgAuthentication);
 
         //复杂权限
-        this.rolePermissionDao.deleteByCompanyId(company.getId());
-        List<RolePermissionEntity> initData = this.rolePermissionDao.getAllDefaultPermission();
-        if (!CollectionUtils.isEmpty(initData)) {
-            for (RolePermissionEntity rolePermission : initData) {
-                rolePermission.setId(StringUtil.buildUUID());
-                rolePermission.setCompanyId(company.getId());
-                this.rolePermissionDao.insert(rolePermission);
-            }
-        }
+//        this.rolePermissionDao.deleteByCompanyId(company.getId());
+//        List<RolePermissionEntity> initData = this.rolePermissionDao.getAllDefaultPermission();
+//        if (!CollectionUtils.isEmpty(initData)) {
+//            for (RolePermissionEntity rolePermission : initData) {
+//                rolePermission.setId(StringUtil.buildUUID());
+//                rolePermission.setCompanyId(company.getId());
+//                this.rolePermissionDao.insert(rolePermission);
+//            }
+//        }
 
         //保存OrgEntity,组织基础表
         OrgEntity org = new OrgEntity();
@@ -193,13 +193,6 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
         org.setOrgStatus("0");
         org.setCreateBy(currUserId);
         orgDao.insert(org);
-
-        //创建团队管理员
-        TeamOperaterEntity teamOperaterEntity = new TeamOperaterEntity();
-        teamOperaterEntity.setUserId(orgManagerId);
-        teamOperaterEntity.setCompanyId(companyId);
-        teamOperaterEntity.setCreateBy(currUserId);
-        teamOperaterService.saveSystemManage(teamOperaterEntity);
 
         //添加公司成员信息
         CompanyUserEntity companyUserEntity = new CompanyUserEntity();
@@ -230,6 +223,13 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
         orgUser.setUserId(orgManagerId);
         orgUser.setCreateBy(currUserId);
         orgUserDao.insert(orgUser);
+
+        //创建团队管理员
+        TeamOperaterEntity teamOperaterEntity = new TeamOperaterEntity();
+        teamOperaterEntity.setUserId(orgManagerId);
+        teamOperaterEntity.setCompanyId(companyId);
+        teamOperaterEntity.setCreateBy(currUserId);
+        teamOperaterService.saveSystemManage(teamOperaterEntity);
 
         //生成二维码
         projectSkyDriverService.createCompanyQrcode(companyId);
@@ -394,13 +394,24 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
         //保存公司信息
         String id = this.saveCompany(company, account.getUserName(), account.getId(), dto.getAccountId());
 
+
         //第四步，把当前的公司和创建的分支机构，挂上分支机构的关系
-        String subOrgId = this.createCompanyRelation(dto.getAccountId(), company.getId(), dto.getCompanyId(), "2");
-        SubCompanyEntity subCompany = new SubCompanyEntity();
-        subCompany.setId(subOrgId);//此id设置和org的一样
-        subCompany.setNickName("");//设置为空
-        subCompany.setCreateBy(dto.getAccountId());
-        subCompanyDao.insert(subCompany);
+        String subOrgId = this.createCompanyRelation(dto.getAccountId(), company.getId(), dto.getCompanyId(), dto.getType() + "", dto.getRoleType());
+        if (dto.getType() == 2) {//邀请分公司
+            SubCompanyEntity subCompany = new SubCompanyEntity();
+            subCompany.setId(subOrgId);//此id设置和org的一样
+            subCompany.setNickName(null);
+            subCompany.setCreateBy(dto.getAccountId());
+            subCompanyDao.insert(subCompany);
+        } else if (dto.getType() == 3) {//邀请事业合伙人
+            BusinessPartnerEntity businessPartner = new BusinessPartnerEntity();
+            businessPartner.setId(subOrgId);//此id设置和org的一样
+            businessPartner.setNickName(null);
+            businessPartner.setCreateBy(dto.getAccountId());
+            businessPartner.setCompanyId(company.getId());
+            businessPartner.setType(3);
+            businessPartnerDao.insert(businessPartner);
+        }
 
         //第五步，发送短信通知负责人
         this.sendMsg(dto.getCellphone(), msg);
@@ -425,7 +436,7 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
      * @param:orgType:2分支机构，3合作伙伴
      * @return:
      */
-    private String createCompanyRelation(String createBy, String orgId, String orgPid, String orgType) throws Exception {
+    private String createCompanyRelation(String createBy, String orgId, String orgPid, String orgType,String roleType) throws Exception {
         OrgEntity subOrg = new OrgEntity();
         String subOrgId = StringUtil.buildUUID();
         subOrg.setId(subOrgId);
@@ -438,6 +449,7 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
         relationEntity.setId(subOrgId);//此id设置和org的一样
         relationEntity.setOrgPid(orgPid);
         relationEntity.setOrgId(orgId);
+        relationEntity.setTypeId(roleType);
         relationEntity.setCreateBy(createBy);
         companyRelationDao.insert(relationEntity);
 
@@ -512,51 +524,53 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
     }
 
     /**
+     * 方法描述：添加分支机构校验方法
+     * 作者：MaoSF
+     * 日期：2016/11/29
+     */
+    public ResponseBean validatecreateBusinessPartner(BusinessPartnerDTO dto) throws Exception {
+
+        if (StringUtil.isNullOrEmpty(dto.getCompanyName())) {
+            return ResponseBean.responseError("团队名称不能为空");
+        }
+
+        if (StringUtil.isNullOrEmpty(dto.getUserId())) {
+            if (StringUtil.isNullOrEmpty(dto.getCellphone())) {
+                return  ResponseBean.responseError(" 负责人手机号码不能为空");
+            }
+            if (StringUtil.isNullOrEmpty(dto.getUserName())) {
+                return  ResponseBean.responseError(" 负责人不能为空");
+            }
+            if (StringUtil.isNullOrEmpty(dto.getAdminPassword())) {
+                return  ResponseBean.responseError(" 密码不能为空");
+            }
+        }
+        return null;
+    }
+
+    /**
      * 方法描述：增加合伙人
      * 作        者：MaoSF
      * 日        期：2016年7月9日-上午11:15:52
      */
     @Override
-    public AjaxMessage createBusinessPartner(BusinessPartnerDTO dto) throws Exception {
+    public ResponseBean createBusinessPartner(BusinessPartnerDTO dto) throws Exception {
         //简称=全称
         dto.setCompanyShortName(dto.getCompanyName());
-
-        SubCompanyDTO subCompanyDTO = new SubCompanyDTO();
-        BaseDTO.copyFields(dto, subCompanyDTO);
-        AjaxMessage ajax = validateCompany(subCompanyDTO);
-        if ("1".equals(ajax.getCode())) {//如果信息有误，直接返回
+        ResponseBean ajax = validatecreateBusinessPartner(dto);
+        if (ajax!=null) {//如果信息有误，直接返回
             return ajax;
         }
-
-        //当前操作人名
-        String accountName = "";
-        CompanyUserEntity companyUser = companyUserDao.getCompanyUserByUserIdAndCompanyId(dto.getAccountId(), dto.getCompanyId());
-        if (companyUser != null) {
-            accountName = companyUser.getUserName();
-        }
-        //当前公司名
-        String pcompanyName = "";
-        CompanyEntity pcompany = companyDao.selectById(dto.getCompanyId());
-
-        if (pcompany != null) {
-            pcompanyName = pcompany.getCompanyName();
+        CompanyInviteEntity companyInviteEntity = this.companyInviteDao.selectById(dto.getInviteId());
+        if (companyInviteEntity == null) {
+            return ResponseBean.responseError("申请失败");
         }
 
-        String msg = "";
-
-        //第二步，管理员加入到组织
-        //1.判断手机号码是否存在，如果不存在，则创建账号
+        //第一步.判断手机号码是否存在，如果不存在，则创建账号
         AccountEntity account = accountDao.getAccountByCellphoneOrEmail(dto.getCellphone());
 
-        //短信信息（默认有账号，使用模板2）
-        msg = StringUtil.format(SystemParameters.CREATE_SUB_COMPANY_MSG_2, accountName, pcompanyName,
-                dto.getCompanyName());
-        //, dto.getClearlyAdminPassword()
         if (account == null) {
-            //创建账号
-            account = this.accountService.createAccount(dto.getUserName(), MD5Helper.getMD5For32("123456"), dto.getCellphone());
-            msg = StringUtil.format(SystemParameters.CREATE_SUB_COMPANY_MSG_1, accountName, pcompanyName,
-                    dto.getCompanyName(), dto.getCellphone(), serverUrl);
+            account = this.accountService.createAccount(dto.getUserName(), MD5Helper.getMD5For32(dto.getAdminPassword()), dto.getCellphone());
         } else if (!"0".equals(account.getStatus())) {//存在更新，设置为有效，
             account.setStatus("0");
             account.setActiveTime(DateUtils.date2Str(DateUtils.datetimeFormat));
@@ -569,27 +583,32 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
         String id = this.saveCompany(company, account.getUserName(), account.getId(), dto.getAccountId());
 
         //第三步，把当前的公司和创建的合作伙伴，挂上合作伙伴的关系
-        String subOrgId = this.createCompanyRelation(dto.getAccountId(), company.getId(), dto.getCompanyId(), "3");
-        BusinessPartnerEntity businessPartner = new BusinessPartnerEntity();
-        businessPartner.setId(subOrgId);//此id设置和org的一样
-        businessPartner.setNickName("");
-        businessPartner.setCreateBy(dto.getAccountId());
-        businessPartnerDao.insert(businessPartner);
-
-        //第四步，发送短信通知负责人
-        this.sendMsg(dto.getCellphone(), msg);
-
-        //第五步，返回信息
-        dto.setId(id);
-        OrgTreeDTO tree = new OrgTreeDTO();
-        tree.setRealId(id);
-        tree.setId(id);
-        tree.setCompanyId(id);
-        tree.setText(dto.getCompanyShortName());
-        tree.setType("partner");
-        tree.setTreeEntity(company);
-
-        return new AjaxMessage().setCode("0").setInfo("保存成功").setData(tree);
+        String subOrgId = null;
+        if ("1".equals(companyInviteEntity.getType())) {//邀请分公司
+            subOrgId = this.createCompanyRelation(dto.getAccountId(), company.getId(), companyInviteEntity.getCompanyId(), "2",dto.getRoleType());
+            SubCompanyEntity subCompany = new SubCompanyEntity();
+            subCompany.setId(subOrgId);//此id设置和org的一样
+            subCompany.setNickName(null);
+            subCompany.setCreateBy(dto.getAccountId());
+            subCompanyDao.insert(subCompany);
+        } else if ("2".equals(companyInviteEntity.getType())) {//邀请事业合伙人
+            subOrgId = this.createCompanyRelation(dto.getAccountId(), company.getId(), companyInviteEntity.getCompanyId(), "3",dto.getRoleType());
+            BusinessPartnerEntity businessPartner = new BusinessPartnerEntity();
+            businessPartner.setId(subOrgId);//此id设置和org的一样
+            businessPartner.setNickName(null);
+            businessPartner.setCreateBy(dto.getAccountId());
+            businessPartner.setCompanyId(company.getId());
+            businessPartner.setType(3);
+            businessPartnerDao.insert(businessPartner);
+        } else {//外部合作伙伴产生生效数据
+            PartnerEntity partnerEntity = new PartnerEntity();
+            partnerEntity.setCompanyId(id);
+            partnerEntity.setId(companyInviteEntity.getId());
+            partnerDao.updateById(partnerEntity);
+        }
+        //第四步，删除邀请信息
+        this.companyInviteDao.deleteById(dto.getInviteId());
+        return ResponseBean.responseSuccess("保存成功");
     }
 
     /**
@@ -651,17 +670,13 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public CompanyDTO getCompanyById(String id) throws Exception {
-
-        CompanyEntity company = this.selectById(id);
-        if (company == null) {
-            return null;
+        CompanyDTO dto = this.selectCompanyById(id);
+        if(dto==null){
+            return dto;
         }
-        CompanyDTO dto = new CompanyDTO();
-        BaseDTO.copyFields(company, dto);
-
-        if (!StringUtil.isNullOrEmpty(company.getServerType())) {
+        if (!StringUtil.isNullOrEmpty(dto.getServerType())) {
             Map map = new HashMap();
-            map.put("idList", company.getServerType().split(","));
+            map.put("idList", dto.getServerType().split(","));
             List<DataDictionaryEntity> list = dataDictionaryDao.getDataByParemeter(map);
             for (DataDictionaryEntity d : list) {
                 map = new HashMap();
@@ -670,10 +685,8 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
                 dto.getServerTypeList().add(map);
             }
         }
-
         //公司logo
         dto.setFilePath(projectSkyDriverService.getCompanyFileByType(id, NetFileType.COMPANY_LOGO_ATTACH, true));
-
         //查询公司二维码
         String qrCodePath = projectSkyDriverService.getCompanyFileByType(id, NetFileType.COMPANY_QR_CODE_ATTACH, true);
         if (!StringUtil.isNullOrEmpty(qrCodePath)) {
@@ -685,24 +698,14 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
     }
 
     @Override
-    public CompanyDTO getCompanyDtoByCompanyName(String companyName) throws Exception {
-
-        CompanyEntity company = companyDao.getCompanyByCompanyName(companyName);
+    public CompanyDTO selectCompanyById(String id) throws Exception {
+        CompanyEntity company = this.selectById(id);
         if (company == null) {
             return null;
         }
         CompanyDTO dto = new CompanyDTO();
         BaseDTO.copyFields(company, dto);
-
-
         return dto;
-    }
-
-    @Override
-    public List<CompanyDTO> getAdminOfCompanyByUserId(String userId) throws Exception {
-
-        List<CompanyDTO> list = companyDao.getAdminOfCompanyByUserId(userId);
-        return list;
     }
 
     @Override
@@ -882,341 +885,6 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
     }
 
     @Override
-    public OrgTreeWsDTO getOrgTreeForNotice(Map<String, Object> map) throws Exception {
-        String rootId = (String) map.get("appOrgId");
-        String companyId = (String) map.get("appOrgId");
-        //把每个节点都保存到nodeMap中
-        Map<String, OrgTreeWsDTO> nodeMap = new HashMap<String, OrgTreeWsDTO>();
-
-        //所有的公司节点
-        List<CompanyEntity> companyNodes = new ArrayList<CompanyEntity>();
-        List<Map<String, Object>> companyEdges = new ArrayList<Map<String, Object>>();
-
-        //查询根节点
-        companyNodes.add(this.selectById(rootId));
-        //查询子公司
-        companyNodes.addAll(this.getAllChilrenCompany(rootId));
-        List<String> companyIds2 = new ArrayList<String>();
-        for (CompanyEntity c : companyNodes) {
-            companyIds2.add(c.getId());
-        }
-
-        map.clear();
-        map.put("companyIds", companyIds2);
-        companyEdges = companyDao.selectAllCompanyEdges(map);
-
-        for (CompanyEntity c : companyNodes) {
-            OrgTreeWsDTO tree = new OrgTreeWsDTO();
-            tree.setCompanyName(c.getCompanyShortName());
-            tree.setId(c.getId());
-
-            //如果是当前公司，则展示
-            if ((c.getId() != null && c.getId().equals(companyId))) {
-                Map<String, Object> tmapMap = new HashMap<String, Object>();
-                tmapMap.put("opened", true);
-                tree.setState(tmapMap);
-            }
-            nodeMap.put(c.getId(), tree);
-        }
-
-        //把分公司和合作伙伴加上
-        for (Map<String, Object> e : companyEdges) {
-            String from = (String) e.get("from");
-            String to = (String) e.get("to");
-            String type = (String) e.get("type");
-            OrgTreeWsDTO toNode = nodeMap.get(to);
-            if (toNode != null) {
-                //分公司关系
-                if ("2".equals(type)) {
-                    if (toNode.getChildById(to + "subCompanyId") == null) {
-                        OrgTreeWsDTO subCompanyTree = new OrgTreeWsDTO();
-                        subCompanyTree.setCompanyName("分公司");
-                        subCompanyTree.setId(toNode.getId() + "subCompanyId");
-                        toNode.getChildren().add(subCompanyTree);
-                        nodeMap.put(toNode.getId() + "subCompanyId", subCompanyTree);
-                    }
-                    toNode.getChildById(to + "subCompanyId").getChildren().add(nodeMap.get(from));
-                    //合作伙伴关系
-                } else if ("3".equals(type)) {
-                    if (toNode.getChildById(to + "partnerId") == null) {
-                        //事业合伙人的节点
-                        OrgTreeWsDTO partnerTree = new OrgTreeWsDTO();
-                        partnerTree.setCompanyName("事业合伙人");
-                        partnerTree.setId(toNode.getId() + "partnerId");
-                        nodeMap.put(toNode.getId() + "partnerId", partnerTree);
-                        toNode.getChildren().add(partnerTree);
-                    }
-                    toNode.getChildById(to + "partnerId").getChildren().add(nodeMap.get(from));
-                }
-            }
-        }
-
-        //重新组合一下数据
-        OrgTreeWsDTO tree = new OrgTreeWsDTO();
-        tree.setCompanyName(nodeMap.get(rootId).getCompanyName());
-        tree.setId("root");
-
-        nodeMap.get(rootId).setCompanyName("本部");
-        tree.getChildren().add(nodeMap.get(rootId));
-        if (nodeMap.get(rootId).getChildById(rootId + "subCompanyId") != null) {
-            tree.getChildren().add(nodeMap.get(rootId).getChildById(rootId + "subCompanyId"));
-        }
-        if (nodeMap.get(rootId).getChildById(rootId + "partnerId") != null) {
-            tree.getChildren().add(nodeMap.get(rootId).getChildById(rootId + "partnerId"));
-        }
-        nodeMap.get(rootId).getChildren().remove(nodeMap.get(rootId).getChildById(rootId + "subCompanyId"));
-        nodeMap.get(rootId).getChildren().remove(nodeMap.get(rootId).getChildById(rootId + "partnerId"));
-        return tree;
-    }
-
-    @Override
-    public OrgTreeWsDTO newV2GetOrgTreeForNotice(Map<String, Object> map) throws Exception {
-        String rootId = (String) map.get("appOrgId");
-        String companyId = (String) map.get("appOrgId");
-        //把每个节点都保存到nodeMap中
-        Map<String, OrgTreeWsDTO> nodeMap = new HashMap<String, OrgTreeWsDTO>();
-
-        //所有的公司节点
-        List<CompanyEntity> companyNodes = new ArrayList<CompanyEntity>();
-        List<Map<String, Object>> companyEdges = new ArrayList<Map<String, Object>>();
-
-        //查询根节点
-        companyNodes.add(this.selectById(rootId));
-        //查询子公司
-        companyNodes.addAll(this.getAllChilrenCompany(rootId));
-        List<String> companyIds2 = new ArrayList<String>();
-        for (CompanyEntity c : companyNodes) {
-            companyIds2.add(c.getId());
-        }
-
-        map.clear();
-        map.put("companyIds", companyIds2);
-        companyEdges = companyDao.selectAllCompanyEdges(map);
-
-        for (CompanyEntity c : companyNodes) {
-            OrgTreeWsDTO tree = new OrgTreeWsDTO();
-            tree.setCompanyName(c.getCompanyShortName());
-            tree.setId(c.getId());
-
-            //如果是当前公司，则展示
-            if ((c.getId() != null && c.getId().equals(companyId))) {
-                Map<String, Object> tmapMap = new HashMap<String, Object>();
-                tmapMap.put("opened", true);
-                tree.setState(tmapMap);
-            }
-            nodeMap.put(c.getId(), tree);
-        }
-
-        //把分公司和合作伙伴加上
-        for (Map<String, Object> e : companyEdges) {
-            String from = (String) e.get("from");
-            String to = (String) e.get("to");
-            String type = (String) e.get("type");
-            OrgTreeWsDTO toNode = nodeMap.get(to);
-            if (toNode != null) {
-                //分公司关系
-                if ("2".equals(type)) {
-                    if (toNode.getChildById(to + "subCompanyId") == null) {
-                        OrgTreeWsDTO subCompanyTree = new OrgTreeWsDTO();
-                        subCompanyTree.setCompanyName("分公司");
-                        subCompanyTree.setId(toNode.getId() + "subCompanyId");
-                        toNode.getChildren().add(subCompanyTree);
-                        nodeMap.put(toNode.getId() + "subCompanyId", subCompanyTree);
-                    }
-                    toNode.getChildById(to + "subCompanyId").getChildren().add(nodeMap.get(from));
-                    //合作伙伴关系
-                } else if ("3".equals(type)) {
-                    if (toNode.getChildById(to + "partnerId") == null) {
-                        //事业合伙人的节点
-                        OrgTreeWsDTO partnerTree = new OrgTreeWsDTO();
-                        partnerTree.setCompanyName("事业合伙人");
-                        partnerTree.setId(toNode.getId() + "partnerId");
-                        nodeMap.put(toNode.getId() + "partnerId", partnerTree);
-                        toNode.getChildren().add(partnerTree);
-                    }
-                    toNode.getChildById(to + "partnerId").getChildren().add(nodeMap.get(from));
-                }
-            }
-        }
-
-        //重新组合一下数据
-        OrgTreeWsDTO tree = new OrgTreeWsDTO();
-        tree.setCompanyName(nodeMap.get(rootId).getCompanyName());
-        tree.setId(rootId);
-
-        // nodeMap.get(rootId).setCompanyName("本部");
-        // tree.getChildren().add(nodeMap.get(rootId));
-        if (nodeMap.get(rootId).getChildById(rootId + "subCompanyId") != null) {
-            tree.getChildren().add(nodeMap.get(rootId).getChildById(rootId + "subCompanyId"));
-        }
-        if (nodeMap.get(rootId).getChildById(rootId + "partnerId") != null) {
-            tree.getChildren().add(nodeMap.get(rootId).getChildById(rootId + "partnerId"));
-        }
-        nodeMap.get(rootId).getChildren().remove(nodeMap.get(rootId).getChildById(rootId + "subCompanyId"));
-        nodeMap.get(rootId).getChildren().remove(nodeMap.get(rootId).getChildById(rootId + "partnerId"));
-        return tree;
-    }
-
-    /**
-     * 方法描述：获取组织架构树信息（消息通告选择发送组织  使用）
-     * 作        者：MaoSF
-     * 日        期：2016年7月9日-下午6:42:43
-     */
-    @Override
-    public OrgTreeDTO v2GetOrgTreeForNotice(Map<String, Object> map) throws Exception {
-        String companyId = (String) map.get("companyId");
-        String rootId = companyId;
-
-        //把每个节点都保存到nodeMap中
-        Map<String, OrgTreeDTO> nodeMap = new HashMap<String, OrgTreeDTO>();
-
-        //所有的公司节点
-        List<CompanyEntity> companyNodes = new ArrayList<CompanyEntity>();
-        List<Map<String, Object>> companyEdges = new ArrayList<Map<String, Object>>();
-        String selectId = (String) map.get("selectId");//被选择的节点id
-
-        //查询根节点
-        companyNodes.add(this.selectById(rootId));
-        //查询子公司
-        companyNodes.addAll(this.getAllChilrenCompany(rootId));
-        List<String> companyIds2 = new ArrayList<String>();
-        for (CompanyEntity c : companyNodes) {
-            companyIds2.add(c.getId());
-        }
-        map.clear();
-        map.put("companyIds", companyIds2);
-        companyEdges = companyDao.selectAllCompanyEdges(map);
-
-
-        for (CompanyEntity c : companyNodes) {
-            OrgTreeDTO tree = new OrgTreeDTO();
-            tree.setText(c.getCompanyShortName());
-            tree.setType("company");
-            tree.setId(c.getId());
-            tree.setCompanyId(c.getId());//当前节点是公司，companyId=id
-            tree.setRealId(c.getId());
-            tree.setTreeEntity(c);
-            if ("2".equals(c.getCompanyType())) {//如果是分公司
-                tree.setType("subCompany");
-            }
-            if ("3".equals(c.getCompanyType())) {//如果是分公司
-                tree.setType("partner");
-            }
-            //如果是当前公司，则展示
-            if ((c.getId() != null && c.getId().equals(companyId)) || (selectId != null && c.getId().equals(selectId))) {
-                Map<String, Object> tmapMap = new HashMap<String, Object>();
-                tmapMap.put("opened", true);
-                tree.setState(tmapMap);
-            }
-            nodeMap.put(c.getId(), tree);
-        }
-
-        //只查询自己的部门
-        List<String> companyIds = new ArrayList<String>();
-        companyIds.add(companyId);
-        Map<String, Object> param = new HashMap<String, Object>();
-        param.put("companyIds", companyIds.toArray());
-        List<DepartEntity> departNodes = departDao.selectDepartNodesByCompanyIds(param);
-        for (DepartEntity d : departNodes) {
-            OrgTreeDTO tree = new OrgTreeDTO();
-            tree.setText(d.getDepartName());
-            tree.setId(d.getId());
-            tree.setCompanyId(d.getCompanyId());//当前节点是部门，companyId为当前节点的companyId
-            tree.setRealId(d.getId());
-            tree.setType("depart");
-            tree.setTreeEntity(d);
-            if (selectId != null && d.getId().equals(selectId)) {
-                Map<String, Object> tmapMap = new HashMap<String, Object>();
-                tmapMap.put("opened", true);
-                tmapMap.put("selected", true);
-                tree.setState(tmapMap);
-            }
-            nodeMap.put(d.getId(), tree);
-        }
-
-        List<Map<String, Object>> departEdges = departDao.selectDepartEdgesByCompanyIds(param);
-        for (Map<String, Object> e : departEdges) {
-            String from = (String) e.get("from");
-            String to = (String) e.get("to");
-            String too = (String) e.get("too");
-
-            OrgTreeDTO fromNode = nodeMap.get(from);//部门id
-            OrgTreeDTO toNode = nodeMap.get(to);//部门的公司
-            OrgTreeDTO tooNode = nodeMap.get(too);//部门pid
-
-            if (tooNode != null) {
-                //部门上级为公司ID
-                if (too.equals(to)) {
-                    if (toNode != null) {
-                        toNode.getChildren().add(fromNode);
-                    }
-                    //部门上级为部门
-                } else {
-                    tooNode.getChildren().add(fromNode);
-                }
-            }
-        }
-
-        //把分公司和合作伙伴加上
-
-        for (Map<String, Object> e : companyEdges) {
-            String from = (String) e.get("from");
-            String to = (String) e.get("to");
-            String type = (String) e.get("type");
-            OrgTreeDTO toNode = nodeMap.get(to);
-            if (toNode != null) {
-                //分公司关系
-                if ("2".equals(type)) {
-                    if (toNode.getChildById(to + "subCompanyId") == null) {
-                        OrgTreeDTO subCompanyTree = new OrgTreeDTO();
-                        subCompanyTree.setText("分公司");
-                        subCompanyTree.setType("subCompanyContainer");
-                        subCompanyTree.setId(toNode.getId() + "subCompanyId");
-                        subCompanyTree.setRealId(toNode.getId() + "subCompanyId");
-                        toNode.getChildren().add(subCompanyTree);
-                        nodeMap.put(toNode.getId() + "subCompanyId", subCompanyTree);
-                    }
-                    toNode.getChildById(to + "subCompanyId").getChildren().add(nodeMap.get(from));
-                    //合作伙伴关系
-                } else if ("3".equals(type)) {
-                    if (toNode.getChildById(to + "partnerId") == null) {
-                        //事业合伙人的节点
-                        OrgTreeDTO partnerTree = new OrgTreeDTO();
-                        partnerTree = new OrgTreeDTO();
-                        partnerTree.setText("事业合伙人");
-                        partnerTree.setType("partnerContainer");
-                        partnerTree.setId(toNode.getId() + "partnerId");
-                        partnerTree.setRealId(toNode.getId() + "partnerId");
-                        nodeMap.put(toNode.getId() + "partnerId", partnerTree);
-                        toNode.getChildren().add(partnerTree);
-                    }
-                    toNode.getChildById(to + "partnerId").getChildren().add(nodeMap.get(from));
-                }
-            }
-        }
-
-        //重新组合一下数据
-        OrgTreeDTO tree = new OrgTreeDTO();
-        tree.setText(nodeMap.get(rootId).getText());
-        tree.setId("root");
-        tree.setCompanyId("root");//当前节点是部门，companyId为当前节点的companyId
-        tree.setRealId("root");
-        tree.setType("company");
-
-        nodeMap.get(rootId).setText(nodeMap.get(rootId).getText() + "本部");
-        tree.getChildren().add(nodeMap.get(rootId));
-        if (nodeMap.get(rootId).getChildById(rootId + "subCompanyId") != null) {
-            tree.getChildren().add(nodeMap.get(rootId).getChildById(rootId + "subCompanyId"));
-        }
-        if (nodeMap.get(rootId).getChildById(rootId + "partnerId") != null) {
-            tree.getChildren().add(nodeMap.get(rootId).getChildById(rootId + "partnerId"));
-        }
-        nodeMap.get(rootId).getChildren().remove(nodeMap.get(rootId).getChildById(rootId + "subCompanyId"));
-        nodeMap.get(rootId).getChildren().remove(nodeMap.get(rootId).getChildById(rootId + "partnerId"));
-        return tree;
-    }
-
-    @Override
     public List<CompanyDTO> getCompanyFilterbyParam(Map<String, Object> param) throws Exception {
         if (null != param.get("pageNumber")) {
             int page = (Integer) param.get("pageNumber");
@@ -1229,8 +897,6 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
 
     @Override
     public int getCompanyFilterbyParamCount(Map<String, Object> map) throws Exception {
-        /*Object count = companyDao.getCompanyFilterbyParamCount(map);
-        return count==null?0:Integer.parseInt(count.toString());*/
         return companyDao.getCompanyFilterbyParamCount(map);
     }
 
@@ -1250,7 +916,7 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
             Map<String, Object> companyAttachMap = new HashMap<>();
             companyAttachMap.put("fileType", "6");
             companyAttachMap.put("companyId", companyDTO.getId());
-            List<ProjectSkyDriveEntity> returnList = projectSkyDriverService.getNetFileByParam(companyAttachMap);
+            List<NetFileDTO> returnList = projectSkyDriverService.getNetFileByParam(companyAttachMap);
             if (returnList.size() > 0) {
                 if (!StringUtil.isNullOrEmpty(returnList.get(0).getFilePath())) {
                     companyDTO.setFilePath(fastdfsUrl + returnList.get(0).getFileGroup() + "/" + returnList.get(0).getFilePath());
@@ -1349,18 +1015,20 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
     }
 
     @Override
-    public List<CompanyEntity> getAllChilrenCompanyWs(String id) {
-        List<CompanyEntity> list = new ArrayList<CompanyEntity>();
-        getChilrenCompany2Ws(id, list);
-        if (!CollectionUtils.isEmpty(list)) {
-            for (CompanyEntity entity : list) {
-                if (!StringUtil.isNullOrEmpty(entity.getFilePath())) {
-                    entity.setFilePath(this.fastdfsUrl + entity.getFilePath());
-                }
-            }
-        }
+    public List<CompanyEntity> getAllOrg(String id) throws Exception {
+        String rootId = this.getRootCompanyId(id);
+        List<CompanyEntity> list = this.getAllChilrenCompany(rootId);
+        list.add(0, this.companyDao.selectById(rootId));
         return list;
     }
+
+    @Override
+    public List<CompanyEntity> getOwnAndChildOrg(String id) throws Exception {
+        List<CompanyEntity> list = this.getAllChilrenCompany(id);
+        list.add(0, this.companyDao.selectById(id));
+        return list;
+    }
+
 
     /**
      * 递归获取子公司
@@ -1388,7 +1056,7 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
     /**
      * 获取某节点公司的根节点id
      */
-    public String getRootCompanyId(String id) throws Exception {
+    public String getRootCompanyId(String id){
         CompanyEntity companyEntity = companyDao.getParentCompany(id);
         if (companyEntity == null) {
             return id;
@@ -1415,79 +1083,6 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
     }
 
     /**
-     * 方法描述：项目统计（新增合同，合同回款）统计，项目承接人查询
-     * 作者：MaoSF
-     * 日期：2016/8/15
-     * @param:
-     * @return:
-     */
-    @Override
-    public List<CompanyDTO> getCompanyForProjectStatics(String companyId) throws Exception {
-        List<CompanyDTO> list = new ArrayList<CompanyDTO>();
-        CompanyDTO dto = this.getCompanyById(companyId);
-        list.add(0, dto);
-        list.addAll(companyDao.getCompanyForProjectStatics(companyId));
-        return list;
-    }
-
-    /**
-     * 方法描述： 技术审查费统计(付款方向），技术审查人选项
-     * 作者：MaoSF
-     * 日期：2016/8/15
-     * @param:
-     * @return:
-     */
-    @Override
-    public List<CompanyDTO> getCompanyForProjectStatics2(String companyId) throws Exception {
-        return companyDao.getCompanyForProjectStatics2(companyId);
-    }
-
-    /**
-     * 方法描述：  合作设计费统计(付款方向）
-     * 作者：MaoSF
-     * 日期：2016/8/15
-     * @param:
-     * @return:
-     */
-    @Override
-    public List<CompanyDTO> getCompanyForProjectStatics3(String companyId) throws Exception {
-        return companyDao.getCompanyForProjectStatics3(companyId);
-    }
-
-    /**
-     * 方法描述：  合作设计费统计(收款方向）
-     * 作者：MaoSF
-     * 日期：2016/8/15
-     * @param:
-     * @return:
-     */
-    @Override
-    public List<CompanyDTO> getCompanyForProjectStatics4(String companyId) throws Exception {
-        return companyDao.getCompanyForProjectStatics4(companyId);
-    }
-
-    /**
-     * 方法描述：注册公司群（开发人员手工调用）
-     * 作者：MaoSF
-     * 日期：2016/8/23
-     * @param:
-     * @return:
-     */
-    @Override
-    public void registerCompanyGroup() {
-        List<CompanyEntity> list = companyDao.selectAll();
-        if (list != null) {
-            for (CompanyEntity company : list) {
-                try {
-                    imService.createImGroup(company.getId(), company.getCreateBy(), company.getCompanyName(), 0);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    /**
      * 方法描述：发送短信【此方法不是接口】
      * 作        者：MaoSF
      * 日        期：2016年7月11日-下午8:05:44
@@ -1498,167 +1093,6 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
         sms.setMsg(msg);
         smsSender.send(sms);
     }
-
-    /**
-     * 方法描述：获取常用的合作伙伴
-     * 作者：MaoSF
-     * 日期：2016/8/26
-     * @param:
-     * @return:
-     */
-    @Override
-    public List<CompanyDTO> getUsedCooperationPartners(String companyId) throws Exception {
-        String root = this.getRootCompanyId(companyId);
-        List<CompanyEntity> childrenCompany = new ArrayList<CompanyEntity>();
-        CompanyEntity rootCompany = this.selectById(root);
-        childrenCompany.add(rootCompany);
-        childrenCompany.addAll(this.getAllChilrenCompany(root));
-        if (!CollectionUtils.isEmpty(childrenCompany)) {
-            for (CompanyEntity c : childrenCompany) {
-                if (companyId.equals(c.getId())) {
-                    childrenCompany.remove(c);
-                    break;
-                }
-            }
-            return BaseDTO.copyFields(childrenCompany, CompanyDTO.class);
-        }
-        return new ArrayList<CompanyDTO>();
-    }
-
-    @Override
-    public List<CompanyEntity> getAllCompany() throws Exception {
-        return companyDao.selectAll();
-    }
-
-    @Override
-    public List<CompanyEntity> getAllCompanyIm() throws Exception {
-        return companyDao.selectAllIm();
-    }
-
-    @Override
-    public List<CompanyEntity> getImAllCompany() throws Exception {
-        return companyDao.getImAllCompany();
-    }
-
-    /**
-     * 方法描述：添加权限，系统管理员角色（初始话云端数据）
-     * 作者：MaoSF
-     * 日期：2016/11/7
-     * @param:
-     * @return:
-     */
-    @Override
-    public AjaxMessage initCompanyRole() throws Exception {
-        //1.初始化有公司的默认角色的权限
-        //1.1查询所有公司
-        List<CompanyEntity> companyList = companyDao.selectAll();
-        //1.2查询所有默认角色
-        List<RolePermissionEntity> initData = this.rolePermissionDao.getAllDefaultPermission();
-        //1.3依次初始化公司默认角色
-        if (!CollectionUtils.isEmpty(companyList)) {
-            for (CompanyEntity entity : companyList) {
-                if (!CollectionUtils.isEmpty(initData)) {
-                    this.rolePermissionDao.deleteByCompanyId(entity.getId());
-                    for (RolePermissionEntity rolePermission : initData) {
-                        rolePermission.setId(StringUtil.buildUUID());
-                        rolePermission.setCompanyId(entity.getId());
-                        this.rolePermissionDao.insert(rolePermission);
-                    }
-                }
-            }
-        }
-
-        //2.初始话所有管理员的角色（添加系统管理员角色）
-        List<TeamOperaterEntity> teamOperaterList = teamOperaterDao.getAllTeamOperater();
-        if (!CollectionUtils.isEmpty(teamOperaterList)) {
-            for (TeamOperaterEntity teamOperater : teamOperaterList) {
-                //删除当前人的系统管理员角色
-                Map<String, Object> param = new HashMap<String, Object>();
-                param.put("roleId", SystemParameters.ADMIN_MANAGER_ROLE_ID);
-                param.put("userId", teamOperater.getUserId());
-                param.put("orgId", teamOperater.getCompanyId());
-                param.put("companyId", teamOperater.getCompanyId());
-                this.roleUserDao.deleteUserRole(param);
-                //添加系统管理员角色
-                RoleUserEntity roleUser = new RoleUserEntity();
-                roleUser.setId(StringUtil.buildUUID());
-                roleUser.setRoleId(SystemParameters.ADMIN_MANAGER_ROLE_ID);
-                roleUser.setCompanyId(teamOperater.getCompanyId());
-                roleUser.setUserId(teamOperater.getUserId());
-                roleUser.setOrgId(teamOperater.getCompanyId());
-                roleUserDao.insert(roleUser);
-            }
-        }
-        return null;
-    }
-
-    /**
-     * 方法描述：系统管理员权限（初始话云端数据）2016-11-11
-     * 作者：MaoSF
-     * 日期：2016/11/11
-     * @param:
-     * @return:
-     */
-    @Override
-    public AjaxMessage initRolePermission() throws Exception {
-        //2.初始话所有管理员的角色（添加系统管理员角色）
-        List<TeamOperaterEntity> teamOperaterList = teamOperaterDao.getAllTeamOperater();
-        if (!CollectionUtils.isEmpty(teamOperaterList)) {
-            for (TeamOperaterEntity teamOperater : teamOperaterList) {
-                //添加系统管理员角色
-                SaveRoleUserDTO saveRoleUserDTO = new SaveRoleUserDTO();
-                saveRoleUserDTO.setRoleId(SystemParameters.ADMIN_MANAGER_ROLE_ID);
-                List<String> users = new ArrayList<String>();
-                users.add(teamOperater.getUserId());
-                saveRoleUserDTO.setUserIds(users);
-                saveRoleUserDTO.setCurrentCompanyId(teamOperater.getCompanyId());
-                this.roleUserService.saveOrUserRole(saveRoleUserDTO);
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public List<CompanyUserEntity> selectCompanyUserId(Map<String, Object> pubMap) {
-        String messSource = pubMap.get("messSource").toString();
-        String[] messSources = messSource.split("[;]");
-        String messSourceType = pubMap.get("messSourceType").toString();
-        String[] messSourceTypes = messSourceType.split("[;]");
-        List<CompanyUserEntity> companyUsers = new ArrayList<CompanyUserEntity>();
-        for (int i = 0; i < messSourceTypes.length; i++) {
-            if ("company".equals(messSourceTypes[i]) || "partner".equals(messSourceTypes[i]) || "subCompany".equals(messSourceTypes[i])) {
-                CompanyEntity company = companyDao.selectById(messSources[i]);
-                List<CompanyEntity> companyEntityList = new ArrayList<CompanyEntity>();
-                companyEntityList.addAll(this.getAllChilrenCompany(company.getId()));
-                companyEntityList.add(company);
-                for (CompanyEntity companyEntity : companyEntityList) {
-                    List<CompanyUserEntity> companyUserEntities = companyUserDao.getCompanyUserByCompanyId(companyEntity.getId());
-                    for (CompanyUserEntity companyUserEntity : companyUserEntities) {
-                        companyUsers.add(companyUserEntity);
-                    }
-                }
-            }
-            if ("depart".equals(messSourceTypes[i])) {
-                Map<String, Object> param = new HashMap<String, Object>();
-                DepartEntity departEn = departDao.selectById(messSources[i]);
-                List<DepartEntity> listChild = departDao.getDepartsByDepartPath(pubMap.get("messSource").toString() + "-");
-                listChild.add(departEn);
-                for (DepartEntity departEntity : listChild) {
-                    param.put("departId", departEntity.getId());
-                    List<CompanyUserEntity> companyUserEntities = companyUserDao.getUserByDepartId(param);
-                    for (CompanyUserEntity companyUserEntity : companyUserEntities) {
-                        companyUsers.add(companyUserEntity);
-                    }
-                }
-            }
-            if ("person".equals(messSourceTypes[i])) {
-                CompanyUserEntity companyUserEntity = companyUserDao.selectById(messSources[i]);
-                companyUsers.add(companyUserEntity);
-            }
-        }
-        return companyUsers;
-    }
-
 
     /**
      * 方法描述：返回选择团队列表（分公司，合作伙伴，所有公司），任务转发给其他公司，团队选择
@@ -1753,8 +1187,6 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
      * 方法描述：返回选择团队列表（分支机构，合作伙伴，所有公司），任务转发给其他公司，团队选择
      * 作者：MaoSF
      * 日期：2017/1/5
-     * @param:
-     * @return:
      */
     public List<CompanyDataDTO> getIssueCompanyForSelect(String id, String projectId) throws Exception {
         List<CompanyEntity> list = companyDao.getChilrenCompany(id);
@@ -1824,13 +1256,11 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
      * 方法描述：组织架构数据
      * 作者：MaoSF
      * 日期：2017/1/13
-     * @param:
-     * @return:
      */
     @Override
     public Map<String, Object> getLinkPeopleAndGroup(Map<String, Object> mapass) throws Exception {
 
-        Map<String, Object> returnMap = new HashMap<String, Object>();//返回对象
+        Map<String, Object> returnMap = new HashMap<>();//返回对象
         //第一，获取公司根目录下的人员
         if (StringUtil.isNullOrEmpty(mapass.get("companyId"))) {
             return mapass;//返回
@@ -1842,13 +1272,19 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
             CompanyEntity companyEntity = companyDao.getCompanyMsgById(rootId);
             List<Object> headOfficeCompanyList = new ArrayList<>();
             if (companyEntity != null) {
-                companyEntity.setCompanyShortName(companyEntity.getAliasName());
+                CompanyDataDTO dataDTO = new CompanyDataDTO();
+                BaseDTO.copyFields(companyEntity, dataDTO);
+                dataDTO.setCompanyShortName(companyEntity.getAliasName());
+                dataDTO.setCompanyShortName(companyEntity.getAliasName());
                 if (!StringUtil.isNullOrEmpty(companyEntity.getFilePath())) {
-                    companyEntity.setFilePath(this.fastdfsUrl + companyEntity.getFilePath());
+                    dataDTO.setFilePath(this.fastdfsUrl + companyEntity.getFilePath());
                 }
-                headOfficeCompanyList.add(companyEntity);
+                if(companyUserDao.getCompanyUserByUserIdAndCompanyId((String)mapass.get("accountId"),companyEntity.getId())!=null){
+                    dataDTO.setIsOwnCompany(1);
+                }
+                headOfficeCompanyList.add(dataDTO);
             }
-            returnMap.put("headOfficeCompanyList", headOfficeCompanyList);
+            returnMap.put("headOfficeCompanyList", headOfficeCompanyList);//总公司
         }
 
         Map<String, Object> paramCompanyUser = new HashMap<String, Object>();
@@ -1874,6 +1310,10 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
                 CompanyDataDTO dataDTO = new CompanyDataDTO();
                 BaseDTO.copyFields(entity, dataDTO);
                 dataDTO.setCompanyShortName(entity.getAliasName());
+                //查询是否存在该公司
+                if(companyUserDao.getCompanyUserByUserIdAndCompanyId((String)mapass.get("accountId"),entity.getId())!=null){
+                    dataDTO.setIsOwnCompany(1);
+                }
                 if (!StringUtil.isNullOrEmpty(dataDTO.getFilePath())) {
                     dataDTO.setFilePath(this.fastdfsUrl + dataDTO.getFilePath());
                 }
@@ -1885,7 +1325,7 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
                 }
             }
         }
-        returnMap.put("companyFilialeList", companyFilialeList);
+        returnMap.put("companyFilialeList", companyFilialeList);//分公司
         returnMap.put("businessPartnerList", businessPartnerList);
 
         //查询我所在一级部门的id
@@ -1899,30 +1339,11 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
         return returnMap;
     }
 
-    public Map<String, Object> firstLevelDepartId(Map<String, Object> mapass) {
-        String companyId = mapass.get("companyId").toString();
-        Map<String, Object> map = new HashMap<>();
-        //查询我所在一级部门的id
-        if (null != mapass.get("accountId")) {
-            map.clear();
-            map.put("companyId", companyId);
-            map.put("userId", mapass.get("accountId"));
-            mapass.put("firstLeveDepartIds", this.departDao.getOwnDepartGroupId(map));
-        }
-        return mapass;
-    }
 
     /**
-     * 方法描述：获取挂靠的公司
-     * 作者：MaoSF
-     * 日期：2017/1/16
-     * @param:
-     * @return:
+     * 查询当前组织下的成员及部门 （组织为companyId or departId）
      */
-    @Override
-    public CompanyEntity getParentCompanyById(String id) throws Exception {
-        return this.companyDao.getParentCompanyById(id);
-    }
+
 
     @Override
     public Map<String, Object> getInviteAbout(Map<String, Object> map) throws Exception {
@@ -2033,11 +1454,10 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
      */
     @Override
     public ResponseBean applayBusinessCompany(Map<String, Object> map) throws Exception {
-        Map<String, Object> resultMap = new HashMap<>();
         String appOrgId = (String) map.get("appOrgId");
         //code ,companyId
         CompanyInviteEntity companyInviteEntity = companyInviteDao.selectByParam(map);
-        if (companyInviteEntity != null && DateUtils.getMillis(companyInviteEntity.getEffectiveTime()) >= new Date().getTime()) {
+        if (companyInviteEntity != null && DateUtils.getMillis(companyInviteEntity.getEffectiveTime()) >= System.currentTimeMillis()) {
             //给对方管理员发送一条任务
             map.clear();
             map.put("companyId", companyInviteEntity.getCompanyId());
@@ -2057,56 +1477,41 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
         return ResponseBean.responseError("邀请码已失效，请向邀请方重新获取。");
     }
 
-    /**
-     * 方法描述：点击邀请信息请求数据
-     * 作        者：chenzhujie
-     * 日        期：2017/2/27
-     */
-    @Override
-    public ResponseBean getCompanyByInviteUrl(Map<String, Object> map) throws Exception {
-        Map<String, Object> resultMap = new HashMap<String, Object>();
-        CompanyInviteEntity companyInviteEntity = companyInviteDao.selectById(map.get("id"));
-
-        if (companyInviteEntity != null) {
-            String companyId = companyInviteEntity.getCompanyId();
-            CompanyEntity companyEntity = companyDao.selectById(companyId);
-            if (companyEntity != null) {
-                resultMap.put("id", companyId);
-                resultMap.put("companyName", companyEntity.getCompanyName());
-                //查询公司logo
-                resultMap.put("filePath", this.projectSkyDriverService.getCompanyLogo(companyId));
-                //查询企业管理员
-                map.clear();
-                map.put("permissionId", "50");//企业负责人权限id
-                map.put("companyId", companyId);
-                List<CompanyUserTableDTO> companyUserList = this.companyUserDao.getCompanyUserByPermissionId(map);
-                if (!CollectionUtils.isEmpty(companyUserList)) {
-                    resultMap.put("systemManager", companyUserList.get(0).getUserName());
-                }
-                return ResponseBean.responseSuccess("查询成功").addData("resultMap", resultMap);
+    public ResponseBean validateInviteParent(InvitatParentDTO dto) throws Exception {
+        for(String cellphone:dto.getCellphoneList()){
+            if(!StringUtil.isMobileNO(cellphone)){
+                return ResponseBean.responseError("手机号："+cellphone+"格式不对");
             }
         }
-        return ResponseBean.responseError("操作失败");
+        return null;
     }
-
     /**
      * 方法描述：邀请事业合伙人
      * 作者：MaoSF
      * 日期：2017/4/1
-     * @param:
-     * @return:
      */
     @Override
     public ResponseBean inviteParent(InvitatParentDTO dto) throws Exception {
+        //手机号验证
+        ResponseBean responseBean = validateInviteParent(dto);
+        if(responseBean!=null){
+            return responseBean;
+        }
         CompanyUserEntity companyUser = this.companyUserDao.getCompanyUserByUserIdAndCompanyId(dto.getAccountId(), dto.getAppOrgId());
         CompanyEntity companyEntity = this.companyDao.selectById(dto.getAppOrgId());
         if (companyUser == null || companyEntity == null) {
             return ResponseBean.responseError("操作失败");
         }
+        if ("3".equals(dto.getType())) {//外部合作组织
+            if (StringUtil.isNullOrEmpty(dto.getProjectId())) {//验证数据,项目ID必传
+                return ResponseBean.responseError("操作失败");
+            }
+        }
         CompanyInviteEntity companyInviteEntity = new CompanyInviteEntity();
         companyInviteEntity.setCompanyId(dto.getAppOrgId());
         companyInviteEntity.setCreateBy(dto.getAccountId());
         companyInviteEntity.setType(dto.getType());
+        companyInviteEntity.setProjectId(dto.getProjectId());
         for (String cellphone : dto.getCellphoneList()) {
             companyInviteEntity.setInviteCellphone(cellphone);
             companyInviteEntity.setId(StringUtil.buildUUID());
@@ -2120,38 +1525,32 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
             if ("2".equals(dto.getType())) {
                 this.sendMsg(cellphone, StringUtil.format(SystemParameters.INVITE_PARENT_MSG2, companyUser.getUserName(), companyEntity.getCompanyName(), url));
             }
+            if ("3".equals(dto.getType())) {
+
+                //插入外部合作组织记录
+                PartnerEntity partnerEntity = new PartnerEntity();
+                partnerEntity.setFromCompanyId(dto.getCurrentCompanyId());
+                partnerEntity.setFromUserId(dto.getAccountId());
+                partnerEntity.setCreateBy(dto.getAccountId());
+                partnerEntity.setCreateDate(new Date());
+                partnerEntity.setType(Integer.valueOf(dto.getType()));//合伙人类别=3
+                partnerEntity.setNickName(companyUser.getUserName());
+                partnerEntity.setProjectId(dto.getProjectId());
+                partnerEntity.setPhone(cellphone);
+                partnerEntity.setId(companyInviteEntity.getId());//此ID与companyInviteEntity的ID同步
+                partnerDao.insert(partnerEntity);
+                //发送信息
+                this.sendMsg(cellphone, StringUtil.format(SystemParameters.INVITE_PARENT_MSG3, companyUser.getUserName(), companyEntity.getCompanyName(), url));
+            }
         }
+
         return ResponseBean.responseSuccess("邀请发送成功");
     }
-
-    /**
-     * 方法描述：邀请事业合伙人身份验证
-     * 作者：MaoSF
-     * 日期：2017/4/1
-     * @param:map(id,cellphone),id为url地址中携带的id
-     * @return:
-     */
-    @Override
-    public ResponseBean verifyIdentityForParent(Map<String, Object> map) throws Exception {
-        CompanyInviteEntity companyInviteEntity = companyInviteDao.selectById(map.get("id"));
-
-        if (companyInviteEntity != null) {
-            if (companyInviteEntity.getInviteCellphone().equals(map.get("cellphone"))) {
-                return ResponseBean.responseSuccess();
-            }
-            return ResponseBean.responseError("系统验证失败，请检查您输入的手机号码");
-        }
-
-        return ResponseBean.responseError("邀请信息已失效");
-    }
-
 
     /**
      * 方法描述：设置事业合伙人的别名
      * 作者：MaoSF
      * 日期：2017/4/18
-     * @param:
-     * @return:
      */
     @Override
     public ResponseBean setBusinessPartnerNickName(BusinessPartnerDTO dto) throws Exception {
@@ -2175,68 +1574,140 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
     }
 
     /**
-     * 方法描述：获取公司别名
-     * 作者：MaoSF
-     * 日期：2017/4/18
-     * @param:
-     * @return:
-     */
-//    @Override
-//    public String getNickName(String companyId, String currentCompanyId) {
-//        String nickName = this.businessPartnerDao.getNickName(companyId);
-//        return nickName;
-//    }
-
-
-    /**
-     * 方法描述：返回选择团队列表（分公司，合作伙伴，所有公司），任务转发给其他公司，团队选择
-     * 作者：MaoSF
-     * 日期：2017/1/5
-     * @param:
-     * @return:
+     * 方法描述：项目讨论区的@和特别提醒人员选择
+     * 作者：zcl
+     * 日期：2018/4/23
+     * @param: companyId 组织id
+     * @param: accountId 查询者用户id
+     * @param: projectId 要查询的项目id
+     * @param: ignoreUserId 在结果中忽略掉的用户Id
+     * @return: 查询到的用户列表和公司信息
      */
     @Override
-    public List<OrgUserForCustomGroupDTO> getCompanyForCustomGroupSelect(String id, String accountId) throws Exception {
-
-        //查询子公司
-        List<CompanyEntity> list = companyDao.getChilrenCompany(id);
-        //查询父公司
-        CompanyEntity parentCompany = this.companyDao.getParentCompany(id);
-        if (parentCompany != null) {
-            list.add(0, parentCompany);
-
-            String rootId = this.getRootCompanyId(id);
-            if (!id.equals(rootId) && !parentCompany.getId().equals(rootId)) {
-                CompanyEntity rootCompany = this.companyDao.selectById(rootId);
-                list.add(1, rootCompany);
-            }
-
-            //查询父级的子节点
-            List<CompanyEntity> list2 = companyDao.getChilrenCompany(parentCompany.getId());
-            if (!CollectionUtils.isEmpty(list2)) {
-                for (CompanyEntity dataDTO : list2) {
-                    if (dataDTO.getId().equals(id)) {
-                        list2.remove(dataDTO);
-                        break;
-                    }
-                }
-            }
-            list.addAll(list2);
-        }
-
-        //查询自己
-        list.add(0, this.companyDao.selectById(id));
-
+    public List<CompanyUserGroupDTO> getCompanyForCustomGroupSelect(QueryCompanyUserDTO query) throws Exception {
+        String projectId = query.getProjectId();
         //重新组装数据并查询人员
-        List<OrgUserForCustomGroupDTO> allCompanyUserList = new ArrayList<>();
-        for (CompanyEntity mCompanyEntity : list) {
-            OrgUserForCustomGroupDTO mOrgUserForCustomGroupDTO = new OrgUserForCustomGroupDTO();
-            mOrgUserForCustomGroupDTO.setCompanyId(mCompanyEntity.getId());
-            mOrgUserForCustomGroupDTO.setCompanyName(mCompanyEntity.getCompanyName());
-            mOrgUserForCustomGroupDTO.setUserList(this.companyUserService.getCompanyUserExceptMe(mCompanyEntity.getId(), accountId));
-            allCompanyUserList.add(mOrgUserForCustomGroupDTO);
+        List<CompanyUserGroupDTO> allCompanyUserList = new ArrayList<>();
+        //如果projectId不为null，则是创建项目群返回数据
+        if(!StringUtil.isNullOrEmpty(projectId)){
+            CompanyUserGroupDTO projectMember = new CompanyUserGroupDTO();
+            projectMember.setCompanyName("项目参与人员");
+            projectMember.setUserList(projectMemberService.listProjectMember(projectId));
+            allCompanyUserList.add(0,projectMember);
         }
         return allCompanyUserList;
     }
+
+    @Override
+    public List<CompanyUserGroupDTO> getLinkman(QueryCompanyUserDTO query) throws Exception {
+        List<CompanyUserGroupDTO> allCompanyUserList = new ArrayList<>();
+        List<CompanyEntity> list = this.getAllOrg(query.getAppOrgId());
+        for (CompanyEntity mCompanyEntity : list) {
+            query.setCompanyId(mCompanyEntity.getId());
+            allCompanyUserList.add(getOrgUser(query,mCompanyEntity));
+        }
+        return allCompanyUserList;
+    }
+
+    @Override
+    public List<CompanyUserGroupDTO> getOrgForSchedule(QueryCompanyUserDTO query) throws Exception {
+        //查询项目参与人员
+        List<CompanyUserGroupDTO> result =this.getCompanyForCustomGroupSelect(query);
+        //再查询组织架构
+        List<CompanyEntity> list = this.getAllOrg(query.getAppOrgId());
+        list.stream().forEach(c->{
+            CompanyUserGroupDTO dto = new CompanyUserGroupDTO();
+            dto.setCompanyId(c.getId());
+            dto.setCompanyName(c.getCompanyName());
+            result.add(dto);
+        });
+
+        return result;
+    }
+
+    @Override
+    public List<CompanyUserGroupDTO> getCostAuditMember(QueryCompanyUserDTO query) throws Exception {
+        query.setIgnoreUserId(expAuditService.getAuditPerson(query.getExpMainId(),query.getAccountId()));
+        return getLinkman(query);
+    }
+
+    @Override
+    public List<CompanyUserGroupDTO> getCostCopyMember(QueryCompanyUserDTO query) throws Exception {
+        return getLinkman(query);
+    }
+
+    @Override
+    public List<CompanyUserAppDTO>  getLeaveAuditMember(QueryCompanyUserDTO query) throws Exception {
+        List<CompanyUserAppDTO> list = new ArrayList<>();
+        CompanyEntity company = this.companyDao.selectById(query.getAppOrgId());
+        if(company!=null){
+            query.setIgnoreUserId(expAuditService.getAuditPerson(query.getExpMainId(),query.getAccountId()));
+            return getOrgUser(query,company).getUserList();
+        }
+        return list;
+    }
+
+    @Override
+    public List<CompanyUserAppDTO> getLeaveCopyMember(QueryCompanyUserDTO query) throws Exception {
+        List<CompanyUserAppDTO> list = new ArrayList<>();
+        CompanyEntity company = this.companyDao.selectById(query.getAppOrgId());
+        if(company!=null){
+            return getOrgUser(query,company).getUserList();
+        }
+        return list;
+    }
+
+    private CompanyUserGroupDTO getOrgUser(QueryCompanyUserDTO query,CompanyEntity mCompanyEntity) throws Exception{
+        CompanyUserGroupDTO orgUser = new CompanyUserGroupDTO();
+        orgUser.setCompanyId(mCompanyEntity.getId());
+        orgUser.setCompanyName(mCompanyEntity.getCompanyName());
+        query.setCompanyId(mCompanyEntity.getId());
+        orgUser.setUserList(this.companyUserService.getCompanyUserExceptMe(query));
+        return orgUser;
+    }
+
+    /**
+     * 方法描述：获取与当前组织相关的组织人员（本公司、分公司、事业合伙人）并按最后操作时间倒序排序
+     * 作者：zcl
+     * 日期：2018/4/23
+     *
+     * @param query 查询条件
+     * @return: 查询到的companyUser列表
+     */
+    @Override
+    public List<CompanyUserAppDTO> listCompanyUserForCustomGroupSelect(QueryCompanyUserDTO query) throws Exception {
+        //重新组装数据并查询人员
+        List<CompanyUserAppDTO> userList = new ArrayList<>();
+        CompanyUserEntity user = companyUserDao.getCompanyUserByUserIdAndCompanyId(query.getAccountId(),query.getAppOrgId());
+        if(user==null){
+            return userList;
+        }
+        query.setCompanyUserId(user.getId());
+        query.setIgnoreUserId(expAuditService.getAuditPerson(query.getExpMainId(),query.getAccountId()));
+        return companyUserService.listCompanyUser(query);
+    }
+
+    @Override
+    public String getOrgTypeId(String companyId) {
+        if(StringUtil.isNullOrEmpty(companyId)){
+            return null;
+        }
+        CompanyRelationDTO relation = this.companyRelationDao.getCompanyRelationByOrgId(companyId);
+        if(relation!=null){
+            return relation.getTypeId();
+        }
+        return null;
+    }
+
+    @Override
+    public String getFinancialHandleCompanyId(String companyId) {
+        CompanyRelationDTO relation = this.companyRelationDao.getCompanyRelationByOrgId(companyId);
+        if(relation==null || StringUtil.isNullOrEmpty(relation.getTypeId()) || !"3".equals(relation.getTypeId())){
+            return companyId;
+        }else {
+            return getFinancialHandleCompanyId(relation.getOrgPid());
+        }
+    }
+
 
 }

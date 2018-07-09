@@ -1,15 +1,18 @@
 package com.maoding.hxIm.dto;
 
+import com.maoding.attach.dto.FilePathDTO;
+
 /**
  * Created by sandy on 2017/8/7.
  */
-public class ImGroupMemberDataDTO {
+public class ImGroupMemberDataDTO extends FilePathDTO {
 
+    /**
+     * companyUserId
+     */
     private String id;
 
     private String userId;
-
-    private String img;
 
     private String userName;
 
@@ -29,14 +32,6 @@ public class ImGroupMemberDataDTO {
 
     public void setUserId(String userId) {
         this.userId = userId;
-    }
-
-    public String getImg() {
-        return img;
-    }
-
-    public void setImg(String img) {
-        this.img = img;
     }
 
     public String getUserName() {

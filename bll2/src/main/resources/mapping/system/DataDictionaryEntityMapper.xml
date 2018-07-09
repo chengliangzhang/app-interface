@@ -85,50 +85,25 @@
 		update_by = #{updateBy,jdbcType=VARCHAR}
 		where id = #{id,jdbcType=VARCHAR}
 	</update>
-	<!-- 根据父级code和父级键值查询相关数据字典， 子级的键值跟父级一样情况下 -->
-	<select  id="getByParentCodeAndVl" resultMap="BaseResultMap" parameterType="java.util.Map">
-		SELECT
-			a.id, a.name, a.code, a.pid, a.root_id, a.deep_index, a.vl, a.seq
-		FROM
-			maoding_data_dictionary a
-		LEFT JOIN maoding_data_dictionary b ON a.pid = b.id
-		WHERE
-			b.`code` = #{code,jdbcType=VARCHAR}
-		AND a.vl = #{vl,jdbcType=VARCHAR}
-		ORDER BY
-			a.seq	
-	</select>
+
 	
 	<!-- 根据code查询子集 -->
 	<select id="selectSubsetByCode" resultMap="BaseResultMap"
 		parameterType="java.lang.String">
 		SELECT id, name, code, pid, root_id, deep_index, vl, seq FROM
 		maoding_data_dictionary
-		WHERE pid=(SELECT id FROM maoding_data_dictionary WHERE
-		code=#{code,jdbcType=VARCHAR}) ORDER BY seq
-	</select>
-	<!-- 根据code查询Name -->
-	<select id="selectTypeNameByCode" resultMap="BaseResultMap"
-			parameterType="java.lang.String">
-		SELECT id, name, code, pid, root_id, deep_index, vl, seq FROM
-		maoding_data_dictionary
-		 WHERE id=#{code,jdbcType=VARCHAR}
+		WHERE deleted = 0 AND pid=(SELECT id FROM maoding_data_dictionary WHERE deleted = 0
+		 and code=#{code,jdbcType=VARCHAR}) ORDER BY seq
 	</select>
 
-	<!-- 根据id查询父 -->
-	<select id="selectDataDictionarysubEntityById" resultMap="BaseResultMap"
-			parameterType="java.lang.String">
-	SELECT id, NAME, CODE, pid, root_id, deep_index, vl, seq FROM
-		maoding_data_dictionary
-		WHERE id=(SELECT pid FROM maoding_data_dictionary WHERE id =#{expType,jdbcType=VARCHAR})
-	</select>
 	<!-- 根据code查询自己及子集 -->
 	<select id="selectParentAndSubByCode" resultMap="BaseResultMap"
 		parameterType="java.util.Map">
 		SELECT dd.id,dd.name,dd.code,dd.pid
 		from maoding_data_dictionary dd
-		where dd.rootId IN (SELECT d.id FROM maoding_data_dictionary d WHERE d.code
-		LIKE '%' #{code} '%')
+		where dd.deleted = 0 and dd.rootId IN (SELECT d.id FROM maoding_data_dictionary d
+		WHERE d.deleted = 0
+		and d.code LIKE '%' #{code} '%')
 		order by seq
 	</select>
 	
@@ -138,7 +113,7 @@
 		select
 		<include refid="Base_Column_List" />
 		from maoding_data_dictionary
-		where 1=1
+		where deleted = 0
 		<if test="pid != null">
 			and pid=#{pid,jdbcType=VARCHAR}
 		</if>
@@ -161,7 +136,33 @@
 				#{id}
 			</foreach>
 		</if>
-		
 		order by seq
+	</select>
+
+
+	<resultMap id="BaseResultMap2" type="com.maoding.system.dto.DataDictionaryDataDTO" >
+		<id column="pid" property="id" />
+		<id column="parentName" property="name" />
+		<result column="parentCode" property="code" />
+		<result column="parentMemo" property="memo" />
+		<result column="parentSeq" property="seq" />
+		<collection property="childList" ofType="com.maoding.system.dto.DataDictionaryDataDTO" >
+			<result column="name" property="name" />
+			<result column="code" property="code" />
+			<result column="pid" property="pid" />
+			<result column="memo" property="memo" />
+			<result column="seq" property="seq" />
+		</collection>
+	</resultMap>
+
+	<select id="getExpTypeList" resultMap="BaseResultMap2" parameterType="java.lang.String">
+		SELECT a.id as pid,a.code as parentCode,b.id, a.name as parentName, a.memo as parentMemo,a.seq as parentSeq,
+		b.name,b.code,b.memo,b.seq
+		from maoding_data_dictionary a
+		INNER JOIN maoding_data_dictionary b on a.id = b.pid
+		where a.deleted = 0
+		and b.deleted = 0
+		and a.`code` like CONCAT(#{code},'%')
+		and a.pid is null
 	</select>
 </mapper>

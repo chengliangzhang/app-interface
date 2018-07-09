@@ -2,10 +2,13 @@ package com.maoding.financial.dao.impl;
 
 import com.maoding.core.base.dao.GenericDao;
 import com.maoding.financial.dao.ExpAuditDao;
+import com.maoding.financial.dto.AuditDTO;
 import com.maoding.financial.dto.ExpAuditDTO;
 import com.maoding.financial.dto.ExpMainDTO;
+import com.maoding.financial.dto.ExpMainDataDTO;
 import com.maoding.financial.entity.ExpAuditEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -84,12 +87,38 @@ public class ExpAuditDaoImpl extends GenericDao<ExpAuditEntity> implements ExpAu
      * @param map 报销主表id
      *
      */
-    public List<ExpMainDTO> selectAuditDetailByMainId(Map<String,Object> map){
+    public List<ExpMainDataDTO> selectAuditDetailByMainId(Map<String,Object> map){
         return this.sqlSession.selectList("ExpAuditEntityMapper.selectAuditDetailByMainId", map);
     }
 
     @Override
+    public List<AuditDTO> selectAuditByMainId(Map<String, Object> map) {
+        return this.sqlSession.selectList("ExpAuditEntityMapper.selectAuditByMainId", map);
+    }
+
+
+    @Override
     public List<ExpAuditEntity> selectByParam(Map<String, Object> mapParam){
+        mapParam.put("isNew","Y");
+        return sqlSession.selectList("ExpAuditEntityMapper.selectByParam", mapParam);
+    }
+
+    @Override
+    public ExpAuditEntity selectLastRecallAudit(String mainId) {
+        return sqlSession.selectOne("ExpAuditEntityMapper.selectLastRecallAudit", mainId);
+    }
+
+    @Override
+    public ExpAuditEntity selectLastAudit(String mainId) {
+        List<ExpAuditEntity> list = this.selectByMainId(mainId);
+        if(!CollectionUtils.isEmpty(list)){
+            return list.get(0);
+        }
+        return null;
+    }
+
+    @Override
+    public List<ExpAuditEntity> getMyAudit(Map<String, Object> mapParam) {
         return sqlSession.selectList("ExpAuditEntityMapper.selectByParam", mapParam);
     }
 }

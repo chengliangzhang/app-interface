@@ -61,4 +61,9 @@ public interface ProjectCostPointDao extends BaseDao<ProjectCostPointEntity> {
      * 日期：2017/6/29
      */
     ProjectCostPointDataForMyTaskDTO getCostPointData(String pointDetailId, String paymentDetailId, String companyId);
+
+    /**
+     * 获取当前数据
+     */
+    String getCostFeeCompanyByTaskId(String taskId);
 }

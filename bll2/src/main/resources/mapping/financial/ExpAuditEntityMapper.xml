@@ -9,6 +9,7 @@
     <result column="approve_status" property="approveStatus" jdbcType="VARCHAR" />
     <result column="approve_date" property="approveDate" jdbcType="DATE" />
     <result column="audit_person" property="auditPerson" jdbcType="VARCHAR" />
+    <result column="submit_audit_id" property="submitAuditId" jdbcType="VARCHAR" />
     <result column="audit_message" property="auditMessage" jdbcType="VARCHAR" />
     <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
     <result column="create_by" property="createBy" jdbcType="VARCHAR" />
@@ -16,7 +17,7 @@
     <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
   </resultMap>
   <sql id="Base_Column_List" >
-    id, parent_id, is_new, main_id, approve_status, approve_date, audit_person, audit_message, 
+    id, parent_id, is_new, main_id, approve_status, approve_date, audit_person,submit_audit_id, audit_message,
     create_date, create_by, update_date, update_by
   </sql>
   <select id="selectById" resultMap="BaseResultMap" parameterType="java.lang.String" >
@@ -32,12 +33,12 @@
   <insert id="insert" parameterType="com.maoding.financial.entity.ExpAuditEntity" >
     insert into maoding_web_exp_audit (id, parent_id, is_new, 
       main_id, approve_status, approve_date, 
-      audit_person, audit_message, create_date, 
+      audit_person, audit_message, submit_audit_id,create_date,
       create_by, update_date, update_by
       )
     values (#{id,jdbcType=VARCHAR}, #{parentId,jdbcType=VARCHAR}, #{isNew,jdbcType=VARCHAR}, 
       #{mainId,jdbcType=VARCHAR}, #{approveStatus,jdbcType=VARCHAR}, #{approveDate,jdbcType=DATE}, 
-      #{auditPerson,jdbcType=VARCHAR}, #{auditMessage,jdbcType=VARCHAR}, now(),
+      #{auditPerson,jdbcType=VARCHAR}, #{auditMessage,jdbcType=VARCHAR}, #{submitAuditId,jdbcType=VARCHAR}, now(),
       #{createBy,jdbcType=VARCHAR}, now(), #{updateBy,jdbcType=VARCHAR}
       )
   </insert>
@@ -63,6 +64,9 @@
       <if test="auditPerson != null" >
         audit_person = #{auditPerson,jdbcType=VARCHAR},
       </if>
+      <if test="submitAuditId != null" >
+        submit_audit_id = #{submitAuditId,jdbcType=VARCHAR},
+      </if>
       <if test="auditMessage != null" >
         audit_message = #{auditMessage,jdbcType=VARCHAR},
       </if>
@@ -87,6 +91,7 @@
       approve_status = #{approveStatus,jdbcType=VARCHAR},
       approve_date = #{approveDate,jdbcType=DATE},
       audit_person = #{auditPerson,jdbcType=VARCHAR},
+      submit_audit_id = #{submitAuditId,jdbcType=VARCHAR},
       audit_message = #{auditMessage,jdbcType=VARCHAR},
       create_date = #{createDate,jdbcType=TIMESTAMP},
       create_by = #{createBy,jdbcType=VARCHAR},
@@ -137,14 +142,31 @@
     where main_id = #{mainId,jdbcType=VARCHAR} and is_new = 'Y'
   </select>
 
-  <select id="selectAuditDetailByMainId" resultType="com.maoding.financial.dto.ExpMainDTO"  parameterType="java.util.Map">
-    select a.id,c.id as userId,c.user_name as userName,a.approve_date as expDate,a.audit_message as remark
-      ,a.approve_status as approveStatus,a.is_new as isNew,
-      IF(d.file_group IS NULL ,NULL,CONCAT(#{fastdfsUrl,jdbcType=VARCHAR},d.file_group,'/',d.attach_path)) AS imgUrl
+  <select id="selectAuditDetailByMainId" resultType="com.maoding.financial.dto.ExpMainDataDTO"  parameterType="java.util.Map">
+    select a.id,c.user_id as accountId,c.id as companyUserId,c.user_name as userName,a.approve_date as approveDate,
+    a.approve_date as expDate,a.audit_message as auditMessage,
+    a.approve_status as approveStatus,a.is_new as isNew,
+    d.oss_file_path AS fileFullPath,
+    company.company_name,company.id as companyId
     from maoding_web_exp_main  b
-    LEFT JOIN maoding_web_exp_audit a on a.main_id = b.id
-    LEFT JOIN maoding_web_company_user c on a.audit_person = c.id and b.company_id = c.company_id
-    LEFT JOIN maoding_web_user_attach d on c.user_id = d.user_id and d.attach_type = 5
+    INNER JOIN maoding_web_exp_audit a on a.main_id = b.id
+    INNER JOIN maoding_web_company_user c on a.audit_person = c.id
+    inner join maoding_web_company company on (company.id = c.company_id)
+    LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) d on c.user_id = d.user_id and d.attach_type = 5
+    where b.id = #{id,jdbcType=VARCHAR} order by a.create_date
+  </select>
+
+  <!--selectAuditByMainId 和 selectAuditDetailByMainId 一样，只是返回值换了类型 -->
+  <select id="selectAuditByMainId" resultType="com.maoding.financial.dto.AuditDTO"  parameterType="java.util.Map">
+    select a.id,c.user_id as accountId,c.id as companyUserId,c.user_name as userName,a.approve_date as approveDate,a.audit_message as auditMessage
+    ,a.approve_status as approveStatus,a.is_new as isNew,
+    d.oss_file_path AS fileFullPath,
+    e.company_name,e.id as companyId
+    from maoding_web_exp_main  b
+    INNER JOIN maoding_web_exp_audit a on a.main_id = b.id
+    INNER JOIN maoding_web_company_user c on a.audit_person = c.id and b.company_id = c.company_id
+    LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) d on c.user_id = d.user_id and d.attach_type = 5
+    left join maoding_web_company e on (c.company_id = e.id)
     where b.id = #{id,jdbcType=VARCHAR} order by a.create_date
   </select>
 
@@ -159,7 +181,23 @@
     <if test="approveStatus != null" >
      and approve_status = #{approveStatus,jdbcType=VARCHAR}
     </if>
-    and is_new = 'Y'
+    <if test="auditPerson != null" >
+      and audit_person = #{auditPerson,jdbcType=VARCHAR}
+    </if>
+    <if test="isNew!=null">
+      and is_new = #{isNew}
+    </if>
+  </select>
+  
+  <select id="selectLastRecallAudit" resultMap="BaseResultMap" parameterType="java.lang.String">
+    select
+    <include refid="Base_Column_List" />
+    from maoding_web_exp_audit
+    where 1=1
+    and main_id = #{mainId,jdbcType=VARCHAR}
+    and approve_status = 2
+    order by create_date desc
+    limit 1
   </select>
 
 </mapper>

@@ -1,6 +1,7 @@
 package com.maoding.task.dao;
 
 import com.maoding.core.base.dao.BaseDao;
+import com.maoding.mytask.dto.QueryMyTaskDTO;
 import com.maoding.task.dto.*;
 import com.maoding.task.entity.ProjectTaskEntity;
 
@@ -36,7 +37,7 @@ public interface ProjectTaskDao extends BaseDao<ProjectTaskEntity> {
      * 作者：MaoSF
      * 日期：2016/12/31
      */
-    List<ProjectTaskDTO> getProjectTaskRootData(String projectId);
+    List<ProjectTaskDTO> getProjectTaskRootData(String projectId,String companyId);
 
     /**
      * 方法描述： 经营界面的时候查询任务所在的根节点
@@ -114,22 +115,8 @@ public interface ProjectTaskDao extends BaseDao<ProjectTaskEntity> {
      * 作者：MaoSF
      * 日期：2017/1/4
      */
-    List<ProjectTaskDTO> getProjectTaskByPidForProduct(String taskPid);
-
-
-    /**
-     * 方法描述：根据taskPid查询
-     * 作者：MaoSF
-     * 日期：2017/1/4
-     */
     List<ProjectTaskEntity> getProjectTaskByPid2(String taskPid);
 
-    /**
-     * 方法描述：根据taskPid查询(用于生产发布)
-     * 作者：MaoSF
-     * 日期：2017/6/28
-     */
-    List<ProjectTaskEntity> listChildTaskForPublish(String taskPid);
 
     /**
      * 方法描述：根据taskPath查询所有的子任务
@@ -151,6 +138,13 @@ public interface ProjectTaskDao extends BaseDao<ProjectTaskEntity> {
      * 日期：2017/1/4
      */
     String getTaskParentName(String id);
+    /**
+     * 方法描述：获取任务的父级的名称(除当前节点)
+     * 作者：郭志彬
+     * 日期：2017/9/19
+     */
+    String getTaskParentNameExceptOwn(String id);
+
 
     /**
      * 方法描述：根据taskPid查询生产分解的任务（用于 经营分解时，判断父任务是否进行了生产）
@@ -179,15 +173,7 @@ public interface ProjectTaskDao extends BaseDao<ProjectTaskEntity> {
      * 日期：2017/3/22
      * @param:map(projectId,companyUserId)
      */
-    List<ProejctTaskForDesignerDTO> getMyProjectTask(Map<String,Object> map);
-
-
-    /**
-     * 方法描述：获取没有设置任务负责人的任务（用于设置设计负责人--推送安排任务负责人）
-     * 作者：MaoSF
-     * 日期：2017/4/7
-     */
-    List<ProjectTaskEntity> getNotSetResponsibleTask(String projectId,String companyId);
+    List<ProjectTaskForDesignerDTO> getMyProjectTask(Map<String,Object> map);
 
     /**
      * 方法描述：获取父级所以的companyId
@@ -273,6 +259,7 @@ public interface ProjectTaskDao extends BaseDao<ProjectTaskEntity> {
      * 日期：2017-5-24
      */
     int getTaskState(String taskId);
+    int getTaskState(String taskId,String projectId);
     String getStateText(Integer taskState, Date startTime, Date endTime, Date completeDate);
     String getStateText(Integer taskState,String startTime,String endTime,String completeDate);
 
@@ -284,13 +271,6 @@ public interface ProjectTaskDao extends BaseDao<ProjectTaskEntity> {
      */
     int updateModifyTaskPid(String publishId,String taskPid,String parentPath);
 
-    /**
-     * 方法描述：生产安排（数据请求）
-     * 作者：MaoSF
-     * 日期：2017/6/28
-     */
-    ProjectTaskDTO getProductTaskForEdit(String id);
-
 
     /**
      * 方法描述：获取设计内容（立项方（type=1）：设计阶段，合作方（type=2 and companyId），签发的数据）
@@ -298,7 +278,12 @@ public interface ProjectTaskDao extends BaseDao<ProjectTaskEntity> {
      * 日期：2017/6/28
      */
     String getIssueTaskName(String projectId,String companyId,int type);
-
+    /**
+     * 方法描述：获取设计内容（立项方（type=1）：设计阶段，合作方（type=2 and companyId），签发的数据）
+     * 作者：MaoSF
+     * 日期：2017/6/28
+     */
+    String getIssueTaskName(String projectId,String companyId,int type,String fromCompanyId);
 
     /**
      * 方法描述：获取我负责的任务
@@ -314,4 +299,40 @@ public interface ProjectTaskDao extends BaseDao<ProjectTaskEntity> {
      * 日期：2017/6/22
      */
     List<ProjectTaskEntity> listUnCompletedTask(String taskPid);
+
+    /**
+     * 获取所有当前公司生产的根任务
+     */
+    String getProductRootTaskName(String projectId,String companyId);
+
+    /**
+     * 项目综合信息--签发板块数据
+     */
+    List<ProjectIssueTaskDTO> getOperatorTaskListByCompanyId(String projectId,String companyId);
+
+    /**
+     * 项目综合信息--签发板块数据
+     */
+    List<ProjectIssueTaskDTO> getProductTaskListByCompanyId(String projectId,String companyId);
+
+    /**
+     * 签发数据(tree数据)（v3)
+     */
+    List<ProjectIssueTaskDTO> listOperatorTaskList(QueryProjectTaskDTO query);
+
+
+    /**
+     * 生产安排数据(tree数据)（v3)
+     */
+    List<ProjectIssueTaskDTO> getProductTaskList(QueryProjectTaskDTO query);
+
+    /**
+     * 方法描述：查找未完成的子任务(查询A-->B组织下的任务是否全部完成)
+     */
+    List<ProjectTaskEntity> listUnCompletedTaskByCompany(String projectId,String fromCompanyId,String toCompanyId);
+
+    /**
+     * 方法描述：使用QueryMyTaskDTO过滤条件查找任务
+     */
+    List<ProjectTaskDetailDTO> listTaskByMyTaskQuery(QueryMyTaskDTO query);
 }

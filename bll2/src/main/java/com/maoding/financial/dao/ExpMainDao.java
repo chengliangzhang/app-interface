@@ -1,8 +1,9 @@
 package com.maoding.financial.dao;
 
 import com.maoding.core.base.dao.BaseDao;
-import com.maoding.financial.dto.ExpMainDTO;
+import com.maoding.financial.dto.*;
 import com.maoding.financial.entity.ExpMainEntity;
+import com.maoding.task.dto.ApproveCount;
 import com.maoding.v2.financial.dto.V2ExpMainDTO;
 
 import java.math.BigInteger;
@@ -36,21 +37,19 @@ public interface ExpMainDao  extends BaseDao<ExpMainEntity> {
 
     public int getExpMainPageCount(Map<String, Object> param);
 
-    /**
-     * 方法描述：查询报销主表记录并关联账号表
-     * 作   者：LY
-     * 日   期：2016/8/2 15:10
-     * @param id 报销主表id
-     */
-    public ExpMainDTO selectByIdWithUserName(String id);
 
     /**
      * 方法描述：查询报销主表记录并关联账号表
      * 作   者：LY
      * 日   期：2016/8/2 15:10
-     * @param id 报销主表id
+     * @param param 报销主表id
      */
-    public ExpMainDTO selectByIdWithUserName(Map<String, Object> param);
+    public ExpMainDataDTO selectByIdWithUserName(Map<String, Object> param);
+
+    /**
+     * 财务拨款信息
+     */
+    ExpMainDataDTO selectAllocationUser(Map<String, Object> param);
 
     /**
      * 方法描述：报销汇总list
@@ -60,13 +59,6 @@ public interface ExpMainDao  extends BaseDao<ExpMainEntity> {
      */
     public List<ExpMainDTO> getExpMainPageForSummary(Map<String, Object> param);
 
-    /**
-     * 方法描述：报销汇总listInterface
-     * 作   者：LY
-     * 日   期：2016/7/28 16:34
-     * @param  param 查询条件
-     */
-    public List<ExpMainDTO> getExpMainPageForSummaryInterface(Map<String, Object> param);
 
     /**
      * 方法描述：报销汇总列表数量
@@ -117,4 +109,42 @@ public interface ExpMainDao  extends BaseDao<ExpMainEntity> {
      * 日   期：2016/12/27
      */
     public List<ExpMainEntity> selectByParam(Map<String,Object> param);
+
+
+    ExpAmountDTO getMyExpAmount(String companyUserId) ;
+
+    /**
+     * 获取审核信息
+     */
+    List<AuditDataDTO> getAuditData(QueryAuditDTO query);
+
+    /**
+     * 获取请假统计信息
+     */
+    ApproveCount getLeaveCount(Map<String,Object> param);
+
+    /**
+     * 获取请假统计信息
+     */
+    ApproveCount getMySubmitLeaveCount(String userId);
+
+    /**
+     * 获取请假统计信息
+     */
+    ApproveCount getMyApproveLeaveCount(String auditPerson);
+
+    /**
+     * 完成审批的数据
+     */
+    ApproveCount getMyApprovedLeaveCount(String auditPerson);
+
+     /**
+      *  待我审批的条目数（报销，费用申请，请假，出差）
+      */
+    int getMyAuditCount(String auditPerson);
+
+    /**
+     * 我申请的（报销，费用申请，请假，出差）统计
+     */
+    TotalDTO getMyApplyData(QueryAuditDTO query);
 }

@@ -8,6 +8,7 @@ import java.util.Map;
 import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.user.dto.UserAttachDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,7 +34,9 @@ public class UserAttachServiceImpl extends GenericService<UserAttachEntity>  imp
     
     @Autowired
 	public UploadService uploadService;
-    
+
+	@Value("${fastdfs.url}")
+	protected String fastdfsUrl;
     private final String th1="142X107";//头像缩略图大小
 	private final String th2="180X240";//头像缩略图大小
 	private final String th3="245X155";
@@ -59,6 +62,20 @@ public class UserAttachServiceImpl extends GenericService<UserAttachEntity>  imp
 	public List<UserAttachDTO> getAttachByTypeToDTO(Map<String, Object> paraMap) throws Exception {
 		List<UserAttachEntity> list = getAttachByType(paraMap) ;
 		return BaseDTO.copyFields(list,UserAttachDTO.class);
+	}
+
+	@Override
+	public UserAttachDTO getHeadImg(String userId) throws Exception{
+		Map<String, Object> param = new HashMap<String, Object>();
+		param.put("userId", userId);
+		param.put("attachType", "5");
+		List<UserAttachDTO> list = getAttachByTypeToDTO(param);
+		if (list != null && list.size() > 0) {
+			UserAttachDTO userAttachDTO = list.get(0);
+			userAttachDTO.setFilePath(fastdfsUrl + list.get(0).getFileGroup() + "/" + list.get(0).getAttachPath());
+			return userAttachDTO;
+		}
+		return null;
 	}
 
 	@Override
@@ -278,5 +295,20 @@ public class UserAttachServiceImpl extends GenericService<UserAttachEntity>  imp
 			return new AjaxMessage().setCode("0").setData("附件上传成功").setData(attachEntity);
 		}
 		return null;
+	}
+
+
+	@Override
+	public String getHeadImgUrl(String userId) throws Exception {
+		String url = this.userAttachDao.getHeadImg(userId);
+		if(!StringUtil.isNullOrEmpty(url)){
+			url = this.fastdfsUrl + url;
+		}
+		return url;
+	}
+
+	@Override
+	public String getHeadImgNotFullPath(String userId) throws Exception {
+		return this.userAttachDao.getHeadImg(userId);
 	}
 }

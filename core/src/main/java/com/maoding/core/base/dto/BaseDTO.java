@@ -1,6 +1,7 @@
 package com.maoding.core.base.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.maoding.core.util.StringUtil;
 
 import java.beans.BeanInfo;
 import java.beans.Introspector;
@@ -38,12 +39,20 @@ public abstract class BaseDTO implements Serializable {
      */
     private String platform;
 
+    /**
+     * 请求接口版本号
+     */
+    private Integer interfaceVersion;
+
     @JsonProperty(value = "IMEI") //大写无效，需要赋值给小写
     private String imei;
     /**
      * 当前公司
      */
     private String currentCompanyId;
+
+
+
 
     /**
      * entity对象和dto对象互相复制属性，包括基类的属性
@@ -82,7 +91,16 @@ public abstract class BaseDTO implements Serializable {
         }
         return destList;
     }
-    
+
+    /**
+     * 根据entityList复制dtoList
+     */
+    public static Object copyFields(Object source, Class destClass) throws Exception {
+        Object dest = destClass.newInstance();
+        copyFields(source, dest);
+        return dest;
+    }
+
     public String getId() {
         return id;
     }
@@ -108,6 +126,9 @@ public abstract class BaseDTO implements Serializable {
     }
 
     public String getAppOrgId() {
+        if(!StringUtil.isNullOrEmpty(currentCompanyId) && StringUtil.isNullOrEmpty(appOrgId)){
+            appOrgId = currentCompanyId;
+        }
         return appOrgId;
     }
 
@@ -116,6 +137,9 @@ public abstract class BaseDTO implements Serializable {
     }
 
     public String getCurrentCompanyId() {
+        if(!StringUtil.isNullOrEmpty(appOrgId) && StringUtil.isNullOrEmpty(currentCompanyId)){
+            currentCompanyId = appOrgId;
+        }
         return currentCompanyId;
     }
 
@@ -138,4 +162,13 @@ public abstract class BaseDTO implements Serializable {
     public void setIMEI(String imei) {
         this.imei = imei;
     }
+
+    public Integer getInterfaceVersion() {
+        return interfaceVersion;
+    }
+
+    public void setInterfaceVersion(Integer interfaceVersion) {
+        this.interfaceVersion = interfaceVersion;
+    }
+
 }

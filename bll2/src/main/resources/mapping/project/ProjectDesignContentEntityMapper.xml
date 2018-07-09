@@ -117,8 +117,8 @@
       select
       a.id,a. project_id, a.company_id, a.content_id, a.content_name, a.seq, a.memo,
       (select COUNT(1) from maoding_web_project_process_time b where a.id = b.target_id) as flag,
-      (select start_time from maoding_web_project_process_time b where a.id = b.target_id and b.type='1' order by create_date desc limit 1) as start_time,
-      (select end_time from maoding_web_project_process_time b where a.id = b.target_id   and b.type='1' order by create_date desc limit 1) as end_time
+      (select start_time from maoding_web_project_process_time b where a.id = b.target_id order by create_date desc limit 1) as start_time,
+      (select end_time from maoding_web_project_process_time b where a.id = b.target_id   order by create_date desc limit 1) as end_time
       from maoding_web_project_design_content a
       where project_id = #{projectId,jdbcType=VARCHAR}
      ORDER BY seq,create_date

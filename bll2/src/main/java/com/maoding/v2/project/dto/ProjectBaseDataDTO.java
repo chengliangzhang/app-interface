@@ -1,8 +1,8 @@
 package com.maoding.v2.project.dto;
 
+import com.maoding.org.dto.CompanyUserDataDTO;
 import com.maoding.project.dto.ProjectConstructDTO;
 import com.maoding.system.dto.DataDictionaryDTO;
-import com.maoding.v2.user.dto.V2CompanyUserTableDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,13 +34,13 @@ public class ProjectBaseDataDTO{
     /**
      * 经营负责人
      */
-    private List<V2CompanyUserTableDTO> companyUserList = new ArrayList<>();
+    private List<CompanyUserDataDTO> companyUserList = new ArrayList<>();
 
-    public List<V2CompanyUserTableDTO> getCompanyUserList() {
+    public List<CompanyUserDataDTO> getCompanyUserList() {
         return companyUserList;
     }
 
-    public void setCompanyUserList(List<V2CompanyUserTableDTO> companyUserList) {
+    public void setCompanyUserList(List<CompanyUserDataDTO> companyUserList) {
         this.companyUserList = companyUserList;
     }
 

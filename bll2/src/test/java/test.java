@@ -1,3 +1,5 @@
+import com.maoding.project.entity.ProjectEntity;
+
 import java.io.FileOutputStream;
 import java.util.Arrays;
 
@@ -6,6 +8,7 @@ import java.util.Arrays;
  */
 public class test {
 
+    private ProjectEntity projectEntity = new ProjectEntity();
     public static void  main(String args[]){
             int [] data = {1,2,3,4,5,6,7,8,9};
             int [] newData;
@@ -17,6 +20,9 @@ public class test {
         String id = ids.toString();
         System.out.println("id:"+ids);
 
+        test t = new test();
+        ProjectEntity p= t.getProjectEntity();
+        System.out.print(p);
     }
 
     public  String hello(){
@@ -32,6 +38,14 @@ public class test {
             System.out.println(i);
         }
 
+    }
+
+    public ProjectEntity getProjectEntity() {
+        return projectEntity;
+    }
+
+    public void setProjectEntity(ProjectEntity projectEntity) {
+        this.projectEntity = projectEntity;
     }
 
 

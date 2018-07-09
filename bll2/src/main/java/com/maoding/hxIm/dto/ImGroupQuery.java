@@ -29,6 +29,13 @@ public class ImGroupQuery extends BaseDTO{
 
     private String companyId;
 
+    private String companyUserId;
+
+    /**
+     * 如果是项目群组，则nodeId = 项目群
+     */
+    private String nodeId;
+
     private Integer type;
 
     public String getUrl() {
@@ -101,5 +108,21 @@ public class ImGroupQuery extends BaseDTO{
 
     public void setCompanyId(String companyId) {
         this.companyId = companyId;
+    }
+
+    public String getCompanyUserId() {
+        return companyUserId;
+    }
+
+    public void setCompanyUserId(String companyUserId) {
+        this.companyUserId = companyUserId;
+    }
+
+    public String getNodeId() {
+        return nodeId;
+    }
+
+    public void setNodeId(String nodeId) {
+        this.nodeId = nodeId;
     }
 }

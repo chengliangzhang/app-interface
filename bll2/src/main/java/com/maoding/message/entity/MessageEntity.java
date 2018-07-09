@@ -49,6 +49,11 @@ public class MessageEntity extends BaseEntity {
      */
     private String status;
 
+    /**
+     * 创建人companyUserId
+     */
+    private String sendCompanyId;
+
     public String getMessageTitle() {
         return messageTitle;
     }
@@ -127,5 +132,13 @@ public class MessageEntity extends BaseEntity {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getSendCompanyId() {
+        return sendCompanyId;
+    }
+
+    public void setSendCompanyId(String sendCompanyId) {
+        this.sendCompanyId = sendCompanyId;
     }
 }

@@ -1,6 +1,7 @@
 package com.maoding.statistic.service;
 
 import com.maoding.statistic.dto.CompanyStatisticDTO;
+import com.maoding.statistic.dto.StatisticDetailSummaryDTO;
 
 import java.util.List;
 import java.util.Map;
@@ -27,4 +28,6 @@ public interface StatisticService {
      * @return:
      */
     public int getCompanyStatisticCount(Map<String, Object> param);
+
+    StatisticDetailSummaryDTO getStatisticDetailSummaryByCompanyId(String companyId);
 }

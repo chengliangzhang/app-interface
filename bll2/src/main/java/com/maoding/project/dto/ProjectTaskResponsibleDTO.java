@@ -4,7 +4,7 @@ import com.maoding.core.base.dto.BaseDTO;
 
 /**
  * 深圳市设计同道技术有限公司
- * 类    名：ProjectAuditDTO
+ * 类    名：ProjectTaskResponsibleDTO
  * 类描述：任务负责人DTO
  * 作    者：MaoSF
  * 日    期：2016年7月19日-下午4:04:50

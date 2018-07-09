@@ -14,6 +14,8 @@ import java.util.List;
  */
 public class CompanyUserTableDTO extends BaseDTO {
 
+    private String id;
+
 	/**
 	 * 公司id
 	 */
@@ -152,6 +154,16 @@ public class CompanyUserTableDTO extends BaseDTO {
 
     private String fileGroup;
 
+    private String needUserStatus;
+
+    public String getNeedUserStatus() {
+        return needUserStatus;
+    }
+
+    public void setNeedUserStatus(String needUserStatus) {
+        this.needUserStatus = needUserStatus;
+    }
+
     public String getFilePath() {
         return filePath;
     }
@@ -194,6 +206,14 @@ public class CompanyUserTableDTO extends BaseDTO {
 //     */
 //    private List<PermissionDTO> permissionList = new ArrayList<PermissionDTO>();
 
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getHeadImg() {
         return headImg;

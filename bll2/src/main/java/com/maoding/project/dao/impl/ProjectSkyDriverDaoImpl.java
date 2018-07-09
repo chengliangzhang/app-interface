@@ -2,6 +2,7 @@ package com.maoding.project.dao.impl;
 
 import com.maoding.core.base.dao.GenericDao;
 import com.maoding.project.dao.ProjectSkyDriverDao;
+import com.maoding.project.dto.NetFileDTO;
 import com.maoding.project.entity.ProjectSkyDriveEntity;
 import com.maoding.v2.project.dto.ProjectSkyDriveListDTO;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,6 @@ import java.util.Map;
 @Service("projectSkyDriverDao")
 public class ProjectSkyDriverDaoImpl extends GenericDao<ProjectSkyDriveEntity> implements ProjectSkyDriverDao {
 
-
     @Override
     public ProjectSkyDriveEntity getSkyDriveByPidAndFileName(String pid, String fileName, String projectId) {
         Map<String,Object> map = new HashMap<String,Object>();
@@ -34,11 +34,6 @@ public class ProjectSkyDriverDaoImpl extends GenericDao<ProjectSkyDriveEntity> i
      * 方法描述：查询文件id为pid的所有文件及文件夹
      * 作者：MaoSF
      * 日期：2016/12/18
-     *
-     * @param pid
-     * @param projectId
-     * @param:
-     * @return:
      */
     @Override
     public List<ProjectSkyDriveEntity> getSkyDriveByPid(String pid, String projectId) {
@@ -52,53 +47,28 @@ public class ProjectSkyDriverDaoImpl extends GenericDao<ProjectSkyDriveEntity> i
      * 方法描述：根据项目id，父级id，文件名查询
      * 作者：MaoSF
      * 日期：2016/12/18
-     *
-     * @param taskId
-     * @param:
-     * @return:
      */
     @Override
     public ProjectSkyDriveEntity getSkyDriveByTaskId(String taskId) {
         return this.sqlSession.selectOne("ProjectSkyDriveEntityMapper.getSkyDriveByTaskId",taskId);
     }
 
-    /**
-     * 方法描述：查询文件
-     * 作者：MaoSF
-     * 日期：2016/12/18
-     *
-     * @param map
-     * @param:
-     * @return:
-     */
-    @Override
-    public List<ProjectSkyDriveEntity> getSkyDriveByParam(Map<String,Object> map) {
-
-        return this.sqlSession.selectList("ProjectSkyDriveEntityMapper.getSkyDriveByParam",map);
-    }
 
     /**
      * 方法描述：查询文件(包含子文件个数)
      * 作者：MaoSF
      * 日期：2016/12/18
-     *
-     * @param map
-     * @param:
-     * @return:
      */
     @Override
     public List<ProjectSkyDriveListDTO> getSkyDrive(Map<String, Object> map) {
         return this.sqlSession.selectList("ProjectSkyDriveEntityMapper.getSkyDrive",map);
     }
 
+
     /**
      * 方法描述：获取所有
      * 作者：MaoSF
      * 日期：2017/1/16
-     *
-     * @param projectId
-     * @param:
-     * @return:
      */
     @Override
     public List<ProjectSkyDriveListDTO> getProjectUploadFile(String projectId) {
@@ -109,11 +79,6 @@ public class ProjectSkyDriverDaoImpl extends GenericDao<ProjectSkyDriveEntity> i
      * 方法描述：查询公司是否存在“设计成果”中的文件
      * 作者：MaoSF
      * 日期：2017/4/12
-     *
-     * @param projectId
-     * @param companyId
-     * @param:
-     * @return:
      */
     @Override
     public List<ProjectSkyDriveEntity> getProjectSkyByCompanyId(String projectId, String companyId) {
@@ -127,10 +92,6 @@ public class ProjectSkyDriverDaoImpl extends GenericDao<ProjectSkyDriveEntity> i
      * 方法描述：更改状态（用于删除）
      * 作者：MaoSF
      * 日期：2017/4/21
-     *
-     * @param map
-     * @param:
-     * @return:
      */
     @Override
     public int updateSkyDriveStatus(Map<String,Object> map) {
@@ -141,13 +102,19 @@ public class ProjectSkyDriverDaoImpl extends GenericDao<ProjectSkyDriveEntity> i
      * 方法描述：获取远程文件
      * 作者：MaoSF
      * 日期：2017/6/1
-     *
-     * @param map
-     * @param:
-     * @return:
      */
     @Override
-    public List<ProjectSkyDriveEntity> getNetFileByParam(Map<String, Object> map) {
+    public List<NetFileDTO> getNetFileByParam(Map<String, Object> map) {
         return this.sqlSession.selectList("ProjectSkyDriveEntityMapper.getNetFileByParam",map);
+    }
+
+    @Override
+    public ProjectSkyDriveEntity getOwnerProject(Map<String, Object> map) {
+        return this.sqlSession.selectOne("ProjectSkyDriveEntityMapper.getOwnerProject", map);
+    }
+
+    @Override
+    public List<ProjectSkyDriveEntity> getDirectoryDTOList(Map<String, Object> map) {
+        return this.sqlSession.selectList("ProjectSkyDriveEntityMapper.getDirectoryDTOList", map);
     }
 }

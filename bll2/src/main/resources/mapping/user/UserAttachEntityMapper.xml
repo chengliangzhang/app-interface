@@ -12,17 +12,31 @@
         <result column="create_by" property="createBy" jdbcType="VARCHAR"/>
         <result column="update_date" property="updateDate" jdbcType="TIMESTAMP"/>
         <result column="update_by" property="updateBy" jdbcType="VARCHAR"/>
+        <result column="oss_file_path" property="ossFilePath" jdbcType="VARCHAR"/>
+
     </resultMap>
     <sql id="Base_Column_List">
     id, user_id, attach_name, attach_type, attach_path,file_group, create_date, create_by, update_date,
-    update_by
+    update_by,oss_file_path
   </sql>
+
+    <sql id ="getHeadImg">
+        SELECT id, user_id,attach_name,attach_type,CONCAT(file_group,'/',attach_path) as oss_file_path  from maoding_web_user_attach
+    </sql>
+
+    <select id="getHeadImgUrl"  resultType="java.lang.String" parameterType="java.lang.String" >
+        SELECT oss_file_path from
+        (<include refid="getHeadImg" />) a
+        where a.attach_type = 5 and a.user_id = #{userId}
+    </select>
+
     <select id="selectById" resultMap="BaseResultMap" parameterType="java.lang.String">
         select
         <include refid="Base_Column_List"/>
         from maoding_web_user_attach
         where id = #{id,jdbcType=VARCHAR}
     </select>
+
     <select id="selectByType" resultMap="BaseResultMap" parameterType="java.util.Map">
         select
         <include refid="Base_Column_List"/>

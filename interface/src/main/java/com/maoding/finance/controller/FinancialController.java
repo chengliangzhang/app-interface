@@ -5,10 +5,12 @@ import com.maoding.core.bean.AjaxMessage;
 import com.maoding.core.bean.ResponseBean;
 import com.maoding.core.util.StringUtil;
 import com.maoding.financial.dto.*;
+import com.maoding.financial.service.ExpCategoryService;
 import com.maoding.financial.service.ExpDetailService;
 import com.maoding.financial.service.ExpMainService;
 import com.maoding.org.dto.CompanyDTO;
 import com.maoding.org.dto.DepartDTO;
+import com.maoding.org.dto.DepartDataDTO;
 import com.maoding.org.service.CompanyService;
 import com.maoding.org.service.CompanyUserService;
 import com.maoding.org.service.DepartService;
@@ -40,6 +42,8 @@ public class FinancialController extends BaseWSController {
 	@Autowired
 	private ExpMainService expMainService;
 
+	@Autowired
+	private ExpCategoryService expCategoryService;
 
 	@Autowired
 	private CompanyService companyService;
@@ -71,7 +75,7 @@ public class FinancialController extends BaseWSController {
 		try {
 			String companyId = paraMap.get("appOrgId");
 			String userId = paraMap.get("accountId");
-			AjaxMessage ajax = expMainService.getCategoryBaseData(companyId, userId);
+			AjaxMessage ajax = expCategoryService.getCategoryBaseData(companyId, userId);
 			Map<String,Object> map = (Map<String,Object>)ajax.getData();
 			return responseSuccess().addData("expTypeList",map.get("expTypeList"));
 		}
@@ -91,7 +95,7 @@ public class FinancialController extends BaseWSController {
 	public ResponseBean saveOrUpdateExpCategory(@RequestBody ExpTypeOutDTO dto) {
 		try {
 			String companyId = dto.getAppOrgId();
-			AjaxMessage ajax = expMainService.saveOrUpdateCategoryBaseData(dto,companyId);
+			AjaxMessage ajax = expCategoryService.saveOrUpdateCategoryBaseData(dto,companyId);
 			if("0".equals(ajax.getCode())){
 				return ResponseBean.responseSuccess("保存成功");
 			}
@@ -115,7 +119,7 @@ public class FinancialController extends BaseWSController {
 	public ResponseBean getExpTypeLis(@RequestBody Map<String, String> paraMap) throws Exception {
 		try {
 			String companyId = paraMap.get("appOrgId");
-			List<ExpTypeDTO> expType=expMainService.getExpTypeList(companyId);
+			List<ExpTypeDTO> expType=expCategoryService.getExpTypeList(null,companyId);
 			return ResponseBean.responseSuccess().addData("expTypeList",expType);
 		}
 		catch (Exception e){
@@ -191,8 +195,8 @@ public class FinancialController extends BaseWSController {
 			mapParams.put("companyId", companyId);
 			mapParams.put("userId", userId);
 			CompanyDTO company = companyService.getCompanyById(companyId);
-			List<DepartDTO> list = departService.getDepartByCompanyId(mapParams);
-			DepartDTO dto = new DepartDTO();
+			List<DepartDataDTO> list = departService.getDepartByCompanyId(mapParams);
+			DepartDataDTO dto = new DepartDataDTO();
 			dto.setId(companyId);
 			dto.setDepartName(company.getCompanyShortName());
 			list.add(0, dto);
@@ -250,7 +254,7 @@ public class FinancialController extends BaseWSController {
 	public ResponseBean getUserList(@RequestBody Map<String, String> paraMap) throws Exception {
 		String companyId = paraMap.get("appOrgId");
 		String orgId = paraMap.get("orgId");
-		return ResponseBean.responseSuccess().addData("userList", expMainService.getUserList(companyId, orgId));
+		return ResponseBean.responseSuccess().addData("userList", companyUserService.getUserList(companyId, orgId));
 	}
 
 	/**
@@ -424,8 +428,8 @@ public class FinancialController extends BaseWSController {
 	 */
 	@RequestMapping("/agree_expmain")
 	@ResponseBody
-	public ResponseBean agreeExpMain(@RequestBody ExpMainDTO expMainDTO) throws Exception{
-		int i=expMainService.agreeExpMain(expMainDTO.getId(),expMainDTO.getAccountId(),expMainDTO.getVersionNum()+"");
+	public ResponseBean agreeExpMain(@RequestBody SaveExpMainDTO expMainDTO) throws Exception{
+		int i=expMainService.agreeExpMain(expMainDTO);
 		if(i>0){
 			return ResponseBean.responseSuccess("操作成功!");
 		}
@@ -442,8 +446,8 @@ public class FinancialController extends BaseWSController {
 	 */
 	@RequestMapping("/agreeandtrans_auditperexpmain")
 	@ResponseBody
-	public ResponseBean agreeAndTransAuditPerExpMain(@RequestBody ExpMainDTO expMainDTO) throws Exception{
-		int i=expMainService.agreeAndTransAuditPerExpMain(expMainDTO.getId(), expMainDTO.getCompanyUserId(), expMainDTO.getAuditPerson(),expMainDTO.getVersionNum()+"",expMainDTO.getAccountId());
+	public ResponseBean agreeAndTransAuditPerExpMain(@RequestBody SaveExpMainDTO expMainDTO) throws Exception{
+		int i=expMainService.agreeAndTransAuditPerExpMain(expMainDTO);
 		if(i>0) {
 			return ResponseBean.responseSuccess("转发成功!");
 		}
@@ -452,26 +456,6 @@ public class FinancialController extends BaseWSController {
 		}
 	}
 
-	/**
-	 * 方法描述：报销详情与审批记录
-	 * 作   者：LY
-	 * 日   期：2016/8/2 14:13
-	 * @param  --报销单id
-	 * @return
-	 *
-	 */
-	@RequestMapping("/get_expmaindetail")
-	@ResponseBody
-	public ResponseBean getExpMainDetail(@RequestBody ExpMainDTO expMainDTO) throws Exception{
-		try {
-			Map<String, Object> map = expMainService.getExpMainDetail(expMainDTO.getId());
-			return responseSuccess().addData(map);
-		}
-		catch (Exception e){
-			log.error("查询报销详情和审批记录失败！",e);
-			return  ResponseBean.responseError("查询报销详情和审批记录失败");
-		}
-	}
 
 	/**
 	 * 方法描述：报销汇总

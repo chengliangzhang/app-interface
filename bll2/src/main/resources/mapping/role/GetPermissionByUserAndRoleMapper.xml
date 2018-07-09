@@ -26,4 +26,25 @@
 
   </select>
 
+  <!-- 查询某个人是否具有某个权限-->
+  <select id="getCompanyUserIsHasPermission" resultType="int" parameterType="java.util.Map">
+    SELECT
+    count(DISTINCT  a.id)
+    FROM maoding_web_user_permission a
+    INNER JOIN maoding_web_role_permission b on a.permission_id = b.permission_id and a.company_id = b.company_id
+    WHERE 1=1  and a.company_id = #{companyId,jdbcType=VARCHAR}
+    <if test="permissionIds!=null">
+      and
+      <foreach collection="permissionIds" item="id" index="i" open="(" separator="or" close=")">
+        a.permission_id = #{id}
+      </foreach>
+    </if>
+    <if test="userId!=null">
+      and a.user_id = #{userId,jdbcType=VARCHAR}
+    </if>
+    <if test="typeId!=null">
+      and (not FIND_IN_SET(#{typeId},b.forbid_relation_type_id) or b.forbid_relation_type_id is null)
+    </if>
+  </select>
+
 </mapper>

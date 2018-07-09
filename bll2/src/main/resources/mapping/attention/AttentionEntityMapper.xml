@@ -77,4 +77,22 @@
     where id = #{id,jdbcType=VARCHAR}
   </update>
 
+  <select id="selectByParam" parameterType="java.util.Map" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from maoding_web_attention
+    where 1=1
+    <if test="targetId != null">
+      AND  target_id = #{targetId,jdbcType=VARCHAR}
+    </if>
+    <if test="type != null">
+      AND type = #{type,jdbcType=CHAR}
+    </if>
+    <if test="companyId != null">
+      AND  company_id = #{companyId,jdbcType=VARCHAR}
+    </if>
+    <if test="companyUserId != null">
+      AND company_user_id = #{companyUserId,jdbcType=VARCHAR}
+    </if>
+  </select>
 </mapper>

@@ -11,6 +11,8 @@ import com.maoding.core.base.dto.BaseDTO;
  */
 public class SubCompanyDTO extends BaseDTO{
 
+    private int type;//2：分公司，3：事业合伙人
+
     /**
      *父节点
      */
@@ -76,6 +78,19 @@ public class SubCompanyDTO extends BaseDTO{
      * 服务类型
      */
     private String serverType;
+
+    /**
+     * 事业合伙人类型
+     */
+    private String roleType;
+
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
+    }
 
     public String getCompanyName() {
         return companyName;
@@ -179,5 +194,13 @@ public class SubCompanyDTO extends BaseDTO{
 
     public void setCounty(String county) {
         this.county = county;
+    }
+
+    public String getRoleType() {
+        return roleType;
+    }
+
+    public void setRoleType(String roleType) {
+        this.roleType = roleType;
     }
 }

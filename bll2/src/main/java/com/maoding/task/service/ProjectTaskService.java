@@ -1,5 +1,6 @@
 package com.maoding.task.service;
 
+import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.core.base.service.BaseService;
 import com.maoding.core.bean.ResponseBean;
 import com.maoding.task.dto.*;
@@ -23,13 +24,6 @@ public interface ProjectTaskService extends BaseService<ProjectTaskEntity>{
      * 日期：2017/6/16
      */
     List<ProjectTaskEntity> listProjectTaskContent(String projectId);
-
-    /**
-     * 方法描述：项目签发数据
-     * 作者：MaoSF
-     * 日期：2016/12/31
-     */
-    List<ProjectIssueDataDTO> getTaskIssueData(String projectId) throws Exception;
 
     /**
      * 方法描述：项目任务列表（任务分配界面 （项目详情界面，签发组织板块数据））
@@ -126,13 +120,6 @@ public interface ProjectTaskService extends BaseService<ProjectTaskEntity>{
     ProjectTaskDetailDTO getProjectTaskById(String id, String companyId, String accountId) throws Exception;
 
     /**
-     * 方法描述：获取任务详情及子任务
-     * 作者：MaoSF
-     * 日期：2016/12/31
-     */
-    ProjectTaskDetailDTO getProductTaskForEdit(String id, String companyId, String accountId) throws Exception;
-
-    /**
      * 方法描述：经营任务分解
      * 作者：CHENZHUJIE
      * 日期：2017/2/24
@@ -144,7 +131,7 @@ public interface ProjectTaskService extends BaseService<ProjectTaskEntity>{
      * 作者：MaoSF
      * 日期：2017/3/12
      */
-    ResponseBean handleProjectTaskCompleteDate(String taskId, String companyUserId) throws Exception;
+    ResponseBean handleProjectTaskCompleteDate(String projectId, String companyId, String accountId) throws Exception;
 
     /**
      * 方法描述：移交设计负责人请求数据
@@ -175,12 +162,6 @@ public interface ProjectTaskService extends BaseService<ProjectTaskEntity>{
      */
     void setTaskState(ProjectTaskDTO dto) throws Exception;
 
-    /**
-     * 方法描述：签发的任务（我的任务，签发任务获取）
-     * 作者：MaoSF
-     * 日期：2017/5/5
-     */
-    ResponseBean getIssueTaskForMyTask(String projectId, String companyId) throws Exception;
 
     /**
      * 方法描述：设置设计负责人（我的任务）获取的数据
@@ -204,6 +185,8 @@ public interface ProjectTaskService extends BaseService<ProjectTaskEntity>{
      * 日期：2017/5/5
      */
     ResponseBean getHandProcessDataForMyTask(String projectId, String taskId, String companyId) throws Exception;
+
+    ProjectTaskDTO getTaskForMyTask(String projectId,String taskId, String companyId) throws Exception;
 
     /**
      * 进行签发
@@ -249,4 +232,51 @@ public interface ProjectTaskService extends BaseService<ProjectTaskEntity>{
      * 日期：2017/6/26
      */
     ResponseBean updateByTaskIdStatus(String id, String taskStatus) throws Exception;
+
+    /**
+     * 签发任务tree数据（v3）
+     */
+
+    List<ProjectIssueTaskDTO> listProjectIssueTask(QueryProjectTaskDTO query) throws Exception;
+
+    /**
+     * 签发任务tree数据（v3）
+     */
+
+    List<ProjectIssueTaskDTO> listProjectProductTask(QueryProjectTaskDTO query) throws Exception;
+
+    /**
+     * 签发任务列表（v3）
+     * 包含了当前级的任务数据及tree数据
+     */
+    IssueTaskDTO getProjectIssueTask(QueryProjectTaskDTO query) throws Exception;
+
+
+    /**
+     * 签发任务列表（v3）
+     * 包含了当前级的任务数据及tree数据
+     */
+    IssueTaskDTO getProjectProductTask(QueryProjectTaskDTO query) throws Exception;
+
+    /**
+     *
+     * @return
+     * @throws Exception
+     */
+    HomeDataDTO getHomeData(Map<String,Object> param) throws Exception;
+
+    /**
+     *
+     * @return
+     * @throws Exception
+     */
+    HomeDTO getHomeData2(Map<String,Object> param) throws Exception;
+
+    /**
+     * 项目综合数据，任务板块
+     */
+    TaskDataDTO getProjectInfoOfTask(String projectId, String companyId, Integer taskType);
+
+
+
 }

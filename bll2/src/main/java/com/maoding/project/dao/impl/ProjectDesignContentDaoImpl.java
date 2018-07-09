@@ -27,9 +27,6 @@ public class ProjectDesignContentDaoImpl extends GenericDao<ProjectDesignContent
      * 方法描述：根据参数查询设计阶段
      * 作        者：ChenZJ
      * 日        期：2016年7月21日-上午11:28:56
-     *
-     * @param projectId
-     * @return
      */
     @Override
     public List<ProjectDesignContentDTO> getProjectDesignContent(String projectId) {
@@ -40,10 +37,9 @@ public class ProjectDesignContentDaoImpl extends GenericDao<ProjectDesignContent
      * 方法描述：根据项目Id删除设计阶段
      * 作   者：LY
      * 日   期：2016/7/22 16:21
-     * @param
-     * @return
      *
      */
+    @Override
     public int deleteDesignContentByProjectId(String projectId){
         return this.sqlSession.delete("ProjectDesignContentEntityMapper.deleteDesignContentByProjectId", projectId);
     }
@@ -52,10 +48,6 @@ public class ProjectDesignContentDaoImpl extends GenericDao<ProjectDesignContent
      * 方法描述：获取最大的seq
      * 作者：MaoSF
      * 日期：2017/4/20
-     *
-     * @param projectId
-     * @param:
-     * @return:
      */
     @Override
     public int getProjectContentMaxSeq(String projectId) {

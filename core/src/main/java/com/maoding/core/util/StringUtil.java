@@ -130,6 +130,19 @@ public class StringUtil {
 		}
 		return is;
 	}
+
+	/**
+	 * 方法描述：手机号码验证
+	 * 作        者：MaoSF
+	 * 日        期：2016年7月11日-下午8:34:56
+	 */
+	public static boolean isMobileNO(String mobiles) {
+		Pattern p = Pattern.compile("^((13[0-9])|(15[^4,\\D])|(17[0-9])|(18[0-9]))\\d{8}$");
+		Matcher m = p.matcher(mobiles);
+		return m.matches();
+
+	}
+
 	/**
 	 * 方法描述：判断字符串是否为数字
 	 * 作        者：Chenxj
@@ -172,7 +185,19 @@ public class StringUtil {
 	{
 		return toNumberStr(number, "###,###,###,##0.00");
 	}
-	
+
+	/**
+	 * 方法描述：格式化，并保留两位小数
+	 * 作        者：MaoSF
+	 * 日        期：2015年7月29日-上午10:39:46
+	 * @param number
+	 * @return
+	 */
+	public static String toNumberStr6(double number)
+	{
+		return toNumberStr(number, "###,###,###,##0.000000");
+	}
+
 	/**
 	 * 方法描述：格式化，无小数位
 	 * 作        者：MaoSF
@@ -230,7 +255,19 @@ public class StringUtil {
 		strChar[0]-=32;
 		return String.valueOf(strChar);
 	}
-	
+
+	public static boolean isContain(String str,String...tt){
+		if(isNullOrEmpty(str)){
+			return false;
+		}
+		for(String t:tt){
+			if(str.indexOf(t)>-1){
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**  
      * 使用java正则表达式去掉多余的.与0  
      * @return

@@ -5,7 +5,6 @@ import com.maoding.core.bean.ResponseBean;
 import com.maoding.notice.dto.NoticeDTO;
 import com.maoding.notice.dto.NoticeDataDTO;
 import com.maoding.notice.service.NoticeService;
-import com.maoding.org.dto.OrgTreeWsDTO;
 import com.maoding.org.service.CompanyService;
 import com.maoding.system.annotation.AuthorityCheckable;
 import com.maoding.system.controller.BaseWSController;
@@ -61,7 +60,7 @@ public class V2NoticeController extends BaseWSController {
     @AuthorityCheckable
     public ResponseBean getNoticeByIdForDynamics(@RequestBody NoticeDTO param) throws Exception {
         NoticeDTO dto = this.noticeService.getNoticeByIdForDynamics(param.getId());
-        dto.setNoticeContent(delHTMLTag(dto.getNoticeContent()));
+      //  dto.setNoticeContent(delHTMLTag(dto.getNoticeContent()));
         return responseSuccess().addData("NoticeDTO", dto);
     }
 
@@ -114,7 +113,7 @@ public class V2NoticeController extends BaseWSController {
         Pattern p_html = Pattern.compile(regEx_html, Pattern.CASE_INSENSITIVE);
         Matcher m_html = p_html.matcher(htmlStr);
         htmlStr = m_html.replaceAll(""); //过滤html标签
-
+        htmlStr = htmlStr.replaceAll("&nbsp;","");
         return htmlStr.trim(); //返回文本字符串
     }
 
@@ -177,21 +176,6 @@ public class V2NoticeController extends BaseWSController {
     /************************************************************v2************************************************/
 
     /**
-     * 方法描述：发送通知公告界面获取组织架构树
-     * 作   者：ZhujieChen
-     * 日   期：2016/12/22
-     */
-    @RequestMapping("/getOrgTree")
-    @ResponseBody
-    @AuthorityCheckable
-    public ResponseBean getOrgTree(@RequestBody Map<String, Object> param) throws Exception {
-        OrgTreeWsDTO tree = this.companyService.newV2GetOrgTreeForNotice(param);
-        param.clear();
-        param.put("orgTree", tree);
-        return responseSuccess().addData(param);
-    }
-
-    /**
      * 方法描述：保存通知公告
      * 作   者：ZhujieChen
      * 日   期：2016/12/22
@@ -207,5 +191,36 @@ public class V2NoticeController extends BaseWSController {
             return ResponseBean.responseSuccess("保存成功");
         }
         return ResponseBean.responseError((String) ajaxMessage.getInfo());
+    }
+
+    /**
+     * 方法描述：获取通知公告
+     * 作   者：郭志彬
+     * 日   期：2017/09/25
+     */
+    @RequestMapping("/getNoticeList")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getNoticeList(@RequestBody Map<String, Object> para) throws Exception {
+        Map<String, Object> param = new HashMap<String, Object>();
+        //param.put("companyId", para.get("appOrgId"));
+        param.put("userId", para.get("accountId"));
+        if (null != para.get("pageSize")) {
+            param.put("pageSize", Integer.parseInt(para.get("pageSize").toString()));
+        }
+        if (null != para.get("pageIndex")) {
+            param.put("pageNumber", Integer.parseInt(para.get("pageIndex").toString()));
+        }
+        List<NoticeDTO> noticeList = this.noticeService.getNoticeByParam(param);
+        for (NoticeDTO noticeDTO : noticeList) {
+            if(noticeDTO.getNoticeType()!=null && noticeDTO.getNoticeType()==1){
+                noticeDTO.setNoticeContent(delHTMLTag(noticeDTO.getNoticeContent()));
+            }else {
+                noticeDTO.setNoticeContent(noticeDTO.getNoticeContent().replaceAll("<br/><br/>","\n"));
+            }
+        }
+        param.clear();
+        param.put("noticeList", noticeList);
+        return responseSuccess().addData(param);
     }
 }

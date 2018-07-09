@@ -9,13 +9,13 @@
 		a.id as userId,
 		a.cellphone,
 		b.user_name as userName,
-		CONCAT(#{fastdfsUrl,jdbcType=VARCHAR},c.file_group,'/',c.attach_path) as img
+		c.oss_file_path as fileFullPath
 		<if test="companyUserId!=null">
 			,d.user_name as companyUserName,d.email,d.company_id as companyId
 		</if>
 		FROM maoding_web_account a
 		LEFT JOIN maoding_web_user b on a.id= b.id
-		LEFT JOIN maoding_web_user_attach c on c.user_id = a.id AND c.attach_type=5
+		LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) c on c.user_id = a.id AND c.attach_type=5
 		<if test="companyUserId!=null">
 		  LEFT JOIN maoding_web_company_user d on a.id = d.user_id and d.id = #{companyUserId}
 		</if>

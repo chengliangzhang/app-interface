@@ -14,7 +14,10 @@ public class RolePermissionEntity extends BaseEntity {
     private String permissionId;
 
     private String companyId;
-
+    /**
+     * 禁止
+     */
+    private String forbidRelationTypeId;
 
 
     public String getRoleId() {
@@ -39,5 +42,13 @@ public class RolePermissionEntity extends BaseEntity {
 
     public void setCompanyId(String companyId) {
         this.companyId = companyId;
+    }
+
+    public String getForbidRelationTypeId() {
+        return forbidRelationTypeId;
+    }
+
+    public void setForbidRelationTypeId(String forbidRelationTypeId) {
+        this.forbidRelationTypeId = forbidRelationTypeId;
     }
 }

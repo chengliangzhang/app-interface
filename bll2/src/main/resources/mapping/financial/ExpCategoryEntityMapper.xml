@@ -10,19 +10,23 @@
     <result column="company_id" property="companyId" jdbcType="VARCHAR" />
     <result column="status" property="status" jdbcType="VARCHAR" />
     <result column="seq" property="seq" jdbcType="INTEGER" />
+    <result column="category_type" property="categoryType" jdbcType="INTEGER" />
     <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
     <result column="create_by" property="createBy" jdbcType="VARCHAR" />
     <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
     <result column="exptype_memo" property="expTypeMemo" jdbcType="VARCHAR" />
+    <result column="pay_type" property="payType" jdbcType="INTEGER" />
+    <result column="relation_company_id" property="relationCompanyId" jdbcType="VARCHAR" />
+    <result column="show_status" property="showStatus" jdbcType="INTEGER" />
   </resultMap>
 
   <sql id="Base_Column_List" >
-    id, name, code, pid, root_id, company_id, status, seq, create_date, create_by, update_date, 
-    update_by,exptype_memo,company_id
+    id, name, code, pid, root_id, company_id, status, seq,category_type, create_date, create_by, update_date,
+    update_by,exptype_memo,company_id,pay_type,show_status,relation_company_id
   </sql>
 
   <select id="selectById" resultMap="BaseResultMap" parameterType="java.lang.String" >
-    select 
+    select
     <include refid="Base_Column_List" />
     from maoding_web_exp_category
     where id = #{id,jdbcType=VARCHAR}
@@ -48,22 +52,18 @@
   </delete>
 
   <insert id="insert" parameterType="com.maoding.financial.entity.ExpCategoryEntity" >
-    insert into maoding_web_exp_category (id, name, code, 
-      pid, root_id, company_id, 
-      status, seq, create_date, 
-      create_by, update_date, update_by,exptype_memo
-      )
-    values (#{id,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR}, #{code,jdbcType=VARCHAR}, 
-      #{pid,jdbcType=VARCHAR}, #{rootId,jdbcType=VARCHAR}, #{companyId,jdbcType=VARCHAR}, 
-      #{status,jdbcType=VARCHAR}, #{seq,jdbcType=INTEGER}, now(),
-      #{createBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{expTypeMemo,jdbcType=VARCHAR}
-      )
-  </insert>
-
-  <insert id="initInsertCategory" parameterType="java.lang.String" >
-    insert into `maoding_web_exp_category` (`id`, `name`, `code`, `pid`, `root_id`, `company_id`, `status`, `seq`, `create_date`, `create_by`, `update_date`, `update_by`)
-    values('0757dde1b64c481d88ebc359ba572ced','办公设备','bgsb','96b311a6d1b846929c74ad58b256b658','96b311a6d1b846929c74ad58b256b658',#{companyId,jdbcType=VARCHAR},'bx-zcgz-bgsb','1','2015-12-05 13:12:05',NULL,NULL,NULL);
-
+    insert into maoding_web_exp_category (id, name, code,
+    pid, root_id, company_id,
+    status, seq, category_type,create_date,
+    create_by, update_date, update_by,exptype_memo,
+    pay_type,show_status,relation_company_id
+    )
+    values (#{id,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR}, #{code,jdbcType=VARCHAR},
+    #{pid,jdbcType=VARCHAR}, #{rootId,jdbcType=VARCHAR}, #{companyId,jdbcType=VARCHAR},
+    #{status,jdbcType=VARCHAR}, #{seq,jdbcType=INTEGER},#{categoryType,jdbcType=INTEGER}, now(),
+    #{createBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{expTypeMemo,jdbcType=VARCHAR},
+    #{payType,jdbcType=INTEGER},#{showStatus,jdbcType=INTEGER},#{relationCompanyId,jdbcType=VARCHAR}
+    )
   </insert>
 
   <update id="updateById" parameterType="com.maoding.financial.entity.ExpCategoryEntity" >
@@ -93,6 +93,18 @@
       <if test="seq != null and seq!=0" >
         seq = #{seq,jdbcType=INTEGER},
       </if>
+      <if test="categoryType != null and categoryType!=0" >
+        category_type = #{categoryType,jdbcType=INTEGER},
+      </if>
+      <if test="payType != null and payType!=0" >
+        pay_type = #{payType,jdbcType=INTEGER},
+      </if>
+      <if test="showStatus != null and showStatus!=0" >
+        show_status = #{showStatus,jdbcType=INTEGER},
+      </if>
+      <if test="relationCompanyId != null" >
+        relation_company_id = #{relationCompanyId,jdbcType=VARCHAR},
+      </if>
       <if test="createDate != null" >
         create_date = #{createDate,jdbcType=TIMESTAMP},
       </if>
@@ -119,6 +131,10 @@
       company_id = #{companyId,jdbcType=VARCHAR},
       status = #{status,jdbcType=VARCHAR},
       seq = #{seq,jdbcType=INTEGER},
+      category_type = #{categoryType,jdbcType=INTEGER},
+      pay_type = #{payType,jdbcType=INTEGER},
+      show_status = #{showStatus,jdbcType=INTEGER},
+      relation_company_id = #{relationCompanyId,jdbcType=VARCHAR},
       create_date = #{createDate,jdbcType=TIMESTAMP},
       create_by = #{createBy,jdbcType=VARCHAR},
       update_date = #{updateDate,jdbcType=TIMESTAMP},
@@ -126,6 +142,17 @@
     where id = #{id,jdbcType=VARCHAR}
   </update>
 
+  <!-- 根据相关参数查找 -->
+  <select id="getParentExpCategory" resultMap="BaseResultMap" parameterType="java.util.Map">
+      select DISTINCT a.*
+      from maoding_web_exp_category a
+      INNER JOIN maoding_web_exp_category b on a.id = b.pid
+      where a.pid is null
+      and b.category_type = 1
+      and b.status = 0
+      and b.company_id = #{companyId}
+      ORDER BY seq
+  </select>
   <!-- 根据相关参数查找 -->
   <select id="selectByParemeter" resultMap="BaseResultMap" parameterType="java.util.Map">
     select
@@ -163,6 +190,57 @@
     select IFNULL(max(seq),0)+1 from maoding_web_exp_category
   </select>
 
+  <resultMap id="BaseResultMap2" type="com.maoding.financial.dto.ExpCategoryDataDTO" >
+    <id column="parentName" property="name" />
+    <result column="pid" property="id" />
+    <result column="parentCode" property="code" />
+    <result column="parentShowStatus" property="showStatus" />
+    <result column="parentCategoryType" property="categoryType" />
+    <result column="parentExpTypeMemo" property="expTypeMemo" />
+    <collection property="childList" ofType="com.maoding.financial.dto.ExpCategoryDataDTO" >
+      <id column="name" property="name" />
+      <result column="id" property="id" />
+      <result column="code" property="code" />
+      <result column="pid" property="pid" />
+      <result column="show_status" property="showStatus" />
+      <result column="category_type" property="categoryType" />
+      <result column="exptype_memo" property="expTypeMemo" />
+    </collection>
+  </resultMap>
 
+  <select id="getExpCategoryListByType" resultMap="BaseResultMap2" parameterType="com.maoding.financial.dto.QueryExpCategoryDTO">
+    SELECT a.id as pid,a.code as parentCode,a.show_status as parentShowStatus,
+    a.category_type as parentCategoryType,a.exptype_memo as parentExpTypeMemo,
+    b.id, a.name as parentName, b.name,b.code,b.show_status,b.category_type,b.exptype_memo
+    from maoding_web_exp_category a
+    INNER JOIN maoding_web_exp_category b on a.id = b.pid
+    INNER JOIN maoding_web_exp_category_relation c on b.id = c.category_type_id
+    where 1=1
+    and a.status = 0
+    and b.status = 0
+    <if test="rootCompanyId!=null">
+      and b.company_id = #{rootCompanyId}
+    </if>
+    <if test="companyId!=null">
+      and c.company_id = #{companyId}
+    </if>
+    <if test="categoryType!=null">
+      and b.category_type = #{categoryType}
+    </if>
+    <if test="companyIdList!=null and companyIdList.size()>0">
+      and c.company_id in
+      <foreach collection="companyIdList" item="companyId" index="i" open="(" separator="," close=")">
+        #{companyId}
+      </foreach>
+    </if>
+    and a.pid is null
+    order by  a.seq,b.seq,a.category_type
+  </select>
 
+  <select id="getExpCategoryByCompanyId" resultType="com.maoding.financial.dto.ExpCountDTO" parameterType="java.lang.String">
+    select ifnull(sum(if(category_type=1,1,0)),0) as exp
+    ,ifnull(sum(if(category_type=2,1,0)),0) as fix
+    ,ifnull(sum(if(category_type=3,1,0)),0) as share
+    from maoding_web_exp_category where company_id = #{companyId} and status = 0
+  </select>
 </mapper>

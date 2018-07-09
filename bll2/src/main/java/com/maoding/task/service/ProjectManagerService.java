@@ -14,7 +14,7 @@ import java.util.Map;
  * 作    者：MaoSF
  * 日    期：2016年12月28日-下午5:28:54
  */
-public interface ProjectManagerService extends BaseService<ProjectManagerEntity>{
+public interface ProjectManagerService {
 
     /**
      * 方法描述：移交经营负责人，项目负责人
@@ -43,10 +43,4 @@ public interface ProjectManagerService extends BaseService<ProjectManagerEntity>
      */
     ResponseBean deleteProjectManage(String projectId,String companyId) throws Exception;
 
-    /**
-     * 方法描述：给companyUser发送成为设计负责人消息
-     * 作者：ZCL
-     * 日期：2017/5/20
-     */
-    void sendMessageTaskDesigner(String projectId,String companyUserId,String companyId) throws Exception;
 }

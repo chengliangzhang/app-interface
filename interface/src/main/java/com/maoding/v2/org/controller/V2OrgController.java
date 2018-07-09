@@ -3,18 +3,17 @@ package com.maoding.v2.org.controller;
 import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.core.bean.AjaxMessage;
 import com.maoding.core.bean.ResponseBean;
-import com.maoding.core.constant.NetFileType;
 import com.maoding.core.constant.SystemParameters;
 import com.maoding.core.util.MD5Helper;
 import com.maoding.core.util.StringUtil;
+import com.maoding.core.util.StringUtils;
 import com.maoding.dynamic.service.OrgDynamicService;
 import com.maoding.hxIm.dto.ImGroupQuery;
 import com.maoding.hxIm.service.ImService;
 import com.maoding.org.dto.*;
-import com.maoding.org.entity.CompanyEntity;
 import com.maoding.org.entity.CompanyUserEntity;
 import com.maoding.org.service.*;
-import com.maoding.project.entity.ProjectSkyDriveEntity;
+import com.maoding.project.dto.NetFileDTO;
 import com.maoding.project.service.ProjectSkyDriverService;
 import com.maoding.role.dto.InterfaceGroupAndRoleDTO;
 import com.maoding.role.service.PermissionService;
@@ -22,7 +21,6 @@ import com.maoding.system.annotation.AuthorityCheckable;
 import com.maoding.system.controller.BaseWSController;
 import com.maoding.system.dto.DataDictionaryDTO;
 import com.maoding.system.service.DataDictionaryService;
-import com.maoding.user.dto.AccountDTO;
 import com.maoding.user.dto.RegisterCompanyDTO;
 import com.maoding.user.dto.ShareInvateDTO;
 import com.maoding.user.dto.UserAttachDTO;
@@ -31,6 +29,7 @@ import com.maoding.user.service.UserAttachService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -49,11 +48,6 @@ import java.util.regex.Pattern;
 @RequestMapping("/v2/org")
 public class V2OrgController extends BaseWSController {
 
-
-    private final String th0 = "240X250"; //内部管理，log
-    private final String th1 = "300X45"; //内部管理，log
-    private final String th2 = "150X180";//公司组织log 最大尺寸150X180
-    private final String th3 = "200X35";//精英组织图标logo尺寸：最大200 x 35
     @Autowired
     public AccountService accountService;
     @Value("${fastdfs.url}")
@@ -73,8 +67,6 @@ public class V2OrgController extends BaseWSController {
     @Autowired
     private CompanyUserAuditService companyUserAuditService;
     @Autowired
-    private PermissionService permissionService;
-    @Autowired
     private CompanyService companyService;
     @Autowired
     private ImService imService;
@@ -82,6 +74,8 @@ public class V2OrgController extends BaseWSController {
     private OrgDynamicService orgDynamicService;
     @Autowired
     private UserAttachService userAttachService;
+    @Autowired
+    private CompanyRelationService companyRelationService;
 
     public static String delHTMLTag(String htmlStr) {
         String regEx_script = "<script[^>]*?>[\\s\\S]*?<\\/script>"; //定义script的正则表达式
@@ -112,135 +106,6 @@ public class V2OrgController extends BaseWSController {
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean imGroupListNew(@RequestBody ImGroupQuery query) throws Exception {
-//        //更新所有的根组织
-//        imGroupService.updateImGroupRootOrgIds();
-//        map.put("fastdfsUrl", fastdfsUrl);
-//        map.put("userId", map.get("accountId"));
-//        //查询所有的公司群
-//        List<ImGroupEntity> lsAll = imGroupService.selectByParameter(map);
-//        //所有的根的公司
-//        String rootIds = "";
-//        int j = 0;
-//        for (ImGroupEntity imGroupEntity : lsAll) {
-//            if (imGroupEntity != null && !rootIds.contains(imGroupEntity.getRootOrgId())) {
-//                if (j == 0) {
-//                    rootIds = imGroupEntity.getRootOrgId();
-//                } else {
-//                    rootIds = rootIds + "," + imGroupEntity.getRootOrgId();
-//                }
-//                j++;
-//            }
-//        }
-//        String[] rootIdsAttr = rootIds.split(",");
-//        //返回数据
-//        List<Object> returnList = new ArrayList<>();
-//        for (String rId : rootIdsAttr) {
-//            List<ImGroupEntity> ls = new ArrayList<>();
-//            for (ImGroupEntity imGroupEntity : lsAll) {
-//                if (rId.equals(imGroupEntity.getRootOrgId())) {
-//                    if (!imGroupEntity.getOrgId().equals(imGroupEntity.getRootOrgId())) {
-//                        CompanyEntity companyEntity = companyService.selectById(imGroupEntity.getRootOrgId());
-//                        if (null != companyEntity) {
-//                            imGroupEntity.setName(imGroupEntity.getName());
-//                        }
-//                    }
-//
-//                    ls.add(imGroupEntity);
-//                }
-//            }
-//            List<ImGroupDTO> lsDtoReturn = new ArrayList<>();
-//            List<ImGroupDTO> lsDto = new ArrayList<>();
-//            if (ls != null) {
-//                lsDto = BaseDTO.copyFields(ls, ImGroupDTO.class);
-//                for (ImGroupDTO et : lsDto) {
-//                    CompanyEntity companyEntity = companyService.selectById(et.getRootOrgId());
-//                    if (null != companyEntity) {
-//                        et.setRootCompanyName(companyEntity.getCompanyName());
-//                    }
-//                    Map<String, Object> mapPass = new HashMap<String, Object>();
-//                    mapPass.put("orgId", et.getOrgId());
-//                    mapPass.put("url", fastdfsUrl);
-//                    List<Map<String, Object>> members = imGroupService.selectNewGroupMembers(mapPass);
-//
-//                    et.setMemberInfo(members);
-//                    et.setIsCompany("0");
-//                    et.setMembers(members.size());
-//                    map.put("orgId", et.getOrgId());
-//                    List<ImGroupEntity> departGroupList = imGroupService.selectDepartGroupList(map);
-//                    List<ImGroupDTO> departGroupDtoList = new ArrayList<>();
-//                    if (departGroupList != null) {
-//                        departGroupDtoList = BaseDTO.copyFields(departGroupList, ImGroupDTO.class);
-//                        et.setImGroupNewDTOList(departGroupDtoList);
-//                        if (departGroupDtoList == null) {
-//                            List<ImGroupDTO> listNull = new ArrayList<>();
-//                            et.setImGroupNewDTOList(listNull);
-//                        }
-//                        for (ImGroupDTO newet : departGroupDtoList) {
-//                            List<Map<String, Object>> listDepartMemebers = imGroupService.selectNewDepartGroupMembers(objectMap("orgId", newet.getOrgId(), "url", fastdfsUrl, "companyId", et.getOrgId()));
-//                            newet.setMembers(listDepartMemebers.size());
-//                            newet.setMemberInfo(listDepartMemebers);
-//                            newet.setIsCompany("1");
-//                            newet.setName(newet.getName());
-//                        }
-//                    } else {
-//                        departGroupDtoList = new ArrayList<>();
-//                        et.setImGroupNewDTOList(departGroupDtoList);
-//                        if (departGroupDtoList == null) {
-//                            List<ImGroupDTO> listNull = new ArrayList<>();
-//                            et.setImGroupNewDTOList(listNull);
-//                        }
-//                    }
-//                    if (lsDto.size() > 0) {
-//                        lsDtoReturn.add(et);
-//                    }
-//                    if (departGroupDtoList.size() > 0) {
-//                        lsDtoReturn.addAll(departGroupDtoList);
-//                    }
-//                }
-//            }
-//            returnList.add(lsDtoReturn);
-//        }
-//        map.remove("orgId");
-//        //查询有关的项目群
-//        List<ImGroupEntity> projectGroupList = imGroupService.selectProjectGroupByParameter(map);
-//        //查询有关的自定义群
-//        map.remove("companyId");//customGroupList需要把所有的自定义群组都查询出来，所有需要移除companyId（如果有的话）
-//        List<ImGroupEntity> customGroupList = imGroupService.selectCustomGroupByParameter(map);
-//
-//        List<ImGroupDTO> resultProjectGroupList = new ArrayList<>();
-//        List<ImGroupDTO> resultProjectGroupListDto = new ArrayList<>();
-//        if (projectGroupList != null) {
-//            resultProjectGroupList = BaseDTO.copyFields(projectGroupList, ImGroupDTO.class);
-//            for (ImGroupDTO et : resultProjectGroupList) {
-//                Map<String, Object> mapPass = new HashMap<String, Object>();
-//                mapPass.put("orgId", et.getOrgId());
-//                mapPass.put("url", fastdfsUrl);
-//                //改变，不加company条件
-//                mapPass.put("projectGroup", "projectGroup");
-//                List<Map<String, Object>> members = imGroupService.selectNewGroupMembers(mapPass);
-//                et.setMemberInfo(members);
-//                et.setIsCompany("3");
-//                et.setMembers(members.size());
-//                resultProjectGroupListDto.add(et);
-//            }
-//        }
-//
-//        List<ImGroupDTO> resultCustomGroupList = new ArrayList<>();
-//        List<ImGroupDTO> resultCustomGroupListDto = new ArrayList<>();
-//        if (null != customGroupList) {
-//            resultCustomGroupList = BaseDTO.copyFields(customGroupList, ImGroupDTO.class);
-//            for (ImGroupDTO et : resultCustomGroupList) {
-//                Map<String, Object> mapPass = new HashMap<String, Object>();
-//                mapPass.put("orgId", et.getOrgId());
-//                mapPass.put("url", fastdfsUrl);
-//                List<Map<String, Object>> members = imGroupService.selectNewGroupMembers(mapPass);
-//                et.setMemberInfo(members);
-//                et.setIsCompany("2");
-//                et.setMembers(members.size());
-//                resultCustomGroupListDto.add(et);
-//            }
-//        }
-
         return responseSuccess().setData(this.imService.imGroupListNew(query));
     }
 
@@ -256,11 +121,6 @@ public class V2OrgController extends BaseWSController {
         String userId = dto.get("accountId");
         List<CompanyDTO> orgList = companyService.getCompanyByUserId(userId);
         for (CompanyDTO cdto : orgList) {
-            Map<String, Object> param = new HashMap<String, Object>();
-            param.put("userId", dto.get("accountId"));
-            param.put("companyId", cdto.getId());
-            String roleCodes = permissionService.getPermissionCodeByUserId(param);
-            cdto.setRoleCodes(roleCodes);
             CompanyUserEntity companyUser = companyUserService.getCompanyUserByUserIdAndCompanyId(userId, cdto.getId());
             cdto.setCompanyUserId(companyUser.getId());
         }
@@ -287,7 +147,6 @@ public class V2OrgController extends BaseWSController {
 
         List<CompanyDTO> returList = new ArrayList<>();
 
-        String idAll = "";
         outer:
         for (CompanyDTO companyDto : orgList) {
             List<CompanyDTO> list = new ArrayList<>();
@@ -317,13 +176,10 @@ public class V2OrgController extends BaseWSController {
             returList.addAll(list);
         }
         for (CompanyDTO dto : returList) {
-            Map<String, Object> param = new HashMap<String, Object>();
-            param.put("userId", mapass.get("accountId"));
-            param.put("companyId", dto.getId());
-            String roleCodes = permissionService.getPermissionCodeByUserId(param);
-            dto.setRoleCodes(roleCodes);
             CompanyUserEntity companyUser = companyUserService.getCompanyUserByUserIdAndCompanyId(userId, dto.getId());
-            dto.setCompanyUserId(companyUser.getId());
+            if(companyUser!=null){
+                dto.setCompanyUserId(companyUser.getId());
+            }
         }
         return responseSuccess().addData("companyData", returList);
     }
@@ -361,51 +217,6 @@ public class V2OrgController extends BaseWSController {
         return responseSuccess().addData("list", list);
     }
 
-    /**
-     * 方法描述：通讯录人员
-     * 作    者 : ChenZhujie
-     * 日    期 : 2016/12/23
-     */
-    @RequestMapping("/getOrgUsers")
-    @ResponseBody
-    @AuthorityCheckable
-    public ResponseBean getOrgUsers(@RequestBody Map<String, Object> dto) throws Exception {
-        Map<String, Object> param = new HashMap<String, Object>();
-        if (null != dto.get("orgId")) {
-            param.put("orgId", dto.get("orgId"));
-        }
-        if (null != dto.get("pageSize")) {
-            param.put("pageSize", dto.get("pageSize"));
-        }
-        if (null != dto.get("pageIndex")) {
-            param.put("pageNumber", dto.get("pageIndex"));
-        }
-        param.put("auditStatus", "1");
-        List<CompanyUserTableDTO> data = companyUserService.getCompanyUserByOrgIdOfWork(param);
-        for (CompanyUserTableDTO companyUserTableDTO : data) {
-            Map<String, Object> paramPass = new HashMap<String, Object>();
-            paramPass.put("userId", companyUserTableDTO.getUserId());
-            paramPass.put("attachType", "5");
-            List<UserAttachDTO> list = userAttachService.getAttachByTypeToDTO(paramPass);
-            if (list != null && list.size() > 0) {
-                String img = list.get(0).getAttachPath();
-                String lastStr = img.substring(img.lastIndexOf('.') + 1);
-                String firstStr = img.substring(0, img.lastIndexOf('.'));
-                String newImg = "";
-                if (firstStr.endsWith("_cut")) {
-                    newImg = img;
-                } else {
-                    newImg = firstStr + "_cut" + "." + lastStr;
-                }
-                companyUserTableDTO.setHeadImg(newImg);
-            }
-        }
-        int totalNumber = companyUserService.getCompanyUserByOrgIdCountOfWork(param);
-        param.clear();
-        param.put("data", data);
-        param.put("total", totalNumber);
-        return responseSuccess().addData(param);
-    }
 
     /**
      * 方法描述：通讯录
@@ -416,8 +227,7 @@ public class V2OrgController extends BaseWSController {
     @ResponseBody
     public ResponseBean getAllPersons(@RequestBody Map<String, Object> map) throws Exception {
         map.put("fastdfsUrl", this.fastdfsUrl);
-        List<AccountDTO> list = accountService.selectV2AllPersonByParam(map);
-        return responseSuccess().addData("list", list);
+        return responseSuccess().addData("list", accountService.selectV2AllPersonByParam(map));
     }
 
     /**
@@ -443,30 +253,15 @@ public class V2OrgController extends BaseWSController {
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean getCompanyImg(@RequestBody Map<String, Object> param) throws Exception {
-        param.put("type", NetFileType.COMPANY_BANNER_ATTACH);
-        param.put("status", "0");
         //没有存公司过来，则不查询出来
         if (StringUtil.isNullOrEmpty(param.get("companyId"))) {
             return ResponseBean.responseSuccess("").addData("status", "0").addData("list", new ArrayList<>());
         }
-        List<ProjectSkyDriveEntity> list = projectSkyDriverService.getNetFileByParam(param);
+        List<NetFileDTO> list = projectSkyDriverService.getCompanyBanner((String)param.get("companyId"));
         return ResponseBean.responseSuccess("").addData("status", "0").addData("list", list);
 
     }
 
-    /**
-     * 方法描述：获取企业登录（组织选择列表） 无
-     * 作    者 : ChenZhujie
-     * 日    期 : 2016/12/23
-     */
-    @RequestMapping("/getAdminOfCompanyByUserId")
-    @ResponseBody
-    @AuthorityCheckable
-    public ResponseBean getAdminOfCompanyByUserId(@RequestBody Map<String, String> dto) throws Exception {
-
-        List<CompanyDTO> list = companyService.getAdminOfCompanyByUserId(dto.get("accountId"));
-        return responseSuccess().addData("companyList", list);
-    }
 
     /**
      * 方法描述：解散组织
@@ -502,6 +297,7 @@ public class V2OrgController extends BaseWSController {
             return ResponseBean.responseSuccess("操作成功");
         } else {
             return ResponseBean.responseError("操作失败");
+            //return ResponseBean.responseError("离开组织操作失败");
         }
     }
 
@@ -539,31 +335,6 @@ public class V2OrgController extends BaseWSController {
 
 /*******************************部门信息*******************************************/
 
-    /**
-     * 方法描述： 查询分公司或合作伙伴
-     * 作    者 : ChenZhujie
-     * 日    期 : 2016/12/23
-     */
-    @RequestMapping("/getPartenerOrsubcompany")
-    @ResponseBody
-    public ResponseBean getPartenerOrsubcompany(@RequestBody Map<String, String> paraMap) throws Exception {
-        String companyId = paraMap.get("companyId");
-        String selectType = paraMap.get("selectType");
-        if (null == paraMap.get("companyId")) {
-            companyId = paraMap.get("appOrgId");
-        }
-        List<CompanyEntity> companyList = new ArrayList<CompanyEntity>();
-        List<CompanyEntity> companyes = companyService.getAllChilrenCompanyWs(companyId);
-        for (CompanyEntity c : companyes) {
-            if ("2".equals(c.getCompanyType()) && selectType.equals("1")) {//如果是分公司
-                companyList.add(c);
-            }
-            if ("3".equals(c.getCompanyType()) && selectType.equals("2")) {//如果是合作伙伴
-                companyList.add(c);
-            }
-        }
-        return responseSuccess().addData("companyList", companyList);
-    }
 
     /***********************添加修改分公司*************************/
 
@@ -596,11 +367,11 @@ public class V2OrgController extends BaseWSController {
             dto.setAccountId(dto.getAccountId());
             dto.setClearlyAdminPassword(dto.getAdminPassword());
             dto.setAdminPassword(MD5Helper.getMD5For32(dto.getAdminPassword()));
+            dto.setType(2);
             return returnResponseBean(companyService.createSubCompany(dto));
         } else {
             return returnResponseBean(companyService.updateSubCompany(dto));
         }
-
     }
 
     /**
@@ -629,18 +400,15 @@ public class V2OrgController extends BaseWSController {
         if (StringUtil.isNullOrEmpty(companyId)) {
             companyId = companyDTO.getAppOrgId();
         }
-        CompanyDTO company = companyService.getCompanyById(companyId);
-        Map<String, Object> param = new HashMap<String, Object>();
-        param.put("companyId", companyId);
-        param.put("type", "0");
-        List<DepartDTO> list = departService.getDepartByCompanyIdWS(param);
-        for (DepartDTO departDTO : list) {
+//        CompanyDTO company = companyService.getCompanyById(companyId);
+        List<DepartDataDTO> list = departService.getDepartByCompanyId(companyId,null);
+        for (DepartDataDTO departDTO : list) {
             departDTO.setType("depart");
         }
-        DepartDTO dto = new DepartDTO();
-        dto.setId(companyId);
-        dto.setDepartName(company.getCompanyName());
-        list.add(0, dto);
+//        DepartDTO dto = new DepartDTO();
+//        dto.setId(companyId);
+//        dto.setDepartName(company.getCompanyName());
+//        list.add(0, dto);
         return responseSuccess().addData("departList", list);
     }
 
@@ -657,7 +425,7 @@ public class V2OrgController extends BaseWSController {
         Map<String, Object> param = new HashMap<String, Object>();
         param.put("companyId", map.get("appOrgId"));
         param.put("type", "0");
-        List<DepartDTO> list = departService.getDepartByCompanyId(param, null);
+        List<DepartDataDTO> list = departService.getDepartByCompanyId(param, null);
 
         return ResponseBean.responseSuccess().addData("departList", list);
     }
@@ -685,16 +453,16 @@ public class V2OrgController extends BaseWSController {
     @RequestMapping("/createBusinessPartner")
     @ResponseBody
     @AuthorityCheckable
-    public ResponseBean createBusinessPartner(@RequestBody BusinessPartnerDTO dto) throws Exception {
+    public ResponseBean createBusinessPartner(@RequestBody SubCompanyDTO dto) throws Exception {
         if (StringUtil.isNullOrEmpty(dto.getId())) {
             String companyId = dto.getAppOrgId();
             dto.setCompanyId(companyId);
-            dto.setAccountId(dto.getAccountId());
-            dto.setClearlyAdminPassword(dto.getAdminPassword());
-            dto.setAdminPassword(MD5Helper.getMD5For32(dto.getAdminPassword()));
-            return returnResponseBean(companyService.createBusinessPartner(dto));
+            dto.setType(3);
+            return returnResponseBean(companyService.createSubCompany(dto)); //此处共用创建分公司接口
         } else {
-            return returnResponseBean(companyService.updateBusinessPartner(dto));
+            BusinessPartnerDTO partner = new BusinessPartnerDTO();
+            BaseDTO.copyFields(dto,partner);
+            return returnResponseBean(companyService.updateBusinessPartner(partner));
         }
     }
 
@@ -737,55 +505,21 @@ public class V2OrgController extends BaseWSController {
      */
     @RequestMapping("/getCompanyUser")
     @ResponseBody
-    @AuthorityCheckable
+//    @AuthorityCheckable
     public ResponseBean getCompanyUser(@RequestBody CompanyUserTableDTO dto) throws Exception {
-        CompanyUserTableDTO companyUser = companyUserService.getCompanyUserByIdInterface(dto.getId());
+        CompanyUserDetailDTO companyUser = companyUserService.getCompanyUserByIdInterface(dto.getId(),dto.getNeedUserStatus());
         Map<String, Object> param = new HashMap<String, Object>();
         param.put("userId", companyUser.getUserId());
         param.put("attachType", "5");
         List<UserAttachDTO> list = userAttachService.getAttachByTypeToDTO(param);
         if (list != null && list.size() > 0) {
-            companyUser.setFilePath(fastdfsUrl + list.get(0).getFileGroup() + "/" + list.get(0).getAttachPath());
-            companyUser.setFileGroup(list.get(0).getFileGroup());
+            companyUser.setFileFullPath(list.get(0).getFileGroup() + "/" + list.get(0).getAttachPath());
+//            companyUser.setFilePath( list.get(0).getOssFilePath());
+//            companyUser.setFileGroup(list.get(0).getFileGroup());
         }
         return responseSuccess().addData("companyUser", companyUser);
     }
 
-    /**
-     * 方法描述：组织成员列表信息【组织界面-组织人员列表，人员选择列表】
-     * 作    者 : ChenZhujie
-     * 日    期 : 2016/12/23
-     */
-    @RequestMapping("/getOrgUser")
-    @ResponseBody
-    @AuthorityCheckable
-    public ResponseBean getOrgUser(@RequestBody Map<String, Object> paraMap) {
-        try {
-            Map<String, Object> param = new HashMap<String, Object>();
-            param.put("orgId", paraMap.get("orgId"));
-            param.put("pageSize", paraMap.get("pageSize"));
-            param.put("pageNumber", paraMap.get("pageIndex"));
-            param.put("auditStatus", "1");
-            if (null == param.get("orgId")) {
-                param.put("orgId", paraMap.get("appOrgId"));
-            }
-            List<CompanyUserTableDTO> data = companyUserService.getCompanyUserByOrgIdOfAdmin(param);
-            for (CompanyUserTableDTO companyUserTableDTO : data) {
-                Map<String, Object> paramRoleCodes = new HashMap<String, Object>();
-                paramRoleCodes.put("userId", companyUserTableDTO.getUserId());
-                paramRoleCodes.put("companyId", companyUserTableDTO.getCompanyId());
-                String roleCodes = permissionService.getPermissionCodeByUserId(paramRoleCodes);
-                if (null != roleCodes && !"".equals(roleCodes)) {
-                    companyUserTableDTO.setRoleCodes(roleCodes);
-                }
-            }
-
-            return responseSuccess().addData("userList", data);
-        } catch (Exception e) {
-            log.error("查询组织员工失败", e);
-            return ResponseBean.responseError("查询组织员工失败！");
-        }
-    }
 
     /**
      * 方法描述： 查找服务类型
@@ -839,68 +573,6 @@ public class V2OrgController extends BaseWSController {
         return returnResponseBean(companyUserAuditService.auditShareInvate(dto));
     }
 
-    /**
-     * 方法描述：批量添加员工
-     * 作    者 : ChenZhujie
-     * 日    期 : 2016/12/23
-     */
-    @RequestMapping("/batchAddPersonal")
-    @ResponseBody
-    @AuthorityCheckable
-    public ResponseBean batchAddPersonal(@RequestBody BatchCompanyUserDTO batchCompanyUserDTO) throws Exception {
-        try {
-            Map<String, Object> param = new HashMap<String, Object>();
-            param.put("orgId", batchCompanyUserDTO.getOrgId());
-            param.put("auditStatus", "1");
-            if (null == param.get("orgId")) {
-                param.put("orgId", batchCompanyUserDTO.getAppOrgId());
-            }
-            List<CompanyUserTableDTO> existUser = companyUserService.getCompanyUserByOrgIdOfAdmin(param);
-            List<CompanyUserTableDTO> importUser = batchCompanyUserDTO.getCompayUserList();
-            Map<String, Object> successImport = new HashMap<String, Object>();
-            List<String> successCellphone = new ArrayList<>();
-            Map<String, Object> alreadyExit = new HashMap<String, Object>();
-            List<String> alreadyCellphone = new ArrayList<>();
-            for (CompanyUserTableDTO cuImport : importUser) {
-                String cellphone = cuImport.getCellphone();
-                boolean flag = false;
-                outer:
-                for (CompanyUserTableDTO cuExist : existUser) {
-                    if (cellphone.equals(cuExist.getCellphone())) {
-                        flag = true;
-                        break outer;
-                    }
-                }
-                if (flag) {
-                    alreadyCellphone.add(cellphone);
-                } else {
-                    successCellphone.add(cellphone);
-                }
-            }
-            successImport.put("successImport", successCellphone);
-            alreadyExit.put("alreadyExit", alreadyCellphone);
-            List<CompanyUserTableDTO> compayUserList = new ArrayList<CompanyUserTableDTO>();
-            if (null != batchCompanyUserDTO.getCompayUserList()) {
-                compayUserList = batchCompanyUserDTO.getCompayUserList();
-            }
-            for (CompanyUserTableDTO dto : compayUserList) {
-                String userId = batchCompanyUserDTO.getAccountId();
-                CompanyDTO company = companyService.getCompanyById(batchCompanyUserDTO.getAppOrgId());
-                dto.setCompanyName(company.getCompanyName());
-                dto.setAccountId(userId);
-                AjaxMessage ajax = companyUserService.saveCompanyUser(dto);
-                if (ajax.getCode().equals("1")) {
-                    return ResponseBean.responseError(ajax.getInfo().toString());
-                }
-            }
-
-
-            return ResponseBean.responseSuccess("批量导入成功").addData("successImport", successImport).addData("alreadyExit", alreadyExit);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseBean.responseError("批量导入失败");
-        }
-    }
 
     /**
      * 方法描述：申请成为分公司,合作伙伴(当前公司的id为orgId，选择公司的id为orgPid）
@@ -1000,23 +672,11 @@ public class V2OrgController extends BaseWSController {
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean selectInvitedPartner(@RequestBody Map<String, Object> map) throws Exception {
-        //Map<String,Object> map = new HashMap<String,Object>();
-        //map.put("companyStatus", companyStatus);
         map.put("cid", map.get("appOrgId"));
         map.put("isAudit", "1");//表示只查询待审核的且只是自己审核的数据
         map.put("auditStatus", 2);
         map.put("fastdfsUrl", this.fastdfsUrl);
         List<CompanyRelationAuditDTO> relationAuditList = companyRelationAuditService.getCompanyRelationAuditByParam(map);
-//        for(CompanyRelationAuditDTO companyRelationAuditDTO :relationAuditList){
-//            Map<String, Object> param = new HashMap<String, Object>();
-//            param.put("companyId", companyRelationAuditDTO.getOrgId());
-//            param.put("fileType", "4");
-//            List<CompanyAttachEntity> list = companyAttachService.getCompanyAttachByParamer(param);
-//            if (list.size()>0) {
-//                companyRelationAuditDTO.setFilePath(fastdfsUrl+list.get(0).getFileGroup()+"/"+list.get(0).getFilePath());
-//                companyRelationAuditDTO.setFileGroup(list.get(0).getFileGroup());
-//            }
-//        }
 
         return responseSuccess().addData("relationAuditList", relationAuditList);
     }
@@ -1030,30 +690,6 @@ public class V2OrgController extends BaseWSController {
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean getFilterCompany(@RequestBody Map<String, Object> paraMap) throws Exception {
-//        Map<String, Object> map = new HashMap<String, Object>();
-//        if(null != paraMap.get("keyword")){
-//            map.put("keyword", paraMap.get("keyword"));
-//        }
-//        if(null != paraMap.get("pageSize") && null != paraMap.get("pageNumber")){
-//            map.put("pageSize", paraMap.get("pageSize"));
-//            map.put("pageNumber", paraMap.get("pageNumber"));
-//        }
-//        if(null != paraMap.get("appOrgId")){
-//            map.put("orgId", paraMap.get("appOrgId"));
-//        }
-//
-//        List<CompanyDTO> orgList = companyService.getCompanyByUserId(paraMap.get("accountId").toString());
-//        String orgIdList = "";
-//        for(int i = 0 ; i < orgList.size();i++){
-//            if(i==0){
-//                orgIdList = orgList.get(i).getId();
-//            }else{
-//                orgIdList = orgIdList + "," +orgList.get(i).getId();
-//            }
-//        }
-//        if(orgIdList.length()>0){
-//            map.put("orgIdList",orgIdList.split(","));
-//        }
         paraMap.put("orgId", paraMap.get("appOrgId"));
         paraMap.put("fastdfsUrl", this.fastdfsUrl);
         return responseSuccess().addData("companyList", companyService.getCompanyFilterbyParamForInvit(paraMap));
@@ -1097,20 +733,6 @@ public class V2OrgController extends BaseWSController {
         } else {
             return ResponseBean.responseError("操作失败");
         }
-
-/*
-        try {
-            AccountDTO accountDTO = accountService.getAccountById(dto.getAccountId());
-            if (accountDTO.getPassword().equals(dto.getUserPassword())) {
-
-                return returnResponseBean(teamOperaterService.transferSysWS(dto,dto.getAdminPassword()));
-            }
-            return ResponseBean.responseError("您输入的密码和当前用户的密码不一致！");
-        }
-        catch (Exception e){
-            log.error("移交管理员失败！",e);
-            return ResponseBean.responseError("移交管理员失败!");
-        }*/
     }
 
     /**
@@ -1165,7 +787,7 @@ public class V2OrgController extends BaseWSController {
         map.clear();
         map.put("companyId", companyId);
         map.put("selectVal", mappass.get("companyName"));
-        List<DepartDTO> departList = departService.getDepartByCompanyId(map);
+        List<DepartDataDTO> departList = departService.getDepartByCompanyId(map);
         company.setDepartList(departList);
         list.add(0, company);
         return responseSuccess().addData("designOrgList", list);
@@ -1201,254 +823,14 @@ public class V2OrgController extends BaseWSController {
             }
             interfaceGroupAndRoleDTO.setCompanyName(companyName);
             interfaceGroupAndRoleDTO.setCompanyShortName(companyShortName);
-
-
-            Map<String, Object> param = new HashMap<String, Object>();
-            param.put("userId", userId);
-            param.put("companyId", companyId);
-            String roleCodes = permissionService.getPermissionCodeByUserId(param);
-            interfaceGroupAndRoleDTO.setRoleCodes(roleCodes);
             interfaceGroupAndRoleDTOList.add(interfaceGroupAndRoleDTO);
-          /* List<RoleEntity> roleList = roleService.getRoleByUser(userId,companyId);
-            if(roleList !=null){
-                List<InterfaceRoleDTO> interfaceRoleDTOList =  BaseDTO.copyFields(roleList,InterfaceRoleDTO.class);
-                interfaceGroupAndRoleDTO.setInterfaceRoleDTOList(interfaceRoleDTOList);
-                interfaceGroupAndRoleDTOList.add(interfaceGroupAndRoleDTO);
-            }else{
-                List<InterfaceRoleDTO> interfaceRoleDTOList = new ArrayList<>();
-                interfaceGroupAndRoleDTO.setInterfaceRoleDTOList(interfaceRoleDTOList);
-                interfaceGroupAndRoleDTOList.add(interfaceGroupAndRoleDTO);
-            }*/
 
         }
         return responseSuccess()
                 .addData("interfaceGroupAndRoleDTOList", interfaceGroupAndRoleDTOList);
     }
 
-    /**
-     * 方法描述：组织架构树(数据）
-     * 作    者 : ChenZhujie
-     * 日    期 : 2016/12/23
-     */
-    @RequestMapping("/newGetcompanyDatabac")
-    @ResponseBody
-    @AuthorityCheckable
-    public ResponseBean newGetcompanyDatabac(@RequestBody Map<String, Object> mapass) throws Exception {
-        //所在的所有公司
-        List<CompanyDTO> orgList = companyService.getCompanyByUserId(mapass.get("accountId").toString());
-        //所在的公司id
-        String inCompanyIds = "";
-        int i = 0;
-        for (CompanyDTO companyDto : orgList) {
-            if (i == 0) {
-                inCompanyIds = companyDto.getId();
-            } else {
-                inCompanyIds = inCompanyIds + "," + companyDto.getId();
-            }
-            i++;
-        }
-        String[] rootIdsAttr = inCompanyIds.split(",");
-        //返回数据
-        List<Object> returnList = new ArrayList<>();
-        //已经存在的公司
-        String exitCompanyIds = "";
-
-        for (String rId : rootIdsAttr) {
-            if (!exitCompanyIds.contains(rId)) {
-                //根公司
-                CompanyEntity companyEntity = companyService.selectById(rId);
-                //所有子公司
-                List<CompanyEntity> list = companyService.getAllChilrenCompany(rId);
-                list.add(0, companyEntity);
-                List<CompanyDTO> listDto = BaseDTO.copyFields(list, CompanyDTO.class);
-                //查询权限
-                for (CompanyDTO dto : listDto) {
-                    //加入到存在的公司
-                    exitCompanyIds = exitCompanyIds + "," + dto.getId();
-                    Map<String, Object> param = new HashMap<String, Object>();
-                    param.put("userId", mapass.get("accountId"));
-                    param.put("companyId", dto.getId());
-                    String roleCodes = permissionService.getPermissionCodeByUserId(param);
-                    //设置权限
-                    dto.setRoleCodes(roleCodes);
-                    if (inCompanyIds.contains(dto.getId())) {
-                        //1：在公司，0不在公司
-                        dto.setIsInCompanyFlag(1);
-                    }
-                    Map<String, Object> map = new HashMap<String, Object>();
-                    map.put("orgId", dto.getId());
-                    map.put("auditStatus", "1");
-                    //公司用户
-                    List<CompanyUserTableDTO> data = companyUserService.getCompanyUserByOrgIdOfAdmin(map);
-                    //设置公司用户数量
-                    dto.setCompanyUserNum(data.size());
-                }
-                returnList.add(listDto);
-            }
-        }
-        return responseSuccess().addData("companyData", returnList);
-    }
-
-
     /****************************************v2*****************************************************/
-
-    /**
-     * 方法描述：组织架构树(数据）
-     * 作    者 : ChenZhujie
-     * 日    期 : 2016/12/23
-     */
-    @RequestMapping("/newGetcompanyData")
-    @ResponseBody
-    @AuthorityCheckable
-    public ResponseBean newGetcompanyData(@RequestBody Map<String, Object> mapass) throws Exception {
-        //所在的所有公司
-        List<CompanyDTO> orgList = companyService.getCompanyByUserId(mapass.get("accountId").toString());
-        //所有的根的公司
-        String rootIds = "";
-        //根公司id临时变量
-        String rootId = "";
-        //所在的公司id
-        String inCompanyIds = "";
-        for (int i = 0; i < orgList.size(); i++) {
-            if (i == 0) {
-                rootId = companyService.getRootCompanyId(orgList.get(i).getId());
-                rootIds = rootId;
-                inCompanyIds = orgList.get(i).getId();
-            } else {
-
-                rootId = companyService.getRootCompanyId(orgList.get(i).getId());
-                inCompanyIds = inCompanyIds + "," + orgList.get(i).getId();
-                if (!rootIds.contains(rootId)) {
-                    rootIds = rootIds + "," + rootId;
-                }
-            }
-        }
-        String[] rootIdsAttr = rootIds.split(",");
-        //返回数据
-        List<Object> returnList = new ArrayList<>();
-        for (String rId : rootIdsAttr) {
-            //根公司
-            CompanyEntity companyEntity = companyService.selectById(rId);
-            //所有子公司
-            List<CompanyEntity> list = companyService.getAllChilrenCompany(rId);
-            list.add(0, companyEntity);
-            List<CompanyDTO> listDto = BaseDTO.copyFields(list, CompanyDTO.class);
-
-            //公司，分公司
-            List<CompanyDTO> companyFilialeList = new ArrayList<>();
-            //排序，把事业合伙人放到最后
-            List<CompanyDTO> businessPartnerList = new ArrayList<>();
-            //查询权限
-            for (CompanyDTO dto : listDto) {
-                Map<String, Object> param = new HashMap<String, Object>();
-                param.put("userId", mapass.get("accountId"));
-                param.put("companyId", dto.getId());
-                String roleCodes = permissionService.getPermissionCodeByUserId(param);
-                //设置权限
-                dto.setRoleCodes(roleCodes);
-                if (inCompanyIds.contains(dto.getId())) {
-                    //1：在公司，0不在公司
-                    dto.setIsInCompanyFlag(1);
-                }
-                Map<String, Object> map = new HashMap<String, Object>();
-                map.put("orgId", dto.getId());
-                map.put("auditStatus", "1");
-                //公司用户
-                List<CompanyUserTableDTO> data = companyUserService.getCompanyUserByOrgIdOfAdmin(map);
-                //设置公司用户数量
-                dto.setCompanyUserNum(data.size());
-
-                if ("3".equals(dto.getCompanyType())) {
-                    businessPartnerList.add(dto);
-                } else {
-                    companyFilialeList.add(dto);
-                }
-            }
-            //拼在一起
-            companyFilialeList.addAll(businessPartnerList);
-            returnList.add(companyFilialeList);
-        }
-        return responseSuccess().addData("companyData", returnList);
-    }
-
-    /**
-     * 方法描述：组织架构树(数据）
-     * 作    者 : ChenZhujie
-     * 日    期 : 2016/12/23
-     */
-    @RequestMapping("/getV2CompanyData")
-    @ResponseBody
-    @AuthorityCheckable
-    public ResponseBean getV2CompanyData(@RequestBody Map<String, Object> mapass) throws Exception {
-        //所在的所有公司
-        List<CompanyDTO> orgList = companyService.getCompanyByUserId(mapass.get("accountId").toString());
-        //所有的根的公司
-        String rootIds = "";
-        //根公司id临时变量
-        String rootId = "";
-        //所在的公司id
-        String inCompanyIds = "";
-        for (int i = 0; i < orgList.size(); i++) {
-            if (i == 0) {
-                rootId = companyService.getRootCompanyId(orgList.get(i).getId());
-                rootIds = rootId;
-                inCompanyIds = orgList.get(i).getId();
-            } else {
-
-                rootId = companyService.getRootCompanyId(orgList.get(i).getId());
-                inCompanyIds = inCompanyIds + "," + orgList.get(i).getId();
-                if (!rootIds.contains(rootId)) {
-                    rootIds = rootIds + "," + rootId;
-                }
-            }
-        }
-        String[] rootIdsAttr = rootIds.split(",");
-        //返回数据
-        List<Object> returnList = new ArrayList<>();
-        for (String rId : rootIdsAttr) {
-            //根公司
-            CompanyEntity companyEntity = companyService.selectById(rId);
-            //所有子公司
-            List<CompanyEntity> list = companyService.getAllChilrenCompany(rId);
-            list.add(0, companyEntity);
-            List<CompanyDTO> listDto = BaseDTO.copyFields(list, CompanyDTO.class);
-
-            //公司，分公司
-            List<CompanyDTO> companyFilialeList = new ArrayList<>();
-            //排序，把事业合伙人放到最后
-            List<CompanyDTO> businessPartnerList = new ArrayList<>();
-            //查询权限
-            for (CompanyDTO dto : listDto) {
-                Map<String, Object> param = new HashMap<String, Object>();
-                param.put("userId", mapass.get("accountId"));
-                param.put("companyId", dto.getId());
-                String roleCodes = permissionService.getPermissionCodeByUserId(param);
-                //设置权限
-                dto.setRoleCodes(roleCodes);
-                if (inCompanyIds.contains(dto.getId())) {
-                    //1：在公司，0不在公司
-                    dto.setIsInCompanyFlag(1);
-                }
-                Map<String, Object> map = new HashMap<String, Object>();
-                map.put("orgId", dto.getId());
-                map.put("auditStatus", "1");
-                //公司用户
-                List<CompanyUserTableDTO> data = companyUserService.getCompanyUserByOrgIdOfAdmin(map);
-                //设置公司用户数量
-                dto.setCompanyUserNum(data.size());
-
-                if ("3".equals(dto.getCompanyType())) {
-                    businessPartnerList.add(dto);
-                } else {
-                    companyFilialeList.add(dto);
-                }
-            }
-            //拼在一起
-            companyFilialeList.addAll(businessPartnerList);
-            returnList.add(companyFilialeList);
-        }
-        return responseSuccess().addData("companyData", returnList);
-    }
 
     /**
      * 方法描述：联系人及群组
@@ -1469,7 +851,7 @@ public class V2OrgController extends BaseWSController {
      */
     @RequestMapping("/getLinkPeopleList")
     @ResponseBody
-    @AuthorityCheckable
+   // @AuthorityCheckable
     public ResponseBean getLinkPeopleList(@RequestBody Map<String, Object> mapass) throws Exception {
         Map<String, Object> returnMap = this.companyService.getLinkPeopleAndGroup(mapass);
         return responseSuccess().setData(returnMap);
@@ -1501,6 +883,18 @@ public class V2OrgController extends BaseWSController {
     }
 
     /**
+     * 方法描述：部门及人员
+     * 作    者 : MaoSF
+     * 日    期 : 2016/12/23
+     */
+    @RequestMapping("/getOrgData")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getOrgData(@RequestBody QueryCompanyUserDTO dto) throws Exception {
+        return ResponseBean.responseSuccess("查询成功").addDataFromObject(departService.getOrgData(dto,true));
+    }
+
+    /**
      * 方法描述：通讯录
      * 作    者 : ChenZhujie
      * 日    期 : 2016/12/23
@@ -1511,8 +905,7 @@ public class V2OrgController extends BaseWSController {
     public ResponseBean v2GetAllPersons(@RequestBody Map<String, Object> dto) throws Exception {
         dto.put("fastdfsUrl", fastdfsUrl);
         dto.put("maodingAid", "maodingAid");
-        List<AccountDTO> list = accountService.selectV2AllPersonByParam(dto);
-        return responseSuccess().addData("list", list);
+        return responseSuccess().addData("list", accountService.selectV2AllPersonByParam(dto));
     }
 
     /**
@@ -1578,15 +971,13 @@ public class V2OrgController extends BaseWSController {
      * 方法描述：项目任务选择人员列表
      * 作者：MaoSF
      * 日期：2017/1/4
-     * @param:
-     * @return:
      */
     @RequestMapping("/getCompanyUserForSelect")
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean getCompanyUserForSelect(@RequestBody Map<String, Object> map) throws Exception {
-        List<CompanyUserAppDTO> userList = this.companyUserService.getCompanyUser((String) map.get("appOrgId"));
-        if ("1".equals(map.get("type"))) {
+        List<CompanyUserAppDTO> userList = this.companyUserService.getCompanyUser((String) map.get("appOrgId"),(String)map.get("needUserStatus"));
+        if ("1".equals(map.get("type")) && StringUtils.isEmpty((String)map.get("needUserStatus"))) {
             for (CompanyUserAppDTO companyUserAppDTO : userList) {
                 if (companyUserAppDTO.getUserId().equals(map.get("accountId"))) {
                     userList.remove(companyUserAppDTO);
@@ -1607,40 +998,14 @@ public class V2OrgController extends BaseWSController {
     public ResponseBean getCompanyNoticeProjectDynamic(@RequestBody Map<String, Object> map) throws Exception {
         //组织信息
         CompanyDTO dto = companyService.getCompanyById(map.get("appOrgId").toString());
-
         //项目动态
         Map<String, Object> paraMap = new HashMap<>();
         paraMap.put("dynamicList", this.orgDynamicService.getLastOrgDynamicListByCompanyId(map));
-
-        Map<String, Object> companyAttachMap = new HashMap<>();
-        companyAttachMap.put("type", NetFileType.COMPANY_BANNER_ATTACH);
-        companyAttachMap.put("companyId", map.get("appOrgId").toString());
-        List<ProjectSkyDriveEntity> list = projectSkyDriverService.getNetFileByParam(companyAttachMap);
-        for (ProjectSkyDriveEntity netFile : list) {
-            if (!StringUtil.isNullOrEmpty(netFile.getFilePath())) {
-                netFile.setFilePath(fastdfsUrl + netFile.getFileGroup() + "/" + netFile.getFilePath());
-            }
-        }
+        List<NetFileDTO> list = projectSkyDriverService.getCompanyBanner(map.get("appOrgId").toString());
         return ResponseBean.responseSuccess("查询成功")
                 .addData("companyAttachList", list)
                 .addData("companyInfo", dto)
                 .addData(paraMap);
-    }
-
-    /**
-     * 方法描述：组织架构树(数据）通知公告使用
-     * 作        者：MaoSF
-     * 日        期：2016年7月11日-上午11:58:59
-     */
-    @RequestMapping("/getOrgTreeForNotice")
-    @ResponseBody
-    @AuthorityCheckable
-    public ResponseBean getOrgTreeForNotice(@RequestBody Map<String, Object> mapPara) throws Exception {
-        Map<String, Object> map = new HashMap<String, Object>();
-        map.put("companyId", mapPara.get("appOrgId"));
-        OrgTreeDTO dataMap = companyService.v2GetOrgTreeForNotice(map);
-        return ResponseBean.responseSuccess("查询成功")
-                .addData("orgTree", dataMap);
     }
 
     /**
@@ -1706,13 +1071,12 @@ public class V2OrgController extends BaseWSController {
      * 方法描述：邀请事业合伙人（发送邀请接口）
      * 作者：MaoSF
      * 日期：2017/4/1
-     * @param:
-     * @return:
      */
     @RequestMapping("/inviteParent")
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean inviteParent(@RequestBody InvitatParentDTO dto) throws Exception {
+        dto.setCurrentCompanyId(dto.getAppOrgId());
         return this.companyService.inviteParent(dto);
     }
 
@@ -1721,8 +1085,6 @@ public class V2OrgController extends BaseWSController {
      * 方法描述：设置事业合伙人的别名
      * 作者：MaoSF
      * 日期：2017/4/1
-     * @param:
-     * @return:
      */
     @RequestMapping("/setBusinessPartnerNickName")
     @ResponseBody
@@ -1732,19 +1094,177 @@ public class V2OrgController extends BaseWSController {
     }
 
     /**
-     * 方法描述：获取与当前组织相关的组织人员（本公司、分公司、事业合伙人）
+     * 方法描述：项目讨论区的@和特别提醒人员选择
      * 作者：GuoZhiBin
      * 日期：2017/4/1
-     * @param:
-     * @return:
      */
     @RequestMapping("/getCompanyUserForCustomGroup")
     @ResponseBody
     @AuthorityCheckable
-    public ResponseBean getCompanyUserForCustomGroup(@RequestBody Map<String, Object> param) throws Exception {
-        List<OrgUserForCustomGroupDTO> returnData = this.companyService.getCompanyForCustomGroupSelect((String) param.get("appOrgId"), (String) param.get("accountId"));
+    public ResponseBean getCompanyUserForCustomGroup(@RequestBody QueryCompanyUserDTO query) throws Exception {
+        query.setIsExceptMe("1");//需要过滤自己
+        List<CompanyUserGroupDTO> returnData = this.companyService.getCompanyForCustomGroupSelect(query);
         return ResponseBean.responseSuccess("查询成功").addData("companyUserList", returnData);
     }
 
+    /**
+     * 方法描述：获取整个组织架构数中的所有组织及成员
+     * 作者：GuoZhiBin
+     * 日期：2017/4/1
+     */
+    @RequestMapping("/getLinkman")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getLinkman(@RequestBody QueryCompanyUserDTO query) throws Exception {
+        List<CompanyUserGroupDTO> returnData = this.companyService.getLinkman(query);
+        return ResponseBean.responseSuccess("查询成功").addData("companyUserList", returnData);
+    }
+
+
+    /**
+     * 方法描述：获取所有组织及项目参与人员（会议选择组织）
+     * 作者：GuoZhiBin
+     * 日期：2017/4/1
+     */
+    @RequestMapping("/getOrgForSchedule")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getOrgForSchedule(@RequestBody QueryCompanyUserDTO query) throws Exception {
+        List<CompanyUserGroupDTO> returnData = this.companyService.getOrgForSchedule(query);
+        return ResponseBean.responseSuccess("查询成功").addData("companyUserList", returnData);
+    }
+
+    /**
+     * 方法描述：获取所选组织的所以成员
+     * 作者：MaoSF
+     * 日期：2018/4/1
+     */
+    @RequestMapping("/getUserByOrgId")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getUserByOrgId(@RequestBody QueryCompanyUserDTO query) throws Exception {
+        Map<String,Object> map = new HashMap<>();
+        map.put("companyId",query.getCompanyId());
+        List<CompanyUserDataDTO> returnData = this.companyUserService.getUserByOrgId(map);
+        return ResponseBean.responseSuccess("查询成功").addData("companyUserList", returnData);
+    }
+
+
+    /**
+     * 方法描述：需求就是选择组织架构中的所有人员，过滤自己以及报销、费用详情审批列表中包含的人员
+     * 作者：MaoSF
+     * 日期：2018/5/3
+     */
+    @RequestMapping("/getCostAuditMember")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getCostAuditMember(@RequestBody QueryCompanyUserDTO query) throws Exception {
+        List<CompanyUserGroupDTO> returnData = this.companyService.getCostAuditMember(query);
+        return ResponseBean.responseSuccess("查询成功").addData("companyUserList", returnData);
+    }
+
+    /**
+     * 方法描述：需求就是选择组织架构中的所有人员，过滤自己以及出差、请求详情审批列表中包含的人员
+     * 作者：MaoSF
+     * 日期：2018/5/3
+     */
+    @RequestMapping("/getLeaveAuditMember")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getLeaveAuditMember(@RequestBody QueryCompanyUserDTO query) throws Exception {
+        List<CompanyUserAppDTO> returnData = this.companyService.getLeaveAuditMember(query);
+        return ResponseBean.responseSuccess("查询成功").addData("companyUserList", returnData);
+    }
+
+    /**
+     * 方法描述：费用、报销，抄送人列表
+     * 作者：MaoSF
+     * 日期：2018/5/3
+     */
+    @RequestMapping("/getCostCopyMember")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getCostCopyMember(@RequestBody QueryCompanyUserDTO query) throws Exception {
+        List<CompanyUserGroupDTO> returnData = this.companyService.getCostCopyMember(query);
+        return ResponseBean.responseSuccess("查询成功").addData("companyUserList", returnData);
+    }
+
+    /**
+     * 方法描述：出差、请假，抄送人列表
+     * 作者：MaoSF
+     * 日期：2018/5/3
+     */
+    @RequestMapping("/getLeaveCopyMember")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getLeaveCopyMember(@RequestBody QueryCompanyUserDTO query) throws Exception {
+        List<CompanyUserAppDTO> returnData = this.companyService.getLeaveCopyMember(query);
+        return ResponseBean.responseSuccess("查询成功").addData("companyUserList", returnData);
+    }
+
+    /**
+     * 方法描述：最近审批人列表并按 最后操作时间倒序排序
+     * 作者：zcl
+     * 日期：2018/4/23
+     */
+    @RequestMapping("/listRecentlyAuditUser")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean listRecentlyAuditUser(@RequestBody QueryCompanyUserDTO query) throws Exception {
+        List<CompanyUserAppDTO> returnData = this.companyService.listCompanyUserForCustomGroupSelect(query);
+        return ResponseBean.responseSuccess("查询成功").addData("companyUserList", returnData);
+    }
+
+    /**
+     * 方法描述：自定义群组创建（人员选择）
+     * 作者：GuoZhiBin
+     * 日期：2017/4/1
+     */
+    @RequestMapping("/getCustomerGroupUser")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getCustomerGroupUser(@RequestBody QueryCompanyUserDTO query) throws Exception {
+        query.setIgnoreUserId(query.getAccountId());
+        List<CompanyUserGroupDTO> returnData = this.companyService.getLinkman(query);
+        return ResponseBean.responseSuccess("查询成功").addData("companyUserList", returnData);
+    }
+
+    /**
+     * 方法描述：根据companyUserId查询报销审批申请人列表
+     * 作者：MaoSF
+     * 日期：2016/12/26
+     */
+    @RequestMapping("/getExpTaskMembers")
+    @AuthorityCheckable
+    @ResponseBody
+    public ResponseBean getExpTaskMembers(@RequestBody Map<String, Object> paraMap) throws Exception {
+        List<CompanyUserExpMemberDTO> list = companyUserService.getExpTaskMembers(paraMap);
+        return ResponseBean.responseSuccess("查询成功").addData("memberList",list);
+    }
+
+    /**
+     * 方法描述：抄送给我的记录的审批人列表
+     * 作者：MaoSF
+     * 日期：2016/12/26
+     */
+    @RequestMapping("/getApplyExpUserForCopy")
+    @AuthorityCheckable
+    @ResponseBody
+    public ResponseBean getApplyExpUserForCopy(@RequestBody Map<String, Object> paraMap) throws Exception {
+        List<CompanyUserExpMemberDTO> list = companyUserService.getApplyExpUserForCopy(paraMap);
+        return ResponseBean.responseSuccess("查询成功").addData("memberList",list);
+    }
+
+    /**
+     * 方法描述：合作组织信息
+     * 作者：MaoSF
+     * 日期：2016/12/26
+     */
+    @RequestMapping("/getCooperatorData")
+    @AuthorityCheckable
+    @ResponseBody
+    public ResponseBean getCooperatorData(@RequestBody Map<String, Object> paraMap) throws Exception {
+        return ResponseBean.responseSuccess("查询成功").addData("relationData",companyRelationService.getCooperatorData(paraMap));
+    }
 
 }

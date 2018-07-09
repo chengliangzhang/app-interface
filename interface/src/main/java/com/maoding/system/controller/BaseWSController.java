@@ -43,6 +43,11 @@ public abstract class BaseWSController{
 	@Value("${server.url}")
 	protected String serverUrl;
 
+	@Value("${oss.bucket.public}")
+	protected String ossBucketPublic;
+
+	@Value("${oss.bucket.private}")
+	protected String ossBucketPrivate;
 
 	@Autowired
 	@Qualifier("redissonClient_session")
@@ -239,7 +244,17 @@ public abstract class BaseWSController{
 	public ResponseBean responseTokenError() {
 		return new ResponseBean().setError(SystemParameters.SESSION_TIMEOUT_CODE).setMsg("token错误或已失效");
 	}
-	
+
+	/**
+	 * 方法描述：接口版本过低返回错误
+	 * 作        者：Chenxj
+	 * 日        期：2015年8月11日-上午9:32:56
+	 * @return
+	 */
+	public ResponseBean responseInterfaceVersionError() {
+		return new ResponseBean().setError(SystemParameters.INTERFACE_VERSION_CODE).setMsg("您当前的版本过低，无法请求当前页面，请升级到最新版本");
+	}
+
 	@ExceptionHandler
 	public ResponseBean exceptionHandler(Exception e){
         if (e instanceof SecurityException) {

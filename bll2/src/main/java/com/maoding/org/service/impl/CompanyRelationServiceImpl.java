@@ -5,6 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.maoding.org.dto.CompanyDataDTO;
+import com.maoding.org.dto.CompanyUserAppDTO;
+import com.maoding.org.dto.OrgRelationDataDTO;
+import com.maoding.org.service.TeamOperaterService;
+import com.maoding.role.dto.OrgRoleTypeDTO;
+import com.maoding.role.service.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,8 +38,13 @@ public class CompanyRelationServiceImpl extends GenericService<CompanyRelationEn
 	private CompanyRelationDao companyRelationDao;
 	
 	@Autowired
+	private RoleService roleService;
+
+	@Autowired
 	private CompanyDao companyDao;
-	
+
+	@Autowired
+	private TeamOperaterService teamOperaterService;
 
 	@Override
 	public List<CompanyRelationDTO> getCompanyRelationByParam(
@@ -44,6 +55,24 @@ public class CompanyRelationServiceImpl extends GenericService<CompanyRelationEn
 	@Override
 	public int getCompanyRelationByParamCount(Map<String, Object> parma) {
 		return companyRelationDao.getCompanyRelationByParamCount(parma);
+	}
+
+	@Override
+	public OrgRelationDataDTO getCooperatorData(Map<String, Object> param) throws Exception {
+		String orgId = (String)param.get("orgId");
+		OrgRoleTypeDTO roleType = null;
+		CompanyRelationDTO relation = companyRelationDao.getCompanyRelationByOrgId(orgId);
+		if(relation!=null){
+			roleType = roleService.getOrgRoleByType(relation.getTypeId());
+		}
+		CompanyEntity company = this.companyDao.selectById(orgId);
+		CompanyUserAppDTO systemManager = this.teamOperaterService.getSystemManager(orgId);
+
+		OrgRelationDataDTO dataDTO = new OrgRelationDataDTO();
+		dataDTO.setCompany(company);
+		dataDTO.setRoleType(roleType);
+		dataDTO.setSystemManager(systemManager);
+		return dataDTO;
 	}
 
 }

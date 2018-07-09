@@ -51,28 +51,4 @@ public class RolePermissionServiceImpl extends GenericService<RolePermissionEnti
 
         return new AjaxMessage().setCode("0").setInfo("保存成功");
     }
-
-    /**
-     * 方法描述：初始化公司权限（没有使用，写在companyDao中）
-     * 作者：MaoSF
-     * 日期：2016/11/2
-     *
-     * @param companyId
-     * @param:
-     * @return:
-     */
-    @Override
-    public AjaxMessage initRolePermissionForCompany(String companyId) throws Exception {
-        this.rolePermissionDao.deleteByCompanyId(companyId);
-        List<RolePermissionEntity> initData = this.rolePermissionDao.getAllDefaultPermission();
-        if(!CollectionUtils.isEmpty(initData)){
-            for(RolePermissionEntity entity:initData){
-                entity.setId(StringUtil.buildUUID());
-                entity.setCompanyId(companyId);
-                this.rolePermissionDao.insert(entity);
-            }
-        }
-        return null;
-    }
-
 }

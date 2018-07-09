@@ -42,6 +42,11 @@ public class ImGroupCustomerDTO extends BaseDTO{
      */
     private String img;
 
+    /**
+     * 项目群组的id
+     */
+    private String nodeId;
+
     private List<ImGroupCustomerUserDTO> imGroupCustomerUserList = new ArrayList<ImGroupCustomerUserDTO>();
 
     public String getOrgId() {
@@ -80,6 +85,9 @@ public class ImGroupCustomerDTO extends BaseDTO{
         return imGroupCustomerUserList;
     }
 
+    public void setImGroupCustomerUserList(List<ImGroupCustomerUserDTO> imGroupCustomerUserList) {
+        this.imGroupCustomerUserList = imGroupCustomerUserList;
+    }
     public String getImg() {
         return img;
     }
@@ -96,4 +104,11 @@ public class ImGroupCustomerDTO extends BaseDTO{
         this.groupId = groupId;
     }
 
+    public String getNodeId() {
+        return nodeId;
+    }
+
+    public void setNodeId(String nodeId) {
+        this.nodeId = nodeId;
+    }
 }

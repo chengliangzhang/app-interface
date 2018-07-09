@@ -1,16 +1,10 @@
 package com.maoding.v2.project.dto;
 
 import com.maoding.core.base.dto.BaseDTO;
-import com.maoding.core.util.DateUtils;
-import com.maoding.core.util.StringUtil;
 import com.maoding.project.dto.ProjectDesignContentDetailDTO;
-import com.maoding.project.dto.ProjectServerContentDTO;
-import com.maoding.project.dto.ProjectServerContentFeeDTO;
-import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**

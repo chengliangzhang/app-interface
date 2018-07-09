@@ -27,43 +27,16 @@ public class ProjectProcessController extends BaseWSController {
     @Autowired
     private ProjectProcessService projectProcessService;
 
-    /**
-     * 修改流程的状态 0：提交，1：通过，2：驳回
-     * 作   者：MaoSF
-     * 日   期：2016/10/26 16:42
-     */
-//    @RequestMapping("/changeProcessNodeStatus")
-//    @ResponseBody
-//    public ResponseBean changeProcessNodeStatus(@RequestBody ProjectProcessChangeDTO projectProcessChangeDTO ) throws Exception {
-//        projectProcessChangeDTO.setIsWsFlag(1);//设置是移动端请求
-//        return projectProcessService.changeProcessNodeStatus(projectProcessChangeDTO);
-//    }
-
 
     /**
      * 方法描述：创建更新流程（设定设计人）
      * 作者：MaoSF
      * 日期：2017/1/4
-     * @param:
-     * @return:
      */
     @RequestMapping("/saveTaskProcess")
     @ResponseBody
     public ResponseBean saveTaskProcess(@RequestBody ProjectProcessDTO dto ) throws Exception {
         return projectProcessService.saveOrUpdateProcess(dto);
-    }
-
-    /**
-     * 方法描述：删除流程
-     * 作者：MaoSF
-     * 日期：2017/1/4
-     * @param:
-     * @return:
-     */
-    @RequestMapping("/deleteTaskProcess")
-    @ResponseBody
-    public ResponseBean deleteTaskProcess(@RequestBody Map<String,Object> map ) throws Exception {
-        return projectProcessService.deleteProcess((String)map.get("id"));
     }
 
 

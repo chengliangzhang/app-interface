@@ -1,8 +1,10 @@
 package com.maoding.financial.dao;
 
 import com.maoding.core.base.dao.BaseDao;
+import com.maoding.financial.dto.AuditDTO;
 import com.maoding.financial.dto.ExpAuditDTO;
 import com.maoding.financial.dto.ExpMainDTO;
+import com.maoding.financial.dto.ExpMainDataDTO;
 import com.maoding.financial.entity.ExpAuditEntity;
 
 import java.util.List;
@@ -41,8 +43,6 @@ public interface ExpAuditDao  extends BaseDao<ExpAuditEntity> {
      * 方法描述：根据报销主表Id更新审批状态
      * 作   者：LY
      * 日   期：2016/7/29 11:49
-     * @param
-     * @return
      *
     */
     int updateByMainId(ExpAuditEntity auditEntity);
@@ -70,13 +70,26 @@ public interface ExpAuditDao  extends BaseDao<ExpAuditEntity> {
      * @param map 报销主表id
      *
     */
-    List<ExpMainDTO> selectAuditDetailByMainId(Map<String, Object> map);
+    List<ExpMainDataDTO> selectAuditDetailByMainId(Map<String, Object> map);
+
+    List<AuditDTO> selectAuditByMainId(Map<String, Object> map);
 
     /**
      * 方法描述：查询
      * 作   者：chenzhujie
      * 日   期：2016/12/23
-     *
      */
     List<ExpAuditEntity> selectByParam(Map<String, Object> mapParam);
+
+    /**
+     * 获取最新退回的审批记录
+     */
+    ExpAuditEntity selectLastRecallAudit(String mainId);
+
+    /**
+     * 获取最新的审批记录
+     */
+    ExpAuditEntity selectLastAudit(String mainId);
+
+    List<ExpAuditEntity> getMyAudit(Map<String, Object> mapParam);
 }

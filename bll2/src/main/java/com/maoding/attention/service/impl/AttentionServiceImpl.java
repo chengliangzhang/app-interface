@@ -13,6 +13,9 @@ import com.maoding.org.entity.CompanyUserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 @Service("attentionService")
 public class AttentionServiceImpl extends GenericService<AttentionEntity> implements AttentionService {
@@ -25,6 +28,7 @@ public class AttentionServiceImpl extends GenericService<AttentionEntity> implem
 
     @Override
     public ResponseBean addAttention(AttentionDTO dto) throws Exception{
+
         dto.setId(StringUtil.buildUUID());
         AttentionEntity attentionEntity = new AttentionEntity();
         BaseDTO.copyFields(dto, attentionEntity);
@@ -32,6 +36,15 @@ public class AttentionServiceImpl extends GenericService<AttentionEntity> implem
         attentionEntity.setCreateBy(dto.getAccountId());
         CompanyUserEntity companyUserEntity = this.companyUserDao.getCompanyUserByUserIdAndCompanyId(dto.getAccountId(),dto.getAppOrgId());
         if(companyUserEntity!=null){
+            //判断是否已经关注过
+            Map<String,Object> map = new HashMap<>();
+            map.put("targetId",dto.getTargetId());
+            map.put("type",dto.getType());
+            map.put("companyId",dto.getAppOrgId());
+            map.put("companyUserId",companyUserEntity.getId());
+            if(attentionDao.getAttentionEntity(map)!=null){
+                return ResponseBean.responseSuccess("关注成功");
+            }
             attentionEntity.setCompanyUserId(companyUserEntity.getId());
             int res = attentionDao.insert(attentionEntity);
             if(res==1){

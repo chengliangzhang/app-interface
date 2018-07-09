@@ -16,7 +16,6 @@ import com.maoding.notice.entity.NoticeEntity;
 import com.maoding.org.dao.CompanyDao;
 import com.maoding.org.dao.CompanyUserDao;
 import com.maoding.org.entity.CompanyEntity;
-import com.maoding.org.entity.CompanyUserEntity;
 import com.maoding.org.service.CompanyService;
 import com.maoding.project.dao.ProjectDao;
 import com.maoding.project.entity.ProjectEntity;
@@ -43,8 +42,6 @@ import java.util.Map;
 @Service("orgDynamicService")
 public class OrgDynamicServiceImpl extends GenericService<OrgDynamicEntity> implements OrgDynamicService {
 
-    @Autowired
-    private CompanyUserDao companyUserDao;
 
     @Autowired
     private ProjectDao projectDao;
@@ -57,9 +54,6 @@ public class OrgDynamicServiceImpl extends GenericService<OrgDynamicEntity> impl
 
     @Autowired
     private CompanyDao companyDao;
-
-    @Autowired
-    private CompanyService companyService;
 
     @Autowired
     private NoticeDao noticeDao;
@@ -130,7 +124,9 @@ public class OrgDynamicServiceImpl extends GenericService<OrgDynamicEntity> impl
 
 
     private String getCreatorName(ProjectEntity entity, String createPersonId) throws Exception{
-        if (entity == null) return "";
+        if (entity == null) {
+            return "";
+        }
         CompanyEntity c = this.companyDao.selectById(entity.getCompanyId());
         String name = (c==null?"":c.getAliasName());
         ProjectMemberDTO projectCreator = this.projectMemberService.getProjectCreatorDTO(entity.getId(),entity.getCompanyId());
@@ -139,9 +135,13 @@ public class OrgDynamicServiceImpl extends GenericService<OrgDynamicEntity> impl
     }
 
     private String getDesignContent(String id){
-        if (StringUtil.isNullOrEmpty(id)) return "";
+        if (StringUtil.isNullOrEmpty(id)){
+            return "";
+        }
         List<ProjectTaskEntity> list = projectTaskService.listProjectTaskContent(id);
-        if (list == null) return "";
+        if (list == null){
+            return "";
+        }
         StringBuffer content = new StringBuffer();
         for (ProjectTaskEntity e : list) {
             if (content.length() > 0) {
@@ -153,7 +153,9 @@ public class OrgDynamicServiceImpl extends GenericService<OrgDynamicEntity> impl
     }
 
     private String getTaskName(ProjectTaskEntity entity){
-        if (entity == null) return "";
+        if (entity == null){
+            return "";
+        }
         return projectTaskDao.getTaskParentName(entity.getId());
     }
 /**
@@ -194,112 +196,6 @@ public class OrgDynamicServiceImpl extends GenericService<OrgDynamicEntity> impl
             dynamicParam = dynamicParam + SEPARATOR;
         }
         return dynamicParam;
-    }
-
-
-
-/**
-     * 乙方动态生成
-     * @param projectId
-     * @param companyId
-     * @param createPersonId
-     * @return
-     */
-
-    @Override
-    public AjaxMessage combinationDynamicForPartyB(String projectId, String companyId, String createPersonId) throws Exception{
-        OrgDynamicEntity orgDynamicEntity = new OrgDynamicEntity();
-        orgDynamicEntity.setId(StringUtil.buildUUID());
-
-        ProjectEntity projectEntity = projectDao.selectById(projectId);
-        String dynamicParam = "";
-        /***************start：此段内容的顺序请不要发生改变，因为，数据要匹配模板*************/
-
-        //记录项目
-        if (null != projectEntity) {
-            dynamicParam = dynamicParam + projectEntity.getProjectName() + SEPARATOR;
-        } else {
-            dynamicParam = dynamicParam + SEPARATOR;
-        }
-
-        //记录立项公司和立项人
-        dynamicParam += getCreatorName(projectEntity,createPersonId) + SEPARATOR;
-
-        //记录设计阶段
-        dynamicParam += getDesignContent(projectId) + SEPARATOR;
-        dynamicParam = this.setDynamicParam(projectId, companyId, dynamicParam);
-        /*******************end********************************************************/
-
-       // dynamicParam = this.setDynamicParam(projectId, companyId, dynamicParam);
-        orgDynamicEntity.setDynamicContent(dynamicParam);
-        orgDynamicEntity.setCompanyId(projectEntity.getCompanyBid());
-        orgDynamicEntity.setDynamicTitle(projectEntity.getProjectName());
-        orgDynamicEntity.setDynamicType(SystemParameters.DYNAMIC_PARTYB);
-        orgDynamicEntity.setTargetId(projectId);
-        orgDynamicEntity.setCreateDate(new Date());
-        orgDynamicEntity.setCreateBy(createPersonId);
-        int i = orgDynamicDao.insert(orgDynamicEntity);
-        if (i > 0) {
-            return new AjaxMessage().setCode("0").setInfo("动态保存成功");
-        } else {
-            return new AjaxMessage().setCode("1").setInfo("动态保存失败");
-        }
-    }
-
-
-/**
-     *  合作伙伴动态生成
-     * @param projectId
-     * @param companyId
-     * @param partnerId
-     * @param taskId
-     * @param createPersonId
-     * @return
-     */
-
-    @Override
-    public AjaxMessage combinationDynamicForPartner(String projectId, String companyId, String partnerId, String taskId, String createPersonId) throws Exception{
-        OrgDynamicEntity orgDynamicEntity = new OrgDynamicEntity();
-        orgDynamicEntity.setId(StringUtil.buildUUID());
-        ProjectEntity projectEntity = projectDao.selectById(projectId);
-
-        ProjectTaskEntity projectTaskEntity = projectTaskDao.selectById(taskId);
-
-        String dynamicParam = "";
-
-        /***************start：此段内容的顺序请不要发生改变，因为，数据要匹配模板*************/
-        //判断项目
-        if (null != projectEntity) {
-            dynamicParam = dynamicParam + projectEntity.getProjectName() + SEPARATOR;
-        } else {
-            dynamicParam = dynamicParam + SEPARATOR;
-        }
-
-        //记录立项组织（立项人）
-        dynamicParam += getCreatorName(projectEntity,createPersonId) + SEPARATOR;
-
-        //记录任务名
-        dynamicParam += getTaskName(projectTaskEntity) + SEPARATOR;
-
-        //判断经营负责人，设计负责人
-        dynamicParam = this.setDynamicParam(projectId, partnerId, dynamicParam);
-
-        /***************end***************************************************/
-        //判断经营负责人，设计负责人
-       // dynamicParam = this.setDynamicParam(projectId, partnerId, dynamicParam);
-        orgDynamicEntity.setDynamicContent(dynamicParam);
-        orgDynamicEntity.setCompanyId(partnerId);
-        orgDynamicEntity.setDynamicTitle(projectEntity.getProjectName());
-        orgDynamicEntity.setDynamicType(SystemParameters.DYNAMIC_PARTNER );
-        orgDynamicEntity.setTargetId(projectId);
-        orgDynamicEntity.setCreateDate(new Date());
-        orgDynamicEntity.setCreateBy(createPersonId);
-        int i = orgDynamicDao.insert(orgDynamicEntity);
-        if (i > 0) {
-            return new AjaxMessage().setCode("0").setInfo("动态保存成功");
-        } else {
-            return new AjaxMessage().setCode("1").setInfo("动态保存失败");
-        }
     }
 
 

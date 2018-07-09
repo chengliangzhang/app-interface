@@ -20,26 +20,20 @@ public interface ProjectProcessTimeService extends BaseService<ProjectProcessTim
      * 方法描述：保存变更
      * 作者：MaoSF
      * 日期：2016/12/30
-     * @param:
-     * @return:
      */
-    public ResponseBean saveProjectProcessTime(ProjectProcessTimeDTO dto) throws Exception;
+    ResponseBean saveProjectProcessTime(ProjectProcessTimeDTO dto) throws Exception;
 
     /**
      * 方法描述：获取任务的变更时间（计划时间）
      * 作者：MaoSF
      * 日期：2016/12/30
-     * @param:
-     * @return:
      */
-    public ResponseBean getProjectProcessTime(Map<String,Object> map) throws Exception;
+    ResponseBean getProjectProcessTime(Map<String,Object> map) throws Exception;
 
     /**
      * 方法描述：删除变更
      * 作者：MaoSF
      * 日期：2016/12/31
-     * @param:
-     * @return:
      */
-    public ResponseBean deleteProjectProcessTime(String id) throws Exception;
+    ResponseBean deleteProjectProcessTime(String id) throws Exception;
 }

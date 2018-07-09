@@ -39,4 +39,39 @@ public class NetFileType {
      */
     public static final Integer EXPENSE_ATTACH = 20;
 
+    /**
+     * 通知公告附件类型（21）
+     */
+    public static final Integer NOTICE_ATTACH = 21;
+
+    /**
+     * 30：成果文件
+     */
+    public static final Integer DIRECTORY_ACHIEVEMENT = 30;
+
+    /**
+     * 40：归档通知(文件夹)
+     */
+    public static final Integer DIRECTORY_ARCHIVE_NOTICE = 40;
+
+    /**
+     * 50：发送归档通知(文件夹)
+     */
+    public static final Integer DIRECTORY_SEND_ARCHIVE_NOTICE = 50;
+
+    /**
+     * 60：会议，日程文件
+     */
+    public static final Integer SCHEDULE_ATTACH = 60;
+
+    /**
+     * 100：个人(文件夹)
+     */
+    private static final Integer DIRECTORY_PERSONALLY = 100;
+
+    /**
+     * 101：个人(文件)
+     */
+    private static final Integer FILE_PERSONALLY = 101;
+
 }

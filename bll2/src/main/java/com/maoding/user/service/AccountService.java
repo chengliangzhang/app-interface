@@ -4,6 +4,7 @@ import com.maoding.core.base.service.BaseService;
 import com.maoding.core.bean.AjaxMessage;
 import com.maoding.core.bean.ResponseBean;
 import com.maoding.user.dto.AccountDTO;
+import com.maoding.user.dto.AccountDataDTO;
 import com.maoding.user.dto.RegisterCompanyDTO;
 import com.maoding.user.entity.AccountEntity;
 
@@ -75,7 +76,7 @@ public interface AccountService extends BaseService<AccountEntity>{
 	 * 作        者：ChenZhujie
 	 * 日        期：2016年12月26
 	 */
-    List<AccountDTO> selectV2AllPersonByParam(Map<String, Object> map)throws Exception;
+    List<AccountDataDTO> selectV2AllPersonByParam(Map<String, Object> map)throws Exception;
 
 
 

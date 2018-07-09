@@ -44,6 +44,19 @@
     <include refid="Base_Column_List" />
     from maoding_web_account where status = '0'
   </select>
+
+
+  <select id="listAccountByIds" resultMap="BaseResultMap"  parameterType="java.util.Map" >
+    select
+    <include refid="Base_Column_List" />
+    from maoding_web_account
+    where status = '0'
+    and id in
+    <foreach collection="userIds" item="userId" index="i" open="(" separator="," close=")">
+      #{userId}
+    </foreach>
+  </select>
+
   <!-- 查询 -->
   <select id="selectNotCreateImUsers" resultMap="BaseResultMap" parameterType="java.util.Map" >
     select
@@ -141,12 +154,12 @@
 
 
   <!-- 查询 -->
-  <select id="selectAllPersonByParam" resultType="com.maoding.user.dto.AccountDTO" parameterType="java.util.Map" >
+  <select id="selectAllPersonByParam" resultType="com.maoding.user.dto.AccountDataDTO" parameterType="java.util.Map" >
     select DISTINCT  ma.id,ma.user_name as userName,ma.cellphone,ma.email,
-    IFNULL(CONCAT(#{fastdfsUrl,jdbcType=VARCHAR},ua.file_group,'/',ua.attach_path),'') AS 'filePath'
+    ua.oss_file_path AS 'fileFullPath'
     from maoding_web_account ma
      LEFT JOIN maoding_web_company_user mu ON mu.user_id = ma.id
-    LEFT JOIN maoding_web_user_attach ua on ma.id = ua.user_id and ua.attach_type='5'
+    LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) ua on ma.id = ua.user_id and ua.attach_type='5'
      WHERE ma.`status` = 0 and mu.audit_status='1' and mu.company_id IN
     <foreach collection="orgList" index="index" item="orgId" open="(" separator="," close=")">
       #{orgId}

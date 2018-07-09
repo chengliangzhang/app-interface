@@ -1,10 +1,7 @@
 package com.maoding.v2.project.controller;
 
 import com.maoding.core.bean.ResponseBean;
-import com.maoding.projectcost.dto.ProjectCostDTO;
-import com.maoding.projectcost.dto.ProjectCostPaymentDetailDTO;
-import com.maoding.projectcost.dto.ProjectCostPointDTO;
-import com.maoding.projectcost.dto.ProjectCostPointDetailDTO;
+import com.maoding.projectcost.dto.*;
 import com.maoding.projectcost.service.ProjectCostService;
 import com.maoding.system.annotation.AuthorityCheckable;
 import com.maoding.system.controller.BaseWSController;
@@ -88,7 +85,7 @@ public class V2ProjectCostController extends BaseWSController {
      */
     @RequestMapping("/getContractInfo")
     @ResponseBody
-    @AuthorityCheckable
+   // @AuthorityCheckable
     public ResponseBean getContractInfo(@RequestBody ProjectCostPaymentDetailDTO projectCostPaymentDetailDTO) throws Exception {
         return this.projectCostService.getContractInfo(projectCostPaymentDetailDTO);
 
@@ -146,7 +143,7 @@ public class V2ProjectCostController extends BaseWSController {
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean deleteProjectCostPaymentDetail(@RequestBody ProjectCostPaymentDetailDTO projectCostPaymentDetailDTO) throws Exception {
-        return this.projectCostService.deleteProjectCostPaymentDetail(projectCostPaymentDetailDTO.getId(), projectCostPaymentDetailDTO.getAccountId());
+        return this.projectCostService.deleteProjectCostPaymentDetail(projectCostPaymentDetailDTO.getId(), projectCostPaymentDetailDTO.getAccountId(),projectCostPaymentDetailDTO.getAppOrgId());
     }
 
     /**************技术审查费列表查询*************/
@@ -161,7 +158,7 @@ public class V2ProjectCostController extends BaseWSController {
      */
     @RequestMapping(value = {"/techicalReviewFeeInfo"}, method = RequestMethod.POST)
     @ResponseBody
-    @AuthorityCheckable
+   // @AuthorityCheckable
     public ResponseBean getTechicalReviewFeeInfo(@RequestBody Map<String, Object> map) throws Exception {
         return projectCostService.getTechicalReviewFeeInfo(map);
     }
@@ -179,6 +176,21 @@ public class V2ProjectCostController extends BaseWSController {
     @AuthorityCheckable
     public ResponseBean getCooperativeDesignFeeInfo(@RequestBody Map<String, Object> map) throws Exception {
         return projectCostService.getCooperativeDesignFeeInfo(map);
+    }
+
+    /**
+     * 方法描述：合作设计费界面数据根据costId（查询某个组织与另外一个组织的合作设计费详情）
+     * 作者：MaoSF
+     * 日期：2017/3/7
+     *
+     * @param:projectId
+     * @return:
+     */
+    @RequestMapping(value = {"/cooperativeDesignFeeInfoByCostId"}, method = RequestMethod.POST)
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getCooperativeDesignFeeInfoByCostId(@RequestBody Map<String, Object> map) throws Exception {
+        return projectCostService.getCooperativeDesignFeeInfoByCostId(map);
     }
 
     /**
@@ -211,6 +223,33 @@ public class V2ProjectCostController extends BaseWSController {
     public ResponseBean getProjectCostPointDetail(@RequestBody Map<String, Object> map) throws Exception {
         return this.projectCostService.getProjectCostPointDetail(map);
     }
+
+
+    /**
+     * 方法描述：项目费用汇总
+     * 作者：MaoSF
+     * 日期：2017/3/7
+     */
+    @RequestMapping(value = {"/getProjectFeeSummary"}, method = RequestMethod.POST)
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getProjectFeeSummary(@RequestBody ProjectCostQueryDTO queryDTO) throws Exception {
+        return ResponseBean.responseSuccess().addData("projectFee",this.projectCostService.getProjectFeeSummary(queryDTO));
+    }
+
+
+    /**
+     * 方法描述：合作设计汇总界面
+     * 作者：MaoSF
+     * 日期：2017/3/7
+     */
+    @RequestMapping(value = {"/getProjectCooperatorFee"}, method = RequestMethod.POST)
+    @ResponseBody
+    //  @AuthorityCheckable
+    public ResponseBean getProjectCooperatorFee(@RequestBody ProjectCostQueryDTO queryDTO) throws Exception {
+        return ResponseBean.responseSuccess().addData("cooperatorFee",this.projectCostService.getProjectCooperatorFee(queryDTO));
+    }
+
 
 }
 

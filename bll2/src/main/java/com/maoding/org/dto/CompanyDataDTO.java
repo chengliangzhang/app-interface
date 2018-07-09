@@ -50,9 +50,16 @@ public class CompanyDataDTO {
     private int isOuterCooperator;
 
     /**
+     * 1:存在，0：不存在
+     */
+    private int isOwnCompany;//当前人是否存在该公司
+
+    /**
      * 别名（此字段不是对应数据表的字段）
      */
     private String aliasName;
+
+    private String typeId;
 
     public String getId() {
         return id;
@@ -143,5 +150,21 @@ public class CompanyDataDTO {
 
     public void setAliasName(String aliasName) {
         this.aliasName = aliasName;
+    }
+
+    public int getIsOwnCompany() {
+        return isOwnCompany;
+    }
+
+    public void setIsOwnCompany(int isOwnCompany) {
+        this.isOwnCompany = isOwnCompany;
+    }
+
+    public String getTypeId() {
+        return typeId;
+    }
+
+    public void setTypeId(String typeId) {
+        this.typeId = typeId;
     }
 }

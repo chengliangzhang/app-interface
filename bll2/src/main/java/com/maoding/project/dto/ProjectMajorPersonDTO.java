@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * 深圳市设计同道技术有限公司
- * 类    名：ProjectAuditDTO
+ * 类    名：ProjectMajorPersonDTO
  * 类描述：添加专业技术人
  * 作    者：MaoSF
  * 日    期：2016年7月19日-下午4:04:50

@@ -1,6 +1,8 @@
 package com.maoding.projectmember.dao.impl;
 
 import com.maoding.core.base.dao.GenericDao;
+import com.maoding.org.dto.CompanyUserAppDTO;
+import com.maoding.org.dto.CompanyUserGroupDTO;
 import com.maoding.project.dto.ProjectTaskProcessNodeDTO;
 import com.maoding.projectmember.dao.ProjectMemberDao;
 import com.maoding.projectmember.dto.ProjectMemberDTO;
@@ -115,5 +117,20 @@ public class ProjectMemberDaoImpl extends GenericDao<ProjectMemberEntity> implem
     @Override
     public List<ProjectMemberEntity> listProjectMemberByTaskId(String taskId) {
         return this.sqlSession.selectList("ProjectMemberEntityMapper.listProjectMemberByTaskId",taskId);
+    }
+
+    @Override
+    public int getMemberCount(ProjectMemberEntity projectMember) {
+        return this.sqlSession.selectOne("ProjectMemberEntityMapper.getMemberCount",projectMember);
+    }
+
+    @Override
+    public List<CompanyUserGroupDTO> listProjectAllMember(Map<String, Object> map) {
+        return this.sqlSession.selectList("GetProjectMemberMapper.listProjectAllMember",map);
+    }
+
+    @Override
+    public List<CompanyUserAppDTO> listProjectMember(Map<String, Object> map) {
+        return this.sqlSession.selectList("GetProjectMemberMapper.listProjectMember",map);
     }
 }

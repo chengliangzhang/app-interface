@@ -1,70 +1,41 @@
 package com.maoding.role.dao.impl;
 
 
+import com.google.common.collect.Lists;
 import com.maoding.core.base.dao.GenericDao;
 import com.maoding.role.dao.PermissionDao;
 import com.maoding.role.dto.PermissionDTO;
 import com.maoding.role.entity.PermissionEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Service("permissionDao")
 public class PermissionDaoImpl extends GenericDao<PermissionEntity> implements PermissionDao {
 
-
-    /**
-     * 方法描述：获取所有权限
-     * 作者：MaoSF
-     * 日期：2016/11/2
-     *
-     * @param:
-     * @return:
-     */
     @Override
-    public List<PermissionDTO> getAllPermission() {
-        return this.sqlSession.selectList("GetPermissionMapper.getAllPermission");
-    }
-
-    /**
-     * 方法描述：获取当前角色下下所有的角色
-     * 作者：MaoSF
-     * 日期：2016/11/2
-     *
-     * @param map
-     * @param:roleId，companyId
-     * @return:
-     */
-    @Override
-    public List<PermissionDTO> getPermissionByRole(Map<String, Object> map) {
-        return this.sqlSession.selectList("GetPermissionMapper.getPermissionByRole",map);
+    public List<PermissionEntity> getDefaultPermission() {
+        return this.sqlSession.selectList("PermissionEntityMapper.getDefaultPermission");
     }
 
     /**
      * 方法描述：角色-权限 只查询角色对应的权限-
      * 作者：MaoSF
      * 日期：2016/11/2
-     *
-     * @param map
      * @param:roleId，companyId
-     * @return:
      */
     @Override
     public List<PermissionDTO> getPermissionByRole2(Map<String, Object> map) {
         return this.sqlSession.selectList("GetPermissionUserMapper.getPermissionByRole2",map);
     }
 
-
-
     /**
      * 方法描述：角色-权限 只userId的权限
      * 作者：MaoSF
      * 日期：2016/11/2
-     *
-     * @param map
      * @param:roleId，companyId
-     * @return:
      */
     @Override
     public List<PermissionDTO> getPermissionByRoleAndUserForApp(Map<String, Object> map) {
@@ -72,58 +43,19 @@ public class PermissionDaoImpl extends GenericDao<PermissionEntity> implements P
     }
 
     /**
-     * 方法描述：获取当前角色下下所有的角色
-     * 作者：MaoSF
-     * 日期：2016/11/2
-     *
-     * @param map
-     * @param:userId，companyId
-     * @return:
-     */
-    @Override
-    public List<PermissionDTO> getPermissionByUserId(Map<String, Object> map) {
-        return this.sqlSession.selectList("GetPermissionMapper.getPermissionByUserId",map);
-    }
-
-    /**
-     * 方法描述：获取当前用户的权限（只含有自己具有的权限）
-     * 作者：MaoSF
-     * 日期：2016/11/2
-     *
-     * @param map
-     * @param:userId，companyId
-     * @return:
-     */
-    @Override
-    public List<PermissionDTO> getUserPermission(Map<String, Object> map) {
-        return this.sqlSession.selectList("GetPermissionMapper.getUserPermission",map);
-    }
-
-    /**
      * 方法描述：获取当前角色下下所有的权限Code
      * 作者：MaoSF
      * 日期：2016/11/2
-     *
-     * @param map
      * @param:userId，companyId
-     * @return:
      */
     @Override
     public String getPermissionCodeByUserId(Map<String, Object> map) {
         return this.sqlSession.selectOne("GetPermissionMapper.getPermissionCodeByUserId",map);
     }
 
-    /**
-     * 方法描述：获取当前角色下下所有的权限Code
-     * 作者：MaoSF
-     * 日期：2016/11/2
-     *
-     * @param map
-     * @param:userId，companyId
-     * @return:
-     */
     @Override
-    public String getPermissionCodeByUserIdWs(Map<String, Object> map) {
-        return this.sqlSession.selectOne("GetPermissionMapper.getPermissionCodeByUserIdWs",map);
+    public int getCompanyUserIsHasPermission(Map<String, Object> map) {
+        return this.sqlSession.selectOne("GetPermissionByUserAndRoleMapper.getCompanyUserIsHasPermission",map);
     }
+
 }

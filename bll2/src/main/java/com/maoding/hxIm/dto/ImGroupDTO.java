@@ -32,6 +32,10 @@ public class ImGroupDTO {
     /** 群头像，从grouppath开始 */
     private String groupImg;
 
+    /**
+     * 项目id
+     */
+    private String nodeId;
 
     /** 成员账号Id，AccountId **/
     private List<ImGroupMemberDTO> members = new ArrayList<>();
@@ -114,5 +118,13 @@ public class ImGroupDTO {
 
     public void setMembers(List<ImGroupMemberDTO> members) {
         this.members = members;
+    }
+
+    public String getNodeId() {
+        return nodeId;
+    }
+
+    public void setNodeId(String nodeId) {
+        this.nodeId = nodeId;
     }
 }

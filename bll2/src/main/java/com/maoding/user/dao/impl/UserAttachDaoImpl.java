@@ -23,9 +23,14 @@ public class UserAttachDaoImpl extends GenericDao<UserAttachEntity> implements U
 	public int delUserAttachByUserId(String userId) {
 		return this.sqlSession.delete("UserAttachEntityMapper.deleteByUserId", userId);
 	}
-	
+
+	@Override
 	public  List<UserAttachEntity>  getAttachByType(Map<String,Object>paraMap){
 		return this.sqlSession.selectList("UserAttachEntityMapper.selectByType", paraMap);
 	}
 
+	@Override
+	public String getHeadImg(String userId) {
+		return this.sqlSession.selectOne("UserAttachEntityMapper.getHeadImgUrl", userId);
+	}
 }

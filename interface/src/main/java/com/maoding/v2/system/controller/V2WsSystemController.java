@@ -20,8 +20,10 @@ import com.maoding.system.service.SystemService;
 import com.maoding.system.service.VersionService;
 import com.maoding.user.dto.AccountDTO;
 import com.maoding.user.dto.ShareInvateDTO;
+import com.maoding.user.dto.UserAttachDTO;
 import com.maoding.user.entity.AccountEntity;
 import com.maoding.user.service.AccountService;
+import com.maoding.user.service.UserAttachService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -66,6 +68,8 @@ public class V2WsSystemController extends BaseWSController {
     @Autowired
     private Msgpusher msgpusher;
 
+    @Autowired
+    private UserAttachService userAttachService;
 
     @ModelAttribute
     public void before(){
@@ -215,6 +219,7 @@ public class V2WsSystemController extends BaseWSController {
             }
             AccountDTO accountUser = (AccountDTO) accountService.register(accountDTO).getData();
             String userId = accountUser.getId();
+            String userName = accountUser.getUserName();
             String token = TokenProcessor.getInstance().generateTokeCode(request);
             saveToken(userId,token,accountDTO.getIMEI(),accountDTO.getPlatform());
             log.debug("userId-->" + userId);
@@ -223,6 +228,7 @@ public class V2WsSystemController extends BaseWSController {
             return responseSuccess("注册成功，欢迎进入卯丁！")
                     .addData("token", token)
                     .addData("fastdfsUrl", fastdfsUrl)
+                    .addData("userName", userName)
                     .addData("accountId", userId);
         } else {
             return responseError("短信验证码有误，请重新输入");
@@ -245,6 +251,7 @@ public class V2WsSystemController extends BaseWSController {
         }
         if (user.getPassword().equals(password)) {
             String userId = user.getId();
+            String userName = user.getUserName();
            String token = TokenProcessor.getInstance().generateTokeCode(request);
             saveToken(userId,token,map.get("IMEI"),map.get("platform"));
             if("1".equals(user.getStatus())){
@@ -252,9 +259,14 @@ public class V2WsSystemController extends BaseWSController {
                 user.setActiveTime(DateUtils.date2Str(DateUtils.datetimeFormat));
                 accountService.updateById(user);
             }
+            //返回头像
+
+            UserAttachDTO img = this.userAttachService.getHeadImg(userId);
             return responseSuccess()
                     .addData("token", token)
                     .addData("fastdfsUrl", fastdfsUrl)
+                    .addData("userName", userName)
+                    .addData("headImg", img==null?null:img.getFilePath())
                     .addData("accountId", userId);
 
         } else {
@@ -316,6 +328,7 @@ public class V2WsSystemController extends BaseWSController {
     public ResponseBean bindCID(@RequestBody Map<String, String>map){
         String userId=map.get("accountId");
         String cid=map.get("cid");
+        msgpusher.unbindAllCID(userId);//同一个账号在另外机器上绑定的时候，把原来所有机器上的绑定给解除
         boolean isOK=msgpusher.bindMultyCID(userId, cid);
         if(isOK){
             return ResponseBean.responseSuccess();
@@ -364,8 +377,6 @@ public class V2WsSystemController extends BaseWSController {
      * 方法描述：获取上传文件的路径
      * 作者：MaoSF
      * 日期：2016/12/27
-     * @param:
-     * @return:
      */
     @RequestMapping("/fileServerPath")
     @ResponseBody
@@ -373,6 +384,9 @@ public class V2WsSystemController extends BaseWSController {
         return ResponseBean.responseSuccess()
                 .addData("fastdfsUrl",this.fastdfsUrl)
                 .addData("fileCenterUrl",this.fileCenterUrl)
-                .addData("uploadUrl",uploadUrl);
+                .addData("uploadUrl",uploadUrl)
+                .addData("ossBucketPrivate",ossBucketPrivate)
+                .addData("ossBucketPublic",ossBucketPublic);
     }
+
 }

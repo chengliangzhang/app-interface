@@ -2,12 +2,14 @@ package com.maoding.financial.dao.impl;
 
 import com.maoding.core.base.dao.GenericDao;
 import com.maoding.financial.dao.ExpMainDao;
-import com.maoding.financial.dto.ExpMainDTO;
+import com.maoding.financial.dto.*;
 import com.maoding.financial.entity.ExpMainEntity;
+import com.maoding.task.dto.ApproveCount;
 import com.maoding.v2.financial.dto.V2ExpMainDTO;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,25 +51,19 @@ public class ExpMainDaoImpl extends GenericDao<ExpMainEntity> implements ExpMain
         return this.sqlSession.selectOne("GetExpMainPageMapper.getExpMainPageCount", param);
     }
 
-
-    /**
-     * 方法描述：查询报销主表记录并关联账号表
-     * 作   者：LY
-     * 日   期：2016/8/2 15:10
-     * @param id 报销主表id
-     */
-    public ExpMainDTO selectByIdWithUserName(String id){
-        return this.sqlSession.selectOne("ExpMainEntityMapper.selectByIdWithUserName", id);
-    }
-
     /**
      * 方法描述：查询报销主表记录并关联账号表
      * 作   者：LY
      * 日   期：2016/8/2 15:10
      * @param
      */
-    public ExpMainDTO selectByIdWithUserName(Map<String, Object> param){
+    public ExpMainDataDTO selectByIdWithUserName(Map<String, Object> param){
         return this.sqlSession.selectOne("ExpMainEntityMapper.selectByIdWithUserNameByParam", param);
+    }
+
+    @Override
+    public ExpMainDataDTO selectAllocationUser(Map<String, Object> param) {
+        return this.sqlSession.selectOne("ExpMainEntityMapper.selectAllocationUser", param);
     }
 
     /**
@@ -78,16 +74,6 @@ public class ExpMainDaoImpl extends GenericDao<ExpMainEntity> implements ExpMain
      */
     public List<ExpMainDTO> getExpMainPageForSummary(Map<String, Object> param){
         return this.sqlSession.selectList("GetExpMainPageMapper.getExpMainPageForSummary", param);
-    }
-
-    /**
-     * 方法描述：报销汇总listInterface
-     * 作   者：LY
-     * 日   期：2016/7/28 16:34
-     * @param  param 查询条件
-     */
-    public List<ExpMainDTO> getExpMainPageForSummaryInterface(Map<String, Object> param){
-        return this.sqlSession.selectList("GetExpMainPageMapper.getExpMainPageForSummaryInterface", param);
     }
 
     /**
@@ -152,5 +138,64 @@ public class ExpMainDaoImpl extends GenericDao<ExpMainEntity> implements ExpMain
      */
     public List<ExpMainEntity> selectByParam(Map<String,Object> param){
         return this.sqlSession.selectList("ExpMainEntityMapper.selectByParam", param);
+    }
+
+    @Override
+    public ExpAmountDTO getMyExpAmount(String companyUserId) {
+        ExpAmountDTO result = this.sqlSession.selectOne("ExpMainEntityMapper.getMyExpAmount", companyUserId);
+        ExpAmountDTO dto = this.sqlSession.selectOne("GetMyTaskByPageMapper.getMyAuditCount", companyUserId);
+        if(result == null){
+            result = new ExpAmountDTO();
+        }
+        if(dto!=null){
+            result.setAuditCount(dto.getAuditCount());
+        }
+        return result;
+    }
+
+    @Override
+    public List<AuditDataDTO> getAuditData(QueryAuditDTO query) {
+        return this.sqlSession.selectList("GetExpMainPageMapper.getAuditData",query);
+    }
+
+    @Override
+    public ApproveCount getLeaveCount(Map<String, Object> param) {
+        ApproveCount approveCount = this.sqlSession.selectOne("GetExpMainPageMapper.getLeaveCount",param);
+        return approveCount==null? new ApproveCount():approveCount;
+    }
+
+    @Override
+    public ApproveCount getMySubmitLeaveCount(String userId) {
+        Map<String,Object> map = new HashMap<>();
+        map.put("companyUserId",userId);
+        return getLeaveCount(map);
+    }
+
+    @Override
+    public ApproveCount getMyApproveLeaveCount(String auditPerson) {
+        Map<String,Object> map = new HashMap<>();
+        map.put("auditPerson",auditPerson);
+        map.put("approveStatus","0");
+        return getLeaveCount(map);
+    }
+
+    @Override
+    public ApproveCount getMyApprovedLeaveCount(String auditPerson) {
+        Map<String,Object> map = new HashMap<>();
+        map.put("auditPerson",auditPerson);
+        map.put("approved","1");
+        return getLeaveCount(map);
+    }
+
+    @Override
+    public int getMyAuditCount(String auditPerson) {
+        Map<String,Object> map = new HashMap<>();
+        map.put("auditPerson",auditPerson);
+        return this.sqlSession.selectOne("GetExpMainPageMapper.getMyAuditCount",map);
+    }
+
+    @Override
+    public TotalDTO getMyApplyData(QueryAuditDTO query) {
+        return this.sqlSession.selectOne("GetExpMainPageMapper.getMyApplyData",query);
     }
 }

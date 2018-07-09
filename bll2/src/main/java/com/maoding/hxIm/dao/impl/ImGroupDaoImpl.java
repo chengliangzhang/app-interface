@@ -3,6 +3,7 @@ package com.maoding.hxIm.dao.impl;
 import com.maoding.core.base.dao.GenericDao;
 import com.maoding.hxIm.dao.ImGroupDao;
 import com.maoding.hxIm.dto.ImGroupDataDTO;
+import com.maoding.hxIm.dto.ImGroupListDTO;
 import com.maoding.hxIm.dto.ImGroupQuery;
 import com.maoding.hxIm.entity.ImGroupEntity;
 import org.springframework.stereotype.Service;
@@ -45,6 +46,11 @@ public class ImGroupDaoImpl extends GenericDao<ImGroupEntity> implements ImGroup
     @Override
     public List<ImGroupDataDTO> listAllGroupByUserIdAndCompanyId(ImGroupQuery query) {
         return sqlSession.selectList("GetImGroupMapper.listAllGroupByUserIdAndCompanyId", query);
+    }
+
+    @Override
+    public List<ImGroupListDTO> listGroupByUserIdAndCompanyId(ImGroupQuery query) {
+        return sqlSession.selectList("GetImGroupMapper.listGroupByUserIdAndCompanyId", query);
     }
 
     @Override

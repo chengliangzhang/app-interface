@@ -42,8 +42,11 @@
       create_by, update_date, update_by, 
       content, reason)
     values (#{id,jdbcType=VARCHAR}, #{queueNo,jdbcType=BIGINT}, #{targetId,jdbcType=VARCHAR}, 
-      #{operation,jdbcType=VARCHAR}, #{retry,jdbcType=INTEGER}, #{queueStatus,jdbcType=TINYINT}, 
-      #{upVersion,jdbcType=BIGINT}, #{deleted,jdbcType=TINYINT}, #{createDate,jdbcType=TIMESTAMP}, 
+      #{operation,jdbcType=VARCHAR}, #{retry,jdbcType=INTEGER},
+     <choose><when test="queueStatus!=null">#{queueStatus}</when><otherwise>0</otherwise></choose>,
+      #{upVersion,jdbcType=BIGINT},
+     <choose><when test="deleted!=null">#{deleted}</when><otherwise>0</otherwise></choose>,
+    #{createDate,jdbcType=TIMESTAMP},
       #{createBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, 
       #{content,jdbcType=LONGVARCHAR}, #{reason,jdbcType=LONGVARCHAR})
   </insert>

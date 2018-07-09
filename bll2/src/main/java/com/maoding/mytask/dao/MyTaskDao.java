@@ -2,9 +2,11 @@ package com.maoding.mytask.dao;
 
 
 import com.maoding.core.base.dao.BaseDao;
-import com.maoding.mytask.dto.MyTaskListDTO;
-import com.maoding.mytask.dto.MyTaskQueryDTO;
+import com.maoding.core.base.dto.QueryDTO;
+import com.maoding.mytask.dto.*;
 import com.maoding.mytask.entity.MyTaskEntity;
+import com.maoding.project.dto.ProjectProgressDTO;
+import com.maoding.task.dto.ApproveCount;
 
 import java.util.List;
 import java.util.Map;
@@ -18,8 +20,6 @@ public interface MyTaskDao extends BaseDao<MyTaskEntity> {
       * 方法描述：根据参数查询我的任务（companyId,companyUserId)
       * 作者：MaoSF
       * 日期：2016/12/1
-      * @param:
-      * @return:
       */
      List<MyTaskEntity> getMyTaskByParam(Map<String, Object> param);
 
@@ -27,8 +27,6 @@ public interface MyTaskDao extends BaseDao<MyTaskEntity> {
      * 方法描述：获取任务的总条数
      * 作者：MaoSF
      * 日期：2017/5/4
-     * @param:
-     * @return:
      */
      int getMyTaskCount();
 
@@ -67,8 +65,6 @@ public interface MyTaskDao extends BaseDao<MyTaskEntity> {
       * 方法描述：任务列表
       * 作者：MaoSF
       * 日期：2017/5/4
-      * @param:
-      * @return:
       */
      List<MyTaskListDTO> getMyTaskList(Map<String, Object> param);
 
@@ -80,10 +76,60 @@ public interface MyTaskDao extends BaseDao<MyTaskEntity> {
     List<MyTaskEntity> getMyTaskByProjectId(Map<String, Object> param);
 
     /**
-     * 作用：根据任务ID获取个人任务
-     * 作者：ZCL
-     * 日期：2017-5-20
-     *
+     * 新接口
      */
-    MyTaskEntity getMyTaskByTaskId(MyTaskQueryDTO dto) throws Exception;
+    List<MyTaskEntity> getMyTaskByProjectId2(Map<String, Object> param);
+    /**
+     * 方法描述：获取我的报销任务列表
+     * 作者：MaoSF
+     * 日期：2017/5/4
+     */
+    List<MyTaskEntity> getMyExpTask(Map<String, Object> param);
+
+    /**
+     *
+     * @param param(handlerId,isHandler)
+     * 获取我的任务的总数，已完成数。已超时数
+     */
+    MyTaskCountDTO selectMyTaskCount(Map<String, Object> param);
+
+    /**
+     *
+     * @param param(handlerId,isHandler)
+     * 获取我的任务的总数，已完成数
+     */
+    MyTaskCountDTO getMyTaskCount(Map<String, Object> param);
+
+    /**
+     *
+     * @param param(handlerId)
+     */
+    MyTaskCountDTO getOvertimeCount(Map<String, Object> param);
+
+    /**
+     * 超时任务
+     */
+    List<MyTaskDTO> getOvertimeTask(Map<String, Object> param);
+
+    /**
+     * 超时任务
+     */
+    List<MyTaskDTO> getDueTask(Map<String, Object> param);
+
+    /**
+     * 项目任务统计 （projectId，companyId，isCooperator：是否是合作组织，可选项）
+     */
+    ProjectProgressDTO getProjectTaskCount(Map<String, Object> param);
+
+    ApproveCount getTaskCount(Map<String,Object> param);
+
+    /**
+     * 我提交的轻量型任务
+     */
+    List<TaskDataDTO> getMySubmitTask(QueryDTO dto);
+
+    TaskDetailDTO getMySubmitTaskById(String id);
+
+    /** 查询个人任务 */
+    List<MyTaskDTO> listMyTask(QueryMyTaskDTO query);
 }

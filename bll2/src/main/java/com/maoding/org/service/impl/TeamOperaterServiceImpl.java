@@ -7,19 +7,25 @@ import com.maoding.core.component.sms.SmsSender;
 import com.maoding.core.component.sms.bean.Sms;
 import com.maoding.core.constant.SystemParameters;
 import com.maoding.core.util.StringUtil;
+import com.maoding.message.entity.MessageEntity;
+import com.maoding.message.service.MessageService;
 import com.maoding.org.dao.CompanyDao;
 import com.maoding.org.dao.CompanyUserDao;
 import com.maoding.org.dao.TeamOperaterDao;
+import com.maoding.org.dto.CompanyUserAppDTO;
+import com.maoding.org.dto.CompanyUserDataDTO;
 import com.maoding.org.dto.CompanyUserTableDTO;
 import com.maoding.org.dto.TeamOperaterDTO;
 import com.maoding.org.entity.CompanyEntity;
 import com.maoding.org.entity.CompanyUserEntity;
 import com.maoding.org.entity.TeamOperaterEntity;
 import com.maoding.org.service.TeamOperaterService;
+import com.maoding.role.dao.PermissionDao;
 import com.maoding.role.dao.RolePermissionDao;
 import com.maoding.role.dao.RoleUserDao;
 import com.maoding.role.dao.UserPermissionDao;
 import com.maoding.role.dto.SaveRoleUserDTO;
+import com.maoding.role.entity.PermissionEntity;
 import com.maoding.role.entity.RolePermissionEntity;
 import com.maoding.role.entity.RoleUserEntity;
 import com.maoding.role.entity.UserPermissionEntity;
@@ -65,7 +71,7 @@ public class TeamOperaterServiceImpl extends GenericService<TeamOperaterEntity> 
 	private RoleUserDao roleUserDao;
 
 	@Autowired
-	private RolePermissionDao rolePermissionDao;
+	private PermissionDao permissionDao;
 
 	@Autowired
 	private UserPermissionDao userPermissionDao;
@@ -76,57 +82,44 @@ public class TeamOperaterServiceImpl extends GenericService<TeamOperaterEntity> 
 	@Autowired
 	private CompanyUserDao companyUserDao;
 
-
+	@Autowired
+	private MessageService messageService;
 	
 	@Override
 	public AjaxMessage transferSys(TeamOperaterDTO dto,String newPassword) throws Exception{
 		TeamOperaterEntity entity = teamOperaterDao.getTeamOperaterByCompanyId(dto.getCompanyId(), null);
-//		AccountEntity aEntity = accountDao.selectById(dto.getAccountId());
-//		if(aEntity==null || !aEntity.getPassword().equals(dto.getAdminPassword())){
-//			return new AjaxMessage().setCode("1").setInfo("密码错误");
-//		}
+
+		if(entity==null){
+			return AjaxMessage.failed("处理失败");
+		}
+		if(entity.getUserId().equals(dto.getUserId())){
+			return AjaxMessage.succeed(null);//如果是同一个人的话，则不处理
+		}
+		String oldUserId = entity.getUserId();
 		entity.setUserId(dto.getUserId());
-	//	entity.setAdminPassword(dto.getNewAdminPassword());
 		teamOperaterDao.updateById(entity);
 
-		//删除当前人的系统管理员角色
-
-		Map<String,Object> param = new HashMap<String,Object>();
-		param.put("roleId",SystemParameters.ADMIN_MANAGER_ROLE_ID);
-		param.put("userId",dto.getAccountId());
-		param.put("orgId",dto.getCompanyId());
-		param.put("companyId",dto.getCompanyId());
-
-		this.roleUserService.deleteRoleUser(param);
-
-
-		//给新的管理员添加管理员角色
-
-		//删除新管理员系统管理员角色（理论上是没有改权限）
-		param.put("userId",dto.getUserId());
-		this.roleUserDao.deleteUserRole(param);
-		//添加系统管理员角色
-		SaveRoleUserDTO saveRoleUserDTO = new SaveRoleUserDTO();
-		saveRoleUserDTO.setRoleId(SystemParameters.ADMIN_MANAGER_ROLE_ID);
-		List<String> users = new ArrayList<String>();
-		users.add(dto.getUserId());
-		saveRoleUserDTO.setUserIds(users);
-		saveRoleUserDTO.setCurrentCompanyId(dto.getCompanyId());
-		this.roleUserService.saveOrUserRole(saveRoleUserDTO);
+		//添加系统管理员角色 <!-- 2018-03-21 修改，系统管理员不对应权限 -->
+//		SaveRoleUserDTO saveRoleUserDTO = new SaveRoleUserDTO();
+//		saveRoleUserDTO.setRoleId(SystemParameters.ADMIN_MANAGER_ROLE_ID);
+//		List<String> users = new ArrayList<String>();
+//		users.add(dto.getUserId());
+//		saveRoleUserDTO.setUserIds(users);
+//		saveRoleUserDTO.setCurrentCompanyId(dto.getCompanyId());
+//		this.roleUserService.saveOrgManager(saveRoleUserDTO);
 		//-----------------end-----------------
-
 		CompanyEntity companyEntity = companyDao.selectById(dto.getCompanyId());
 		AccountEntity accountEntity = accountDao.selectById(dto.getUserId());
-		if(companyEntity!=null && accountEntity!=null)
-		{
+		if(companyEntity!=null && accountEntity!=null) {
 			sendMsg(accountEntity.getCellphone(),StringUtil.format(SystemParameters.TRANSFER_ADMIN_MSG,companyEntity.getCompanyName()));
+			//推送消息
+			this.pushMessage(dto.getUserId(),dto.getCompanyId(),dto.getAccountId(),SystemParameters.MESSAGE_TYPE_NEW_SYSTEM_MANAGER);
 		}
-
 		//发送消息给App端，进行权限刷新
 		List<String> userIdList = new ArrayList<String>();
-		userIdList.add(dto.getAccountId());
+		userIdList.add(oldUserId);
 		userIdList.add(dto.getUserId());
-		this.userPermissionService.sendMessageForRole(userIdList,dto.getCompanyId());
+		this.roleUserService.sendMessageForRole(userIdList,dto.getCompanyId());
 		return  new AjaxMessage().setCode("0").setInfo("移交成功");
 	}
 	/**
@@ -140,17 +133,21 @@ public class TeamOperaterServiceImpl extends GenericService<TeamOperaterEntity> 
 	 */
 	@Override
 	public AjaxMessage transferOrgManager(TeamOperaterDTO dto, String newPassword) throws Exception {
+		boolean isSendMessageToOldUser = false;
+		CompanyUserDataDTO orgManager = null;
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("permissionId", "11");//企业负责人
+		map.put("companyId", dto.getCompanyId());
+		List<CompanyUserDataDTO> companyUserList = this.companyUserDao.getCompanyUserByPermissionId(map);
+		if(!CollectionUtils.isEmpty(companyUserList)){
+			orgManager = companyUserList.get(0);
+		}
+		if(!dto.getAccountId().equals(orgManager.getUserId())){
+			isSendMessageToOldUser = true;
+		}
 
-		CompanyUserTableDTO orgManager = null;
-		if("2".equals(dto.getFlag())){//如果是设置
-			//给原来企业负责人发送信息
-			Map<String, Object> map = new HashMap<String, Object>();
-			map.put("permissionId", "50");//企业负责人
-			map.put("companyId", dto.getCompanyId());
-			List<CompanyUserTableDTO> companyUserList = this.companyUserDao.getCompanyUserByPermissionId(map);
-			if(!CollectionUtils.isEmpty(companyUserList)){
-				orgManager = companyUserList.get(0);
-			}
+		if(orgManager!=null && orgManager.getUserId().equals(dto.getUserId())){//如果该人并没有被改变，则不处理
+			return AjaxMessage.succeed(null);
 		}
 		//保存企业负责人权限
 		SaveRoleUserDTO saveRoleUserDTO = new SaveRoleUserDTO();
@@ -159,18 +156,25 @@ public class TeamOperaterServiceImpl extends GenericService<TeamOperaterEntity> 
 		users.add(dto.getUserId());
 		saveRoleUserDTO.setUserIds(users);
 		saveRoleUserDTO.setCurrentCompanyId(dto.getCompanyId());
-		this.roleUserService.saveOrUserRole(saveRoleUserDTO);
-
+		this.roleUserService.saveOrgManager(saveRoleUserDTO);
 		//发送短信通知
-		if(orgManager!=null){
+		if(isSendMessageToOldUser){
 			CompanyEntity company = this.companyDao.selectById(dto.getCompanyId());
-			TeamOperaterEntity teamOperater = teamOperaterDao.getTeamOperaterByCompanyId(dto.getCompanyId(), null);
-			if(company!=null && teamOperater!=null){
-				CompanyUserEntity companyUserEntity = this.companyUserDao.getCompanyUserByUserIdAndCompanyId(teamOperater.getUserId(),teamOperater.getCompanyId());
+			CompanyUserEntity companyUserEntity = this.companyUserDao.getCompanyUserByUserIdAndCompanyId(dto.getAccountId(),dto.getCompanyId());
+			if(company!=null && companyUserEntity!=null){
 				String msg = StringUtil.format(SystemParameters.TRANSFER_ORG_MSG, company.getCompanyName(),companyUserEntity.getUserName());
 				this.sendMsg(orgManager.getCellphone(),msg);
 			}
 		}
+		//推送消息
+		this.pushMessage(dto.getUserId(),dto.getCompanyId(),dto.getAccountId(),SystemParameters.MESSAGE_TYPE_NEW_ORG_MANAGER);
+		//发送消息给App端，进行权限刷新
+		List<String> userIdList = new ArrayList<String>();
+		if(orgManager!=null){
+			userIdList.add(orgManager.getUserId());
+		}
+		userIdList.add(dto.getUserId());
+		this.roleUserService.sendMessageForRole(userIdList,dto.getCompanyId());
 		return AjaxMessage.succeed("设置成功");
 	}
 
@@ -180,10 +184,6 @@ public class TeamOperaterServiceImpl extends GenericService<TeamOperaterEntity> 
 	 * 方法描述：保存系统管理员所以资料（创建企业的时候，给管理员设置系统管理员，并赋予所有权限）
 	 * 作者：MaoSF
 	 * 日期：2016/11/17
-	 *
-	 * @param teamOperaterEntity
-	 * @param:
-	 * @return:
 	 */
 	@Override
 	public AjaxMessage saveSystemManage(TeamOperaterEntity teamOperaterEntity) throws Exception {
@@ -197,15 +197,13 @@ public class TeamOperaterServiceImpl extends GenericService<TeamOperaterEntity> 
 		teamOperaterDao.insert(teamOperaterEntity);
 
 		//添加系统管理员角色
-
-
-		SaveRoleUserDTO saveRoleUserDTO = new SaveRoleUserDTO();
-		saveRoleUserDTO.setRoleId(roleId);
-		List<String> users = new ArrayList<String>();
-		users.add(teamOperaterEntity.getUserId());
-		saveRoleUserDTO.setUserIds(users);
-		saveRoleUserDTO.setCurrentCompanyId(companyId);
-		this.roleUserService.saveOrUserRole(saveRoleUserDTO);
+//		SaveRoleUserDTO saveRoleUserDTO = new SaveRoleUserDTO();
+//		saveRoleUserDTO.setRoleId(roleId);
+//		List<String> users = new ArrayList<String>();
+//		users.add(teamOperaterEntity.getUserId());
+//		saveRoleUserDTO.setUserIds(users);
+//		saveRoleUserDTO.setCurrentCompanyId(companyId);
+//		this.roleUserService.saveOrUserRole(saveRoleUserDTO);
 
 		//先删除权限
 		Map<String,Object> map = new HashMap<String,Object>();
@@ -225,13 +223,13 @@ public class TeamOperaterServiceImpl extends GenericService<TeamOperaterEntity> 
 		this.roleUserDao.insert(roleUserEntity);
 
 		//添加所有权限
-		List<RolePermissionEntity> permissionList = rolePermissionDao.getAllDefaultPermission();
+		List<PermissionEntity> permissionList = permissionDao.getDefaultPermission();
 
-		for(RolePermissionEntity rolePermission:permissionList){
+		for(PermissionEntity rolePermission:permissionList){
 			map.clear();
 			//先删除已有数据
 			List<String> permissionLists = new ArrayList<String>();
-			permissionLists.add(rolePermission.getPermissionId());
+			permissionLists.add(rolePermission.getId());
 			map.put("permissionList",permissionLists);
 			map.put("companyId",companyId);
 			map.put("userId",userId);
@@ -240,7 +238,7 @@ public class TeamOperaterServiceImpl extends GenericService<TeamOperaterEntity> 
 			//添加数据
 			UserPermissionEntity userPermission =new UserPermissionEntity();
 			//userPermission.setId(StringUtil.buildUUID());
-			userPermission.setPermissionId(rolePermission.getPermissionId());
+			userPermission.setPermissionId(rolePermission.getId());
 			userPermission.setCompanyId(companyId);
 			userPermission.setUserId(userId);
 			this.userPermissionService.saveUserPermission(userPermission);
@@ -268,7 +266,7 @@ public class TeamOperaterServiceImpl extends GenericService<TeamOperaterEntity> 
 	 * @return
 	 */
 	@Override
-	public TeamOperaterEntity getTeamOperaterByParam(String companyId,String userId)throws Exception{
+	public TeamOperaterEntity getTeamOperaterByParam(String companyId,String userId){
 		return teamOperaterDao.getTeamOperaterByCompanyId(companyId, userId);
 	}
 
@@ -323,5 +321,33 @@ public class TeamOperaterServiceImpl extends GenericService<TeamOperaterEntity> 
 			return ResponseBean.responseError("密码错误");
 		}
 		return ResponseBean.responseSuccess("密码正确");
+	}
+
+	@Override
+	public CompanyUserAppDTO getSystemManager(String companyId) {
+		List<TeamOperaterEntity> team = this.teamOperaterDao.selectTeamOperaterByCompanyId(companyId);
+		if(!CollectionUtils.isEmpty(team)){
+			Map<String,Object> map = new HashMap<>();
+			map.put("userId",team.get(0).getUserId());
+			map.put("companyId",team.get(0).getCompanyId());
+			return this.companyUserDao.getCompanyUserByUserId(map);
+		}
+		return null;
+	}
+
+	/**
+	 * 方法描述：推送消息【此方法不是接口】
+	 * 作        者：MaoSF
+	 * 日        期：2016年7月11日-下午8:05:44
+	 */
+	public void pushMessage(String userId,String companyId,String accountId,Integer messageType) throws Exception{
+	//	CompanyUserEntity u = companyUserDao.getCompanyUserByUserIdAndCompanyId(accountId,companyId);
+		MessageEntity m = new MessageEntity();
+		m.setCompanyId(companyId);
+		m.setUserId(userId);
+		m.setCreateBy(accountId);
+		m.setSendCompanyId(companyId);
+		m.setMessageType(messageType);
+		messageService.sendMessage(m);
 	}
 }

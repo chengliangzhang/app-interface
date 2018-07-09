@@ -87,11 +87,9 @@ public class ProjectCostPointDTO extends BaseDTO {
     /**
      * 节点明细
      */
-    private List<ProjectCostPaymentDetailDTO> projectCostDetailList= new ArrayList<>();
+    private List<ProjectCostPointDetailDTO> projectCostDetailList= new ArrayList<>();
 
-    public List<ProjectCostPaymentDetailDTO> getProjectCostDetailList() {
-        return projectCostDetailList;
-    }
+
 
     public String getProjectId() {
         return projectId;
@@ -157,10 +155,6 @@ public class ProjectCostPointDTO extends BaseDTO {
         this.pid = pid;
     }
 
-    public void setProjectCostDetailList(List<ProjectCostPaymentDetailDTO> projectCostDetailList) {
-        this.projectCostDetailList = projectCostDetailList;
-    }
-
     public BigDecimal getTotalPaidFee() {
         return totalPaidFee;
     }
@@ -207,5 +201,13 @@ public class ProjectCostPointDTO extends BaseDTO {
 
     public void setFlag(String flag) {
         this.flag = flag;
+    }
+
+    public List<ProjectCostPointDetailDTO> getProjectCostDetailList() {
+        return projectCostDetailList;
+    }
+
+    public void setProjectCostDetailList(List<ProjectCostPointDetailDTO> projectCostDetailList) {
+        this.projectCostDetailList = projectCostDetailList;
     }
 }

@@ -1,8 +1,8 @@
 package com.maoding.config;
 
 import com.maoding.hxIm.dto.ImQueueDTO;
+import com.maoding.message.dto.SendMessageDataDTO;
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,7 +11,6 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.support.converter.MappingJackson2MessageConverter;
 import org.springframework.jms.support.converter.MessageConverter;
 import org.springframework.jms.support.converter.MessageType;
-import org.springframework.jms.support.converter.SimpleMessageConverter;
 
 import javax.jms.ConnectionFactory;
 import java.util.HashMap;
@@ -71,8 +70,9 @@ public class ActiveMQConfig {
      * JMS 队列的模板类
      */
     @Bean(name = "notifyJmsTemplate")
-    public JmsTemplate notifyJmsTemplate(ConnectionFactory connectionFactory) {
+    public JmsTemplate notifyJmsTemplate(ConnectionFactory connectionFactory, MessageConverter messageConverter) {
         JmsTemplate template = new JmsTemplate();
+        template.setMessageConverter(messageConverter);
         template.setConnectionFactory(connectionFactory);
         return template;
     }
@@ -104,6 +104,7 @@ public class ActiveMQConfig {
         converter.setTypeIdPropertyName("_type");
         Map<String, Class<?>> idMappings = new HashMap<>();
         idMappings.put(ImQueueDTO.class.getSimpleName(), ImQueueDTO.class);
+        idMappings.put(SendMessageDataDTO.class.getSimpleName(), SendMessageDataDTO.class);
         converter.setTypeIdMappings(idMappings);
         return converter;
     }

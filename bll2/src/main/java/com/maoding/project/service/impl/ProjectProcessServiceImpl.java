@@ -10,16 +10,19 @@ import com.maoding.core.constant.SystemParameters;
 import com.maoding.core.util.StringUtil;
 import com.maoding.dynamic.dao.ZInfoDAO;
 import com.maoding.dynamic.service.DynamicService;
+import com.maoding.message.dto.SendMessageDTO;
 import com.maoding.message.service.MessageService;
 import com.maoding.mytask.service.MyTaskService;
 import com.maoding.org.dao.CompanyUserDao;
+import com.maoding.org.dto.CompanyUserAppDTO;
 import com.maoding.org.entity.CompanyUserEntity;
-import com.maoding.project.dao.*;
+import com.maoding.project.dao.ProjectDao;
+import com.maoding.project.dao.ProjectProcessNodeDao;
+import com.maoding.project.dto.ProjectDesignUserList;
 import com.maoding.project.dto.ProjectProcessDTO;
 import com.maoding.project.dto.ProjectProcessNodeDTO;
 import com.maoding.project.entity.ProjectEntity;
 import com.maoding.project.entity.ProjectProcessEntity;
-import com.maoding.project.entity.ProjectProcessInstanceEntity;
 import com.maoding.project.entity.ProjectProcessNodeEntity;
 import com.maoding.project.service.ProjectProcessService;
 import com.maoding.projectmember.entity.ProjectMemberEntity;
@@ -42,19 +45,10 @@ import java.util.Map;
  * Created by Wuwq on 2016/10/27.
  */
 @Service("projectProcessService")
-public class ProjectProcessServiceImpl extends GenericService<ProjectProcessEntity> implements ProjectProcessService {
-
-    @Autowired
-    private ProjectProcessDao projectProcessDao;
+public class ProjectProcessServiceImpl implements ProjectProcessService {
 
     @Autowired
     private ProjectProcessNodeDao projectProcessNodeDao;
-
-    @Autowired
-    private ProjectProcessInstanceDao projectProcessInstanceDao;
-
-    @Autowired
-    private ProjectProcessNodeHistoryDao projectProcessNodeHistoryDao;
 
     @Autowired
     private CompanyUserDao companyUserDao;
@@ -86,38 +80,6 @@ public class ProjectProcessServiceImpl extends GenericService<ProjectProcessEnti
     @Autowired
     private ProjectDao projectDao;
 
-    /**
-     * 方法描述：根据id删除流程
-     * 作者：MaoSF
-     * 日期：2016/10/31
-     */
-    @Override
-    public ResponseBean deleteProcess(String id) throws Exception {
-        ProjectProcessEntity projectProcessEntity = projectProcessDao.selectById(id);
-
-        //1.删除流程数据
-        this.projectProcessDao.deleteById(id);
-
-        //查询节点，用于后面删除任务
-        List<ProjectProcessNodeEntity> projectProcessNodeList = this.projectProcessNodeDao.selectByProcessId(id);
-        //2.删除节点
-        if (!CollectionUtils.isEmpty(projectProcessNodeList)) {
-            for (ProjectProcessNodeEntity nodeEntity : projectProcessNodeList) {
-                this.deleteProjectProcessNode(projectProcessEntity.getProjectId(), nodeEntity);
-            }
-        }
-
-
-        ProjectProcessInstanceEntity instanceEntity = this.projectProcessInstanceDao.getProjectProcessInstanceByProcessId(id);
-        if (instanceEntity != null) {
-            //删除流程实例
-            this.projectProcessInstanceDao.deleteByProcessId(id);
-            //删除该流程的历史记录
-            this.projectProcessNodeHistoryDao.deleteByProcessInstanceId(instanceEntity.getId());
-        }
-
-        return ResponseBean.responseSuccess("删除成功");
-    }
 
     /**
      * 方法描述：根据taskId删除流程
@@ -159,7 +121,7 @@ public class ProjectProcessServiceImpl extends GenericService<ProjectProcessEnti
         for (ProjectProcessNodeDTO nodeDTO : dto.getNodes()) {
             ProjectMemberEntity memberEntity = this.projectMemberService.getProjectMember(nodeDTO.getCompanyUserId(), nodeDTO.getSeq() + 3, taskId);
             if (null == memberEntity) {
-                memberEntity = this.projectMemberService.saveProjectMember(dto.getProjectId(), dto.getCompanyId(), nodeDTO.getCompanyUserId(), taskId, nodeDTO.getSeq() + 3, nodeSeq, dto.getAccountId());
+                memberEntity = this.projectMemberService.saveProjectMember(dto.getProjectId(), dto.getCompanyId(), nodeDTO.getCompanyUserId(), taskId, nodeDTO.getSeq() + 3, nodeSeq, dto.getAccountId(),dto.getAppOrgId());
             }
             nodeSeq++;
             ids.append(memberEntity.getId() + ",");
@@ -182,6 +144,7 @@ public class ProjectProcessServiceImpl extends GenericService<ProjectProcessEnti
      * 作者：MaoSF
      * 日期：2017/1/4
      */
+    @Override
     public ResponseBean saveOrUpdateProcess(ProjectProcessDTO dto) throws Exception {
         TaskWithFullNameDTO origin = zInfoDAO.getTaskByTaskId(dto.getTaskId());//保留原有数据
         String taskId = dto.getTaskId();
@@ -191,7 +154,7 @@ public class ProjectProcessServiceImpl extends GenericService<ProjectProcessEnti
         }
         List<ProjectMemberEntity> list = this.projectMemberService.listProjectMember(null, null, null, taskId);
         //流程节点
-        String companyId = dto.getCurrentCompanyId();
+        String companyId = dto.getAppOrgId();
         StringBuffer ids = new StringBuffer();
         List<ProjectProcessNodeDTO> addNodes = new ArrayList<ProjectProcessNodeDTO>();
         for (ProjectProcessNodeDTO nodeDTO : dto.getNodes()) {
@@ -226,10 +189,10 @@ public class ProjectProcessServiceImpl extends GenericService<ProjectProcessEnti
         dynamicService.addDynamic(target, target, dto.getCompanyId(), dto.getAccountId());
 
         //给乙方任务负责人推送消息
-        String msg = (origin != null) ? origin.getMembers() : "";
-        msg += ";";
-        msg += (target != null) ? target.getMembers() : "";
-        this.sendMessageToPartBDesigner(dto.getProjectId(), dto.getTaskId(), msg);
+//        String msg = (origin != null) ? origin.getMembers() : "";
+//        msg += ";";
+//        msg += (target != null) ? target.getMembers() : "";
+//        this.sendMessageToPartBDesigner(dto.getProjectId(), dto.getTaskId(), msg);
 
         return ResponseBean.responseSuccess("操作成功");
     }
@@ -255,8 +218,13 @@ public class ProjectProcessServiceImpl extends GenericService<ProjectProcessEnti
             boolean isSendMessage = true;
             if (companyUser != null && companyUser.getId().equals(node.getCompanyUserId())) {
                 isSendMessage = false;
+            }else {
+                companyUser = this.companyUserDao.selectById(node.getCompanyUserId());
             }
-            ProjectMemberEntity m = this.projectMemberService.saveProjectMember(projectId, companyId, node.getCompanyUserId(), null, new Integer(3 + node.getSeq()), node.getId(), taskId, node.getSeq(), accountId, isSendMessage);
+            ProjectMemberEntity m = this.projectMemberService.saveProjectMember(projectId, companyId, node.getCompanyUserId(), companyUser.getUserId(), new Integer(3 + node.getSeq()), node.getId(), taskId, node.getSeq(), accountId, false,companyId);
+            if(isSendMessage){
+                this.messageService.sendMessageForDesigner(new SendMessageDTO(projectId,companyId,companyUser.getUserId(),accountId,companyId,SystemParameters.MESSAGE_TYPE_501,SystemParameters.MESSAGE_TYPE_502,taskId,taskId,node.getId(),node.getNodeName()));
+            }
             ids += m.getId();
         }
         return ids;
@@ -288,19 +256,22 @@ public class ProjectProcessServiceImpl extends GenericService<ProjectProcessEnti
         ProjectTaskEntity pTask = projectTaskDao.selectById(taskId);
         this.collaborationService.pushSyncCMD_PT(pTask.getProjectId(), pTask.getTaskPath(), SyncCmd.PT2);
 
-        //判断是否存在设校审，并且是是否完成，如果全部完成，则给任务负责人推送消息
-        Map<String, Object> map = new HashMap<>();
-        map.put("taskManageId", taskId);//param1中保存了任务的id
-        map.put("notComplete", "1");//查询未完成的
-        List<ProjectProcessNodeEntity> processNodeList = this.projectProcessNodeDao.getProcessNodeByParam(map);
-        if (CollectionUtils.isEmpty(processNodeList)) {//如果全部完成，则给任务负责人推送消息
-            //通知任务负责人projectTaskEntity
-            //加上推送信息代码
-            ProjectMemberEntity taskResponsible = this.projectMemberService.getProjectMember(projectId, companyId, ProjectMemberType.PROJECT_TASK_RESPONSIBLE, taskId);
-            if (taskResponsible != null) {
-                this.messageService.sendMessage(projectId, companyId, taskId, SystemParameters.MESSAGE_TYPE_9, null, taskResponsible.getAccountId(), accountId, null);
-            }
-        }
+        //推送设计--》校对--》审核
+        this.sendMessage(projectId,companyId,nodeId,taskId,accountId,originNode.getSeq());
+
+//        //判断是否存在设校审，并且是是否完成，如果全部完成，则给任务负责人推送消息
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("taskManageId", taskId);//param1中保存了任务的id
+//        map.put("notComplete", "1");//查询未完成的
+//        List<ProjectProcessNodeEntity> processNodeList = this.projectProcessNodeDao.getProcessNodeByParam(map);
+//        if (CollectionUtils.isEmpty(processNodeList)) {//如果全部完成，则给任务负责人推送消息
+//            //通知任务负责人projectTaskEntity
+//            //加上推送信息代码
+//            ProjectMemberEntity taskResponsible = this.projectMemberService.getProjectMember(projectId, companyId, ProjectMemberType.PROJECT_TASK_RESPONSIBLE, taskId);
+//            if (taskResponsible != null) {
+//                this.messageService.sendMessage(projectId, companyId, taskId, SystemParameters.MESSAGE_TYPE_9, null, taskResponsible.getAccountId(), accountId, null);
+//            }
+//        }
         if (i > 0) {
             return ResponseBean.responseSuccess("操作成功");
         }
@@ -337,5 +308,52 @@ public class ProjectProcessServiceImpl extends GenericService<ProjectProcessEnti
         node.setCompanyUserId(companyUserId);
         this.projectProcessNodeDao.insert(node);
         return node.getId();
+    }
+
+    private void sendMessage(String projectId, String companyId, String nodeId, String taskId, String accountId,int seq) throws Exception{
+        //推送设计--》校对--》审核
+        ProjectDesignUserList members = null;
+        if(seq==1) {//设计
+            members = projectMemberService.listDesignMemberList(taskId);
+            if (!CollectionUtils.isEmpty(members.getCheckUser().getUserList())) {
+                for(CompanyUserAppDTO u :members.getCheckUser().getUserList()){
+                    this.messageService.sendMessageForProcess(new SendMessageDTO(projectId,companyId,u.getUserId(),accountId,companyId,SystemParameters.MESSAGE_TYPE_503,taskId,u.getTargetId(),"设计","校对"));
+                }
+
+            }else if(!CollectionUtils.isEmpty(members.getExamineUser().getUserList())){
+                for(CompanyUserAppDTO u :members.getExamineUser().getUserList()){
+                    this.messageService.sendMessageForProcess(new SendMessageDTO(projectId,companyId,u.getUserId(),accountId,companyId,SystemParameters.MESSAGE_TYPE_503,taskId,u.getTargetId(),"设计","审核"));
+                }
+            }else {
+                //任务负责人
+                ProjectMemberEntity u = this.projectMemberService.getProjectMember(projectId, companyId, ProjectMemberType.PROJECT_TASK_RESPONSIBLE, taskId);
+                if(u!=null){
+                    this.messageService.sendMessageForProcess(new SendMessageDTO(projectId,companyId,u.getAccountId(),accountId,companyId,SystemParameters.MESSAGE_TYPE_405,taskId,nodeId,"设计",null));
+                }
+            }
+        }
+        if(seq==2){
+            members = projectMemberService.listDesignMemberList(taskId);
+            if (!CollectionUtils.isEmpty(members.getCheckUser().getUserList())) {
+                for(CompanyUserAppDTO u :members.getExamineUser().getUserList()){
+                    this.messageService.sendMessageForProcess(new SendMessageDTO(projectId,companyId,u.getUserId(),accountId,companyId,SystemParameters.MESSAGE_TYPE_503,taskId,u.getTargetId(),"校对","审核"));
+                }
+            }else {
+                //任务负责人
+                //任务负责人
+                ProjectMemberEntity u = this.projectMemberService.getProjectMember(projectId, companyId, ProjectMemberType.PROJECT_TASK_RESPONSIBLE, taskId);
+                if(u!=null){
+                    this.messageService.sendMessageForProcess(new SendMessageDTO(projectId,companyId,u.getAccountId(),accountId,companyId,SystemParameters.MESSAGE_TYPE_405,taskId,nodeId,"校对",null));
+                }
+            }
+        }
+        if(seq==3){
+            //给任务负责人
+            //任务负责人
+            ProjectMemberEntity u = this.projectMemberService.getProjectMember(projectId, companyId, ProjectMemberType.PROJECT_TASK_RESPONSIBLE, taskId);
+            if(u!=null){
+                this.messageService.sendMessageForProcess(new SendMessageDTO(projectId,companyId,u.getAccountId(),accountId,companyId,SystemParameters.MESSAGE_TYPE_405,taskId,nodeId,"审核",null));
+            }
+        }
     }
 }

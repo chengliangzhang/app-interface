@@ -8,19 +8,11 @@ import com.maoding.project.entity.ProjectProcessEntity;
 /**
  * Created by Wuwq on 2016/10/27.
  */
-public interface ProjectProcessService extends BaseService<ProjectProcessEntity>{
+public interface ProjectProcessService{
 
     /**新建或更新流程*/
     ResponseBean saveOrUpdateProcess(ProjectProcessDTO dto) throws Exception;
 
-    /**
-     * 方法描述：根据id删除流程
-     * 作者：MaoSF
-     * 日期：2016/10/31
-     * @param:
-     * @return:
-     */
-    ResponseBean deleteProcess(String id) throws Exception;
 
     /**
      * 方法描述：根据taskId删除流程

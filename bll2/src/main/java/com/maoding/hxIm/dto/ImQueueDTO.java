@@ -2,8 +2,10 @@ package com.maoding.hxIm.dto;
 
 import com.maoding.core.util.StringUtil;
 
-public class ImQueueDTO {
+import java.io.Serializable;
 
+public class ImQueueDTO implements Serializable{
+    private static final long serialVersionUID = -295422703255886286L;
     private String id;
 
     /** 操作队列号 */

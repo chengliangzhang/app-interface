@@ -9,12 +9,12 @@ import com.maoding.core.util.BeanUtilsEx;
 import com.maoding.core.util.StringUtil;
 import com.maoding.dynamic.dto.OrgDynamicDataDTO;
 import com.maoding.dynamic.entity.OrgDynamicEntity;
-import com.maoding.message.service.MessageService;
 import com.maoding.org.dao.CompanyDao;
 import com.maoding.org.dao.CompanyUserDao;
 import com.maoding.org.entity.CompanyEntity;
 import com.maoding.org.entity.CompanyUserEntity;
-import com.maoding.project.dao.*;
+import com.maoding.project.dao.ProjectDao;
+import com.maoding.project.dao.ProjectDynamicsDao;
 import com.maoding.project.dto.*;
 import com.maoding.project.entity.*;
 import com.maoding.project.service.ProjectDynamicsService;
@@ -28,7 +28,6 @@ import com.maoding.projectcost.dto.ProjectCostPointDetailDTO;
 import com.maoding.projectcost.entity.*;
 import com.maoding.projectmember.dto.ProjectMemberDTO;
 import com.maoding.projectmember.service.ProjectMemberService;
-import com.maoding.task.dao.ProjectManagerDao;
 import com.maoding.task.dao.ProjectTaskDao;
 import com.maoding.task.dto.ProjectProcessTimeDTO;
 import com.maoding.task.dto.SaveProjectTaskDTO;
@@ -72,12 +71,6 @@ public class ProjectDynamicsServiceImpl extends GenericService<ProjectDynamicsEn
     private ProjectCostPaymentDetailDao projectCostPaymentDetailDao;
 
     @Autowired
-    private ProjectProcessDao projectProcessDao;
-
-    @Autowired
-    private ProjectProcessNodeDao projectProcessNodeDao;
-
-    @Autowired
     private ProjectMemberService projectMemberService;
 
     @Autowired
@@ -85,13 +78,6 @@ public class ProjectDynamicsServiceImpl extends GenericService<ProjectDynamicsEn
 
     @Autowired
     private ProjectCostPointDetailDao projectCostPointDetailDao;
-
-
-    @Autowired
-    private ProjectManagerDao projectManagerDao;
-
-    @Autowired
-    private MessageService messageService;
 
     private final String SEPARATOR = " ;";
 
@@ -694,58 +680,6 @@ public class ProjectDynamicsServiceImpl extends GenericService<ProjectDynamicsEn
     }
     private String getTeamPersons(String taskManageId){
         return  projectMemberService.getDesignUserByTaskId(taskManageId);
-//        List<ProjectProcessDataDTO> processList = projectProcessDao.selectByTaskManageId(taskManageId);
-//        if (processList == null) return "";
-//        String designPerson="";
-//        String proofreading="";
-//        String review="";
-//        for (ProjectProcessDataDTO process : processList) {
-//            List<ProjectProcessNodeEntity> processNodeList = projectProcessNodeDao.selectByProcessId(process.getId());
-//            if (processNodeList == null) return "";
-//            for (ProjectProcessNodeEntity node : processNodeList) {
-//                if (!StringUtil.isNullOrEmpty(node.getCompanyUserId())) {
-//                    if ("设计".equals(node.getNodeName())) {
-//                        if (StringUtil.isNullOrEmpty(designPerson)) {
-//                            designPerson = "设计人：" + getCompanyUserName(node.getCompanyUserId());
-//                        } else {
-//                            designPerson += "、" + getCompanyUserName(node.getCompanyUserId());
-//                        }
-//                    } else if ("校对".equals(node.getNodeName())) {
-//                        if (StringUtil.isNullOrEmpty(proofreading)) {
-//                            proofreading = "校对人：" + getCompanyUserName(node.getCompanyUserId());
-//                        } else {
-//                            proofreading += "、" + getCompanyUserName(node.getCompanyUserId());
-//                        }
-//                    } else if ("审核".equals(node.getNodeName())) {
-//                        if (StringUtil.isNullOrEmpty(review)) {
-//                            review = "审核人：" + getCompanyUserName(node.getCompanyUserId());
-//                        } else {
-//                            review += "、" + getCompanyUserName(node.getCompanyUserId());
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        String persons = "";
-//        if (!StringUtil.isNullOrEmpty(designPerson)) {
-//            if (!StringUtil.isNullOrEmpty(persons)) {
-//                persons += "，";
-//            }
-//            persons += designPerson;
-//        }
-//        if (!StringUtil.isNullOrEmpty(proofreading)) {
-//            if (!StringUtil.isNullOrEmpty(persons)) {
-//                persons += "，";
-//            }
-//            persons += proofreading;
-//        }
-//        if (!StringUtil.isNullOrEmpty(review)) {
-//            if (!StringUtil.isNullOrEmpty(persons)) {
-//                persons += "，";
-//            }
-//            persons += review;
-//        }
-//        return persons;
     }
     /**
      * 增加项目费用时调用

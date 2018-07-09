@@ -1,19 +1,25 @@
 package com.maoding.user.dto;
 
-import com.maoding.core.base.dto.BaseDTO;
+import com.maoding.attach.dto.FilePathDTO;
+import com.maoding.financial.dto.LeaveSimpleDTO;
+import com.maoding.mytask.dto.MyTaskSimpleDTO;
+import com.maoding.task.dto.TaskSimpleDTO;
+
+import java.util.List;
 
 /**
  * 深圳市设计同道技术有限公司
  * 类    名：RegisterAccountDTO
- * 类描述：用户注册DTO
+ * 类描述：用户DTO
  * 作    者：MaoSF
  * 日    期：2016年7月7日-上午9:50:37
  */
 @SuppressWarnings("serial")
-public class UserInfoDTO extends BaseDTO {
+public class UserInfoDTO extends FilePathDTO {
 	
 /************************用户信息******************************/
-	
+	private String id;
+
 	/**
 	 * 姓名
 	 */
@@ -58,17 +64,10 @@ public class UserInfoDTO extends BaseDTO {
      */
     private String sex;//user表中的信息
 
-	/**
-	 * 头像地址
-     */
-	private String headImg;
-    
     /**
      * 账号状态(1:未激活，0：激活）
      */
     private String status;
-
-    private String oldPassword;
 
 	/**
 	 * 专业id
@@ -81,36 +80,70 @@ public class UserInfoDTO extends BaseDTO {
 	private String majorName;
 
 	/**
-	 * 公司logo地址
+	 *
 	 */
-	private String filePath;
 
-	private String fileName;
+	/** 出勤情况 */
+	private Integer workStatus;
 
-	private String fileGroup;
+	/** 请假列表 */
+	private List<LeaveSimpleDTO> leaveList;
 
-	public String getFilePath() {
-		return filePath;
+	/** 出差列表 */
+	private List<LeaveSimpleDTO> workoutList;
+
+	/** 轻量任务列表 */
+	private List<MyTaskSimpleDTO> lightTaskList;
+
+	/** 设计任务列表 */
+	private List<TaskSimpleDTO> taskList;
+
+	public List<LeaveSimpleDTO> getWorkoutList() {
+		return workoutList;
 	}
 
-	public void setFilePath(String filePath) {
-		this.filePath = filePath;
+	public void setWorkoutList(List<LeaveSimpleDTO> workoutList) {
+		this.workoutList = workoutList;
 	}
 
-	public String getFileName() {
-		return fileName;
+	public Integer getWorkStatus() {
+		return workStatus;
 	}
 
-	public void setFileName(String fileName) {
-		this.fileName = fileName;
+	public void setWorkStatus(Integer workStatus) {
+		this.workStatus = workStatus;
 	}
 
-	public String getFileGroup() {
-		return fileGroup;
+	public List<LeaveSimpleDTO> getLeaveList() {
+		return leaveList;
 	}
 
-	public void setFileGroup(String fileGroup) {
-		this.fileGroup = fileGroup;
+	public void setLeaveList(List<LeaveSimpleDTO> leaveList) {
+		this.leaveList = leaveList;
+	}
+
+	public List<MyTaskSimpleDTO> getLightTaskList() {
+		return lightTaskList;
+	}
+
+	public void setLightTaskList(List<MyTaskSimpleDTO> lightTaskList) {
+		this.lightTaskList = lightTaskList;
+	}
+
+	public List<TaskSimpleDTO> getTaskList() {
+		return taskList;
+	}
+
+	public void setTaskList(List<TaskSimpleDTO> taskList) {
+		this.taskList = taskList;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	public String getUserName() {
@@ -185,28 +218,12 @@ public class UserInfoDTO extends BaseDTO {
 		this.birthday = birthday;
 	}
 
-	public String getOldPassword() {
-		return oldPassword;
-	}
-
-	public void setOldPassword(String oldPassword) {
-		this.oldPassword = oldPassword;
-	}
-
 	public String getStatus() {
 		return status;
 	}
 
 	public void setStatus(String status) {
 		this.status = status;
-	}
-
-	public String getHeadImg() {
-		return headImg;
-	}
-
-	public void setHeadImg(String headImg) {
-		this.headImg = headImg;
 	}
 
 	public String getMajor() {

@@ -85,9 +85,10 @@ public class ProjectCostPointDataDTO {
      */
     private int deleteFlag;
 
-    private BigDecimal paidFee;//用于计算未付
+    private BigDecimal paidFee;//已收金额
+    private BigDecimal payFee;//已付金额
 
-
+    private int level = 0; //给app端区分父子节点的type值
     /**
      * 子节点
      */
@@ -228,5 +229,21 @@ public class ProjectCostPointDataDTO {
 
     public void setPaidFee(BigDecimal paidFee) {
         this.paidFee = paidFee;
+    }
+
+    public BigDecimal getPayFee() {
+        return payFee;
+    }
+
+    public void setPayFee(BigDecimal payFee) {
+        this.payFee = payFee;
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    public void setLevel(int level) {
+        this.level = level;
     }
 }

@@ -108,4 +108,8 @@ public class ProjectCostPointDaoImpl extends GenericDao<ProjectCostPointEntity> 
         map.put("companyId",companyId);
         return this.sqlSession.selectOne("GetProjectCostPointMapper.getCostPointData", map);
     }
+
+    public String getCostFeeCompanyByTaskId(String taskId){
+        return this.sqlSession.selectOne("GetProjectCostPointMapper.getCostFeeCompanyByTaskId", taskId);
+    }
 }

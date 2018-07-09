@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetProjectIssueTaskMapper" >
+    <resultMap id="BaseResultMap" type="com.maoding.task.dto.ProjectIssueTaskDTO" >
+        <id column="id" property="id" jdbcType="VARCHAR" />
+        <result column="seq" property="seq" jdbcType="INTEGER" />
+        <result column="task_pid" property="taskPid" jdbcType="VARCHAR" />
+        <result column="project_id" property="projectId" jdbcType="VARCHAR" />
+        <result column="publish_id" property="publishId" jdbcType="VARCHAR" />
+        <result column="current_company_id" property="currentCompanyId" jdbcType="VARCHAR" /><!-- 用于参数传递 -->
+        <result column="from_company_id" property="fromCompanyId" jdbcType="VARCHAR" />
+        <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+        <result column="depart_id" property="departId" jdbcType="VARCHAR" />
+        <result column="depart_name" property="departName" jdbcType="VARCHAR" />
+        <result column="task_name" property="taskName" jdbcType="VARCHAR" />
+        <result column="task_remark" property="taskRemark" jdbcType="VARCHAR"/>
+        <result column="start_time" property="startTime" jdbcType="DATE" />
+        <result column="end_time" property="endTime" jdbcType="DATE" />
+        <result column="task_type" property="taskType" jdbcType="INTEGER" />
+        <result column="task_state" property="taskState" jdbcType="INTEGER" />
+        <result column="issue_level" property="issueLevel" jdbcType="INTEGER" />
+        <result column="member_count" property="memberCount" jdbcType="INTEGER" />
+        <result column="task_status" property="taskStatus" jdbcType="VARCHAR" />
+        <association property="companyName" column="company_id"  select="CompanyEntityMapper.getAliasName"  fetchType="eager" />
+    </resultMap>
+
+    <resultMap id="BaseResultMap1" extends="BaseResultMap" type="com.maoding.task.dto.ProjectIssueTaskDTO" >
+        <association property="stateMap" select="GetTaskStateMapper.getTaskState3" column="{projectId = project_id,taskId=id,startTime=start_time,endTime=end_time}" fetchType="eager"/>
+    </resultMap>
+
+    <resultMap id="BaseResultMap3" extends="BaseResultMap" type="com.maoding.task.dto.ProjectIssueTaskDTO" >
+        <association property="stateMap" select="GetTaskStateMapper.getTaskState3" column="{projectId = project_id,taskId=id,startTime=start_time,endTime=end_time,taskStatus=task_status}" fetchType="eager"/>
+    </resultMap>
+
+    <!-- 查询当前公司相关的签发任务 -->
+    <select id="getOperatorTaskListByCompanyId" resultMap="BaseResultMap1" parameterType="com.maoding.task.dto.QueryProjectTaskDTO">
+        SELECT a.project_id, a.id, a.task_name,a.org_id,a.task_type,a.task_pid,a.task_path,a.task_level,a.be_modify_id,
+        if(b.id is null,a.start_time,b.start_time) as start_time,
+        if(b.id is null,a.end_time,b.end_time) as end_time
+        from maoding_web_project_task a
+        LEFT JOIN maoding_web_project_task b on a.id = b.be_modify_id and b.task_status != 1  and b.from_company_id = #{companyId}
+        WHERE a.project_id = #{projectId}
+        AND (
+               b.task_type = 3
+            OR  (
+                   b.id IS NULL AND (a.task_type = 1 OR a.task_type = 2)
+                   AND (a.company_id = #{companyId} OR a.from_company_id = #{companyId}	)
+                )
+            )
+        GROUP BY  a.id
+        ORDER BY a.task_level,a.seq
+    </select>
+
+    <select id="getOperatorTaskList" resultMap="BaseResultMap3" parameterType="com.maoding.task.dto.QueryProjectTaskDTO">
+         SELECT DISTINCT
+        t1.id as be_modify_id,
+        t1.is_operater_task,
+        if(t3.id is null ,t1.id,if(t3.task_status=2 and t1.task_type = 3,t3.id,t1.id)) as id,
+        if(t3.id is null ,t1.seq,if(t3.task_status=2,t3.seq,t1.seq)) as seq,
+        if(t3.id is null ,t1.id,t3.id) as publish_id,
+        t1.project_id,t1.task_name,t1.task_level,t1.task_path,
+        if(t2.id= t1.id,t2.task_type,t1.task_type) as task_type,
+        if(t2.id= t1.id,t2.task_pid,t1.task_pid) as task_pid,
+		if(t3.id is null ,t1.company_id ,t3.company_id) as company_id,
+		if(t3.id is null ,t1.from_company_id ,t3.from_company_id) as from_company_id,
+        if(t3.id is null ,t1.org_id, t3.org_id) as depart_id,
+        t4.depart_name,
+        if(t3.id is null ,t1.start_time,t3.start_time) as start_time,
+        if(t3.id is null ,t1.end_time,t3.end_time) as end_time,
+		if(t3.id is null ,t1.task_status,t3.task_status) as task_status,
+        if(t2.id= t1.id,t2.task_level-1,t1.task_level-1) as issue_level,
+        #{companyId} as current_company_id
+        from maoding_web_project_task t1
+        LEFT JOIN (
+        SELECT a.project_id, a.id, a.task_name,a.org_id,a.task_type,a.task_pid,a.task_path,a.task_level,a.be_modify_id,
+        if(b.id is null,a.start_time,b.start_time) as start_time,
+        if(b.id is null,a.end_time,b.end_time) as end_time
+        from maoding_web_project_task a
+        LEFT JOIN maoding_web_project_task b on a.id = b.be_modify_id and b.task_status != 1 and b.from_company_id = #{companyId}
+        where a.project_id= #{projectId}
+        and a.task_status != 1
+        and ((a.task_type = 1  or a.task_type = 2) and b.id is null or (a.task_type = 3 and  a.from_company_id = #{companyId}) )
+        and (b.from_company_id = #{companyId}  or b.company_id = #{companyId}  or  a.company_id = #{companyId}  or  a.from_company_id =#{companyId})
+        ) t2 on t1.project_id = t2.project_id
+		LEFT JOIN maoding_web_project_task t3 on t1.id = t3.be_modify_id and t3.from_company_id = #{companyId}
+		LEFT JOIN maoding_web_depart t4 on if(t3.id is null ,t1.org_id, t3.org_id) = t4.id
+        where t1.project_id= #{projectId} and (POSITION(t1.id in t2.task_path) or t1.id = t2.be_modify_id)
+        and (t1.task_type = 1 or t1.task_type = 2 or t1.task_type = 3 and t1.be_modify_id is null)
+        GROUP BY t1.id
+        ORDER BY t1.task_level,t1.seq,t3.seq
+    </select>
+
+
+    <select id="getProductTaskList" resultMap="BaseResultMap1" parameterType="com.maoding.task.dto.QueryProjectTaskDTO">
+        SELECT a.id,a.project_id,a.task_pid,a.task_path,a.task_level,a.task_name,a.task_remark,a.task_type,a.is_operater_task,
+         a.start_time, a.end_time,a.company_id,
+         a.org_id as depart_id,c.depart_name,a.seq,count(DISTINCT d.id) as member_count
+        from maoding_web_project_task a
+        INNER  JOIN  maoding_web_project_task b on a.project_id = b.project_id
+        LEFT JOIN maoding_web_depart c on a.org_id = c.id
+        LEFT JOIN maoding_web_project_member d on (a.id = d.target_id or a.id = d.node_id) and d.deleted=0
+        where a.project_id= #{projectId}
+        AND b.is_operater_task = 0
+        AND (b.task_type = 0 or b.task_type = 1 or b.task_type = 2 or b.task_type=5)
+        and b.task_status != 1
+        and b.company_id = #{companyId} and POSITION(a.id IN b.task_path)
+        group by a.id
+        ORDER BY a.task_level,a.seq
+    </select>
+
+    <select id="getProductTaskListByCompanyId" resultMap="BaseResultMap1" parameterType="com.maoding.task.dto.QueryProjectTaskDTO">
+        SELECT a.id,a.project_id,a.task_pid,a.task_path,a.task_level,a.task_name,a.task_type,a.is_operater_task,
+        a.start_time, a.end_time,a.company_id,
+        a.org_id as depart_id,c.depart_name,a.seq
+        from maoding_web_project_task a
+        LEFT JOIN maoding_web_depart c on a.org_id = c.id
+        where a.project_id= #{projectId}
+        and a.company_id = #{companyId}
+        AND a.is_operater_task = 0
+        AND (a.task_type = 0 or a.task_type = 1 or a.task_type = 2 or a.task_type=5)
+        and a.task_status != 1
+        group by a.id
+        ORDER BY a.task_level,a.seq
+    </select>
+
+    <!--<select id="getOtherCompanyTaskPlan" resultMap="BaseResultMap3" parameterType="java.util.Map">-->
+        <!--select a.id,a.task_name,-->
+        <!--if(b.id is null,a.from_company_id,b.from_company_id) as from_company_id,-->
+        <!--if(b.id is null,a.company_id,b.company_id) as company_id,-->
+        <!--if(b.id is null,a.start_time,b.start_time) as start_time,-->
+        <!--if(b.id is null,a.end_time,b.end_time) as end_time-->
+        <!--from  maoding_web_project_task a-->
+        <!--LEFT JOIN maoding_web_project_task b on a.id = b.be_modify_id-->
+        <!--where a.id = #{taskId}-->
+        <!--and (a.task_type = 1 or a.task_type = 2)-->
+        <!--and b.task_status !=1-->
+        <!--and (b.company_id =  #{companyId}  or ( b.id is null and a.company_id =  #{companyId}))-->
+		<!--and if(b.id is null,a.from_company_id,b.from_company_id) is not null-->
+    <!--</select>-->
+
+
+    <!--<select id="getOtherCompanyTaskPlanForIssueOverview" resultMap="BaseResultMap3" parameterType="java.util.Map">-->
+        <!--select a.id,a.task_name,-->
+        <!--if(b.id is null,if(a.company_id =  #{companyId},a.from_company_id,a.company_id),b.from_company_id) as from_company_id,-->
+        <!--if(b.id is null,a.company_id,b.company_id) as company_id,-->
+        <!--if(b.id is null,a.start_time,b.start_time) as start_time,-->
+        <!--if(b.id is null,a.end_time,b.end_time) as end_time-->
+        <!--from ( SELECT a.* from maoding_web_project_task a-->
+				<!--LEFT JOIN maoding_web_project_task_relation c on a.id = c.task_id-->
+				<!--where a.id = #{taskId}-->
+				<!--and (a.company_id =  #{companyId} or a.from_company_id =  #{companyId}-->
+				<!--or c.from_company_id =  #{companyId} or c.to_company_id =  #{companyId})-->
+		<!--)a-->
+        <!--LEFT JOIN maoding_web_project_task b on a.id = b.be_modify_id and  b.from_company_id != #{companyId}-->
+        <!--where a.id = #{taskId}-->
+        <!--and (a.task_type = 1 or a.task_type = 2)-->
+        <!--and a.task_status !=1-->
+        <!--and (b.id is not null and b.from_company_id != #{companyId}  or ( b.id is null and (a.company_id =  #{companyId} or a.from_company_id = #{companyId})))-->
+        <!--and if(b.id is null,a.from_company_id,b.from_company_id) is not null-->
+    <!--</select>-->
+
+</mapper>

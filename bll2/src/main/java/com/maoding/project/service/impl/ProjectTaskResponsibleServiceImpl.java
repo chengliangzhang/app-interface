@@ -1,16 +1,19 @@
 package com.maoding.project.service.impl;
 
-import com.maoding.core.base.service.GenericService;
 import com.maoding.core.bean.ResponseBean;
 import com.maoding.core.constant.ProjectMemberType;
 import com.maoding.core.constant.SystemParameters;
 import com.maoding.core.util.BeanUtilsEx;
 import com.maoding.core.util.StringUtil;
 import com.maoding.dynamic.service.DynamicService;
+import com.maoding.message.dto.QueryMessageDTO;
+import com.maoding.message.dto.SendMessageDTO;
+import com.maoding.message.entity.MessageEntity;
+import com.maoding.message.service.MessageService;
 import com.maoding.org.dao.CompanyUserDao;
+import com.maoding.org.dto.CompanyUserDataDTO;
 import com.maoding.org.entity.CompanyUserEntity;
 import com.maoding.project.dto.ProjectTaskResponsibleDTO;
-import com.maoding.project.entity.ProjectTaskResponsiblerEntity;
 import com.maoding.project.service.ProjectTaskResponsibleService;
 import com.maoding.projectmember.entity.ProjectMemberEntity;
 import com.maoding.projectmember.service.ProjectMemberService;
@@ -20,6 +23,11 @@ import com.maoding.task.entity.ProjectTaskEntity;
 import com.maoding.task.service.ProjectTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 深圳市设计同道技术有限公司
@@ -29,7 +37,7 @@ import org.springframework.stereotype.Service;
  * 日    期：2016年7月19日-下午5:28:54
  */
 @Service("projectTaskResponsibleService")
-public class ProjectTaskResponsibleServiceImpl extends GenericService<ProjectTaskResponsiblerEntity>  implements ProjectTaskResponsibleService {
+public class ProjectTaskResponsibleServiceImpl  implements ProjectTaskResponsibleService {
 
     @Autowired
     private CompanyUserDao companyUserDao;
@@ -46,6 +54,9 @@ public class ProjectTaskResponsibleServiceImpl extends GenericService<ProjectTas
     @Autowired
     private DynamicService dynamicService;
 
+    @Autowired
+    private MessageService messageService;
+
     /**
      * 方法描述：保存设计负责人（新增）
      * 作者：MaoSF
@@ -61,7 +72,7 @@ public class ProjectTaskResponsibleServiceImpl extends GenericService<ProjectTas
             }
         }
         this.projectMemberService.deleteProjectMember(ProjectMemberType.PROJECT_TASK_RESPONSIBLE,taskId);
-        this.projectMemberService.saveProjectMember(projectId,companyId,targetId,null, ProjectMemberType.PROJECT_TASK_RESPONSIBLE,taskId,accountId,isSendMessage);
+        this.projectMemberService.saveProjectMember(projectId,companyId,targetId,null, ProjectMemberType.PROJECT_TASK_RESPONSIBLE,taskId,accountId,isSendMessage,currentCompanyId);
 
         return ResponseBean.responseSuccess();
     }
@@ -73,10 +84,46 @@ public class ProjectTaskResponsibleServiceImpl extends GenericService<ProjectTas
      */
     @Override
     public ResponseBean insertTaskResponsible(String projectId, String companyId, String companyUserId, String taskId, String accountId) throws Exception {
-        this.projectMemberService.saveProjectMember(projectId,companyId,companyUserId,taskId, ProjectMemberType.PROJECT_TASK_RESPONSIBLE,0,accountId);
+        this.projectMemberService.deleteProjectMember(ProjectMemberType.PROJECT_TASK_RESPONSIBLE,taskId);
+        this.projectMemberService.saveProjectMember(projectId,companyId,companyUserId,taskId, ProjectMemberType.PROJECT_TASK_RESPONSIBLE,0,accountId,companyId);
         return ResponseBean.responseSuccess();
     }
 
+    /**
+     * 方法描述：保存任务负责人（新增）-- 发布任务给本组织，默认设计负责人为任务负责人
+     * 作者：MaoSF
+     * 日期：2017/5/20
+     */
+    @Override
+    public ResponseBean insertTaskResponsibleForPublishTask(String projectId, String companyId, String taskId, String accountId,String currentCompanyId) throws Exception {
+        this.projectMemberService.deleteProjectMember(ProjectMemberType.PROJECT_TASK_RESPONSIBLE,taskId);
+        ProjectMemberEntity member = this.projectMemberService.getDesignManager(projectId, companyId);
+        if (member != null) {
+            //如果不为空，则设置任务负责人，默认为设计负责人
+            this.projectMemberService.saveProjectMember(projectId,companyId,member.getCompanyUserId(),member.getAccountId(), ProjectMemberType.PROJECT_TASK_RESPONSIBLE,taskId,accountId,false,currentCompanyId);
+            //如果是第一次，则推送给设计负责人
+            //是否是第一次发布给本团队
+            Map<String, Object> map = new HashMap<>();
+            map.put("permissionId", "50");//经营总监权限id
+            map.put("companyId", currentCompanyId);
+            List<CompanyUserDataDTO> companyUserList = this.companyUserDao.getCompanyUserByPermissionId(map);
+            if(!CollectionUtils.isEmpty(companyUserList)){
+                QueryMessageDTO query = new QueryMessageDTO();
+                query.setProjectId(projectId);
+                query.setCompanyId(currentCompanyId);
+                query.setMessageType(SystemParameters.MESSAGE_TYPE_401);
+                query.setUserId(companyUserList.get(0).getUserId());
+                if(CollectionUtils.isEmpty(messageService.getMessageByParam(query))){
+                    this.sendMessage(projectId,companyId,member.getAccountId(),accountId,currentCompanyId,SystemParameters.MESSAGE_TYPE_401,null);
+                }else {
+                    this.sendMessage(projectId,companyId,member.getAccountId(),accountId,currentCompanyId,SystemParameters.MESSAGE_TYPE_402,null);
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
     public ResponseBean saveTaskResponsible(ProjectTaskResponsibleDTO dto) throws Exception {
         ProjectMemberEntity projectMember = this.projectMemberService.getProjectMember(dto.getProjectId(), dto.getCompanyId(),ProjectMemberType.PROJECT_TASK_RESPONSIBLE,dto.getTaskId());
         //保留原有的数据
@@ -91,9 +138,12 @@ public class ProjectTaskResponsibleServiceImpl extends GenericService<ProjectTas
             isSendMessage = false;
         }
         if(null!=projectMember) {
-            this.projectMemberService.updateProjectMember(projectMember,dto.getTargetId(),null,dto.getAccountId(),isSendMessage);
+            this.projectMemberService.updateProjectMember(projectMember,dto.getTargetId(),null,dto.getAccountId(),false);
         }else {
-            projectMember = this.projectMemberService.saveProjectMember(dto.getProjectId(),dto.getCompanyId(),dto.getTargetId(),null,ProjectMemberType.PROJECT_TASK_RESPONSIBLE,dto.getTaskId(),dto.getAccountId(),isSendMessage);
+            projectMember = this.projectMemberService.saveProjectMember(dto.getProjectId(),dto.getCompanyId(),dto.getTargetId(),null,ProjectMemberType.PROJECT_TASK_RESPONSIBLE,dto.getTaskId(),dto.getAccountId(),false,dto.getAppOrgId());
+        }
+        if(isSendMessage){
+            this.messageService.sendMessageForDesigner(new SendMessageDTO(dto.getProjectId(), dto.getCompanyId(),projectMember.getAccountId(),dto.getAccountId(),dto.getAppOrgId(),SystemParameters.MESSAGE_TYPE_403,SystemParameters.MESSAGE_TYPE_404,dto.getTaskId(),dto.getTaskId(),null));
         }
         // 添加项目动态
         dynamicService.addDynamic(oldProjectTaskResponsible,projectMember,dto.getAppOrgId(),dto.getAccountId());
@@ -129,7 +179,7 @@ public class ProjectTaskResponsibleServiceImpl extends GenericService<ProjectTas
             if(null!=projectMember) {
                 this.projectMemberService.updateProjectMember(projectMember,dto.getTargetId(),null,dto.getAccountId(),isSendMessage);
             }else {
-                this.projectMemberService.saveProjectMember(dto.getProjectId(),dto.getCompanyId(),dto.getTargetId(),null,ProjectMemberType.PROJECT_TASK_RESPONSIBLE,dto.getTaskId(),dto.getAccountId(),isSendMessage);
+                this.projectMemberService.saveProjectMember(dto.getProjectId(),dto.getCompanyId(),dto.getTargetId(),null,ProjectMemberType.PROJECT_TASK_RESPONSIBLE,dto.getTaskId(),dto.getAccountId(),isSendMessage,dto.getAppOrgId());
             }
         }
         //无论何种情况，任务类型=4的，都需要新增记录（如果存在原来的记录，则删除，再新增）
@@ -137,4 +187,15 @@ public class ProjectTaskResponsibleServiceImpl extends GenericService<ProjectTas
         return  ResponseBean.responseSuccess("操作成功");
     }
 
+    private void sendMessage(String projectId,String companyId,String userId,String accountId,String currentCompanyId,Integer messageType,String taskId) throws Exception{
+        MessageEntity messageEntity = new MessageEntity();
+        messageEntity.setCompanyId(companyId);
+        messageEntity.setProjectId(projectId);
+        messageEntity.setMessageType(messageType);
+        messageEntity.setUserId(userId);
+        messageEntity.setCreateBy(accountId);
+        messageEntity.setSendCompanyId(currentCompanyId);
+        messageEntity.setTargetId(taskId);
+        messageService.sendMessage(messageEntity);
+    }
 }

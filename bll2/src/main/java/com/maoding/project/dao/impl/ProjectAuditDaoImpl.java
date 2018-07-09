@@ -28,6 +28,7 @@ public class ProjectAuditDaoImpl extends GenericDao<ProjectAuditEntity> implemen
      * @return
      *
      */
+    @Override
     public int delAuditByProjectAndType(String projectId,String type){
         Map<String,String> map = new HashMap<String, String>();
         map.put("projectId", projectId);

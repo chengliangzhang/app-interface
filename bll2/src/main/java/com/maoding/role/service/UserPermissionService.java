@@ -32,18 +32,13 @@ public interface UserPermissionService extends BaseService<UserPermissionEntity>
      * 方法描述：保存用户权限关联数据
      * 作者：MaoSF
      * 日期：2016/11/2
-     * @param:
-     * @return:
      */
     AjaxMessage saveUserPermission(SaveUserPermissionDTO dto) throws Exception;
-
 
     /**
      * 方法描述：保存用户权限关联数据（从权限中选择人员）
      * 作者：MaoSF
      * 日期：2016/11/2
-     * @param:
-     * @return:
      */
     AjaxMessage saveUserPermission2(SaveUserPermission2DTO dto) throws Exception;
 
@@ -51,47 +46,14 @@ public interface UserPermissionService extends BaseService<UserPermissionEntity>
      * 方法描述：删除用户权限关联数据（从权限中删除人员）
      * 作者：MaoSF
      * 日期：2016/11/2
-     * @param:
-     * @return:
      */
     AjaxMessage deleteUserPermission2(Map<String, Object> map) throws Exception;
-
-
-
-    /**
-     * 方法描述：批量删除用户权限关联数据
-     * 作者：MaoSF
-     * 日期：2016/11/2
-     * @param:
-     * @return:
-     */
-    AjaxMessage deleteUserPermissionOfBatch(SaveUserPermissionDTO dto) throws Exception;
-
-    /**
-     * 方法描述：保存用户角色、权限关联数据
-     * 作者：wrb
-     * 日期：2016/11/5
-     * @param:
-     * @return:
-     */
-    AjaxMessage saveUserRolePermission(Map<String, Object> paraMap) throws Exception;
 
     /**
      * 方法描述：批量保存用户权限（新版）
      * 作者：MaoSF
      * 日期：2016/11/2
-     * @param:
-     * @return:
      */
     ResponseBean saveUserPermission2(SaveUserPermissionListDTO dto) throws Exception;
-
-    /**
-     * 方法描述：发送消息
-     * 作者：MaoSF
-     * 日期：2016/12/8
-     * @param:
-     * @return:
-     */
-    void sendMessageForRole(List<String> userIdList, String companyId);
 
 }

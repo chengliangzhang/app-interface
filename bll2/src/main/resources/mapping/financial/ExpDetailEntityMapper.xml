@@ -13,7 +13,6 @@
     <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
     <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
     <result column="exp_name" property="expName" jdbcType="VARCHAR" />
-    <result column="exp_name" property="expName" jdbcType="VARCHAR" />
     <result column="exp_pname" property="expPName" jdbcType="VARCHAR" />
     <result column="exp_allname" property="expAllName" jdbcType="VARCHAR" />
     <result column="seq" property="seq" jdbcType="INTEGER" />

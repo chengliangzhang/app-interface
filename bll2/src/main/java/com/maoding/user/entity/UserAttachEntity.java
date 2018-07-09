@@ -17,6 +17,7 @@ public class UserAttachEntity  extends BaseEntity implements java.io.Serializabl
      */
     private String fileGroup;
 
+    private String ossFilePath;
     public String getUserId() {
         return userId;
     }
@@ -55,5 +56,13 @@ public class UserAttachEntity  extends BaseEntity implements java.io.Serializabl
 
     public void setFileGroup(String fileGroup) {
         this.fileGroup = fileGroup;
+    }
+
+    public String getOssFilePath() {
+        return ossFilePath;
+    }
+
+    public void setOssFilePath(String ossFilePath) {
+        this.ossFilePath = ossFilePath;
     }
 }

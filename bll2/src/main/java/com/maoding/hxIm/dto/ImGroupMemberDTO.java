@@ -3,6 +3,10 @@ package com.maoding.hxIm.dto;
 public class ImGroupMemberDTO {
     private String accountId;
     private String companyUserId;
+    /**
+     * 组织Id
+     */
+    private String orgId;
 
     public ImGroupMemberDTO() {
 
@@ -27,5 +31,13 @@ public class ImGroupMemberDTO {
 
     public void setCompanyUserId(String companyUserId) {
         this.companyUserId = companyUserId;
+    }
+
+    public String getOrgId() {
+        return orgId;
+    }
+
+    public void setOrgId(String orgId) {
+        this.orgId = orgId;
     }
 }

@@ -21,10 +21,9 @@ public interface ProjectDesignContentService extends BaseService<ProjectDesignCo
      * 作        者：ChenZJ
      * 日        期：2016年7月21日-上午11:28:56
      * @param projectId
-     * @param param(其他参数)
      * @return
      */
-    List<ProjectDesignContentDTO> getProjectDesignContentByProjectId(String projectId, Map<String, Object> param) throws Exception;
+    List<ProjectDesignContentDTO> getProjectDesignContentByProjectId(String projectId, String companyId) throws Exception;
 
 
 

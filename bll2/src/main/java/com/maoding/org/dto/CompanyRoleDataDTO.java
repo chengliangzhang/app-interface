@@ -1,5 +1,7 @@
 package com.maoding.org.dto;
 
+import com.maoding.role.dto.OperatorDTO;
+
 /**
  * 深圳市设计同道技术有限公司
  * 类    名：CompanyRoleDataDTO
@@ -43,6 +45,13 @@ public class CompanyRoleDataDTO {
      * logo
      */
     private String filePath;
+
+    private String typeId;
+
+    /**
+     * 组织下操作权限标识
+     */
+    private OperatorDTO operatorRole;
 
     public String getCompanyUserName() {
         return companyUserName;
@@ -106,5 +115,21 @@ public class CompanyRoleDataDTO {
 
     public void setCompanyNikeName(String companyNikeName) {
         this.companyNikeName = companyNikeName;
+    }
+
+    public OperatorDTO getOperatorRole() {
+        return operatorRole;
+    }
+
+    public void setOperatorRole(OperatorDTO operatorRole) {
+        this.operatorRole = operatorRole;
+    }
+
+    public String getTypeId() {
+        return typeId;
+    }
+
+    public void setTypeId(String typeId) {
+        this.typeId = typeId;
     }
 }

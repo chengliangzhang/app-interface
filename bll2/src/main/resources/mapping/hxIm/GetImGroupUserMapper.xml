@@ -8,18 +8,17 @@
     <result column="company_user_id" property="id" jdbcType="VARCHAR" />
     <result column="user_id" property="userId" jdbcType="VARCHAR" />
     <result column="user_name" property="userName" jdbcType="VARCHAR" />
-    <result column="img_url" property="imgUrl" jdbcType="VARCHAR" />
+    <result column="file_full_path" property="fileFullPath" jdbcType="VARCHAR" />
     </collection>
   </resultMap>
 
   <select id="listCustomerImGroupMember" resultMap="BaseResultMap" parameterType="com.maoding.hxIm.dto.ImGroupMemberQuery" >
-    select c.company_id,b.company_user_id,c.user_id,c.user_name,
-     IF(d.file_group IS NULL ,NULL,CONCAT(#{fastdfsUrl},d.file_group,'/',d.attach_path)) AS img_url
+    select c.company_id,b.company_user_id,c.user_id,c.user_name, d.oss_file_path AS file_full_path
     from maoding_im_group a
     LEFT JOIN maoding_im_group_member b on a.id = b.group_id
     LEFT JOIN maoding_web_company_user c on b.company_user_id = c.id
-    LEFT JOIN maoding_web_user_attach d on c.user_id = d.user_id and d.attach_type = 5
-    where a.group_type = 2
+    LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) d on c.user_id = d.user_id and d.attach_type = 5
+    where 1=1
     <if test="groupId!=null">
       AND a.group_no = #{groupId,jdbcType=VARCHAR}
     </if>

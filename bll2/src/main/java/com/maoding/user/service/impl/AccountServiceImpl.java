@@ -13,6 +13,7 @@ import com.maoding.org.service.CompanyService;
 import com.maoding.user.dao.AccountDao;
 import com.maoding.user.dao.UserDao;
 import com.maoding.user.dto.AccountDTO;
+import com.maoding.user.dto.AccountDataDTO;
 import com.maoding.user.dto.RegisterCompanyDTO;
 import com.maoding.user.entity.AccountEntity;
 import com.maoding.user.entity.UserEntity;
@@ -96,8 +97,14 @@ public class AccountServiceImpl extends GenericService<AccountEntity> implements
             BaseDTO.copyFields(dto, account);
             this.accountDao.updateById(account);
             user = this.userDao.selectById(account.getId());
-            user.setUserName(dto.getUserName());
-            this.userDao.updateById(user);
+            if(user==null){ //理论上user是不会为空的，只怕错误删除数据库中的数据，导致user记录被删除，此处判断为null的时候新增，否则更新
+                user = new UserEntity();
+                BaseDTO.copyFields(account, user);
+                userDao.insert(user);
+            }else {
+                user.setUserName(dto.getUserName());
+                userDao.updateById(user);
+            }
             imService.updateImAccount(account.getId(), account.getPassword());
         }
         dto.setId(account.getId());
@@ -166,7 +173,7 @@ public class AccountServiceImpl extends GenericService<AccountEntity> implements
     /**
      * v2
      */
-    public List<AccountDTO> selectV2AllPersonByParam(Map<String, Object> map) throws Exception {
+    public List<AccountDataDTO> selectV2AllPersonByParam(Map<String, Object> map) throws Exception {
         //所在的所有公司
         List<CompanyDTO> list = companyService.getCompanyByUserId((String) map.get("accountId"));
         if (!CollectionUtils.isEmpty(list)) {

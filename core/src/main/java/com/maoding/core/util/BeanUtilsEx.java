@@ -9,6 +9,7 @@ import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -125,5 +126,16 @@ public class BeanUtilsEx extends BeanUtils {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static void setPropertyValue(Object o,String propertyName,String value){
+        Field field = null;
+        try {
+            field = o.getClass().getDeclaredField(propertyName);
+            field.setAccessible(true); //此句必须在  field = o.getClass().getDeclaredField(propertyName); 后面
+            field.set(o,value);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }

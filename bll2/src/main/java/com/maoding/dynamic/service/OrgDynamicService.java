@@ -23,28 +23,6 @@ public interface OrgDynamicService extends BaseService<OrgDynamicEntity> {
      */
     AjaxMessage combinationDynamicForProject(String projectId, String companyId, String createPersonId) throws Exception;
 
-
-    /**
-     * 创建乙方动态
-     * @param projectId
-     * @param companyId
-     * @param createPersonId
-     * @return
-     */
-    AjaxMessage combinationDynamicForPartyB(String projectId, String companyId, String createPersonId) throws Exception;
-
-
-    /**
-     * 创建合作方动态
-     * @param projectId
-     * @param companyId
-     * @param partnerId
-     * @param taskId
-     * @param createPersonId
-     * @return
-     */
-    AjaxMessage combinationDynamicForPartner(String projectId, String companyId, String partnerId, String taskId, String createPersonId) throws Exception;
-
     /***
      * 创建通知公告动态
      * @param noticeId

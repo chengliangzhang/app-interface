@@ -22,6 +22,12 @@ public class CompanyRelationEntity extends BaseEntity implements java.io.Seriali
      */
     private String orgPid;
 
+    /**
+     * 事业合伙人类型
+     */
+    private String typeId;
+
+
     public String getOrgId() {
         return orgId;
     }
@@ -39,4 +45,11 @@ public class CompanyRelationEntity extends BaseEntity implements java.io.Seriali
         this.orgPid = orgPid == null ? null : orgPid.trim();
     }
 
+    public String getTypeId() {
+        return typeId;
+    }
+
+    public void setTypeId(String typeId) {
+        this.typeId = typeId;
+    }
 }

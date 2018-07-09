@@ -2,13 +2,11 @@ package com.maoding.financial.service;
 
 import com.maoding.core.base.service.BaseService;
 import com.maoding.core.bean.AjaxMessage;
-import com.maoding.financial.dto.ExpAuditDTO;
-import com.maoding.financial.dto.ExpMainDTO;
-import com.maoding.financial.dto.ExpTypeDTO;
-import com.maoding.financial.dto.ExpTypeOutDTO;
+import com.maoding.financial.dto.*;
 import com.maoding.financial.entity.ExpMainEntity;
 import com.maoding.org.dto.CompanyUserDataDTO;
 import com.maoding.project.dto.ProjectDTO;
+import com.maoding.task.dto.HomeDTO;
 import com.maoding.v2.financial.dto.V2ExpMainDTO;
 
 import java.util.List;
@@ -22,36 +20,6 @@ import java.util.Map;
  * 日    期 : 2016/7/26-15:58
  */
 public interface ExpMainService extends BaseService<ExpMainEntity>{
-
-
-
-    /**
-     * 方法描述：报销基础数据
-     * 作   者：LY
-     * 日   期：2016/7/27 17:59
-     * @return
-     *
-     */
-    AjaxMessage getExpBaseData(String companyId, String userId) throws Exception ;
-
-    /**
-     * 方法描述：报销类别基础数据
-     * 作   者：LY
-     * 日   期：2016/7/27 17:59
-     * @return
-     *
-     */
-    AjaxMessage getCategoryBaseData(String companyId, String userId) throws Exception ;
-
-
-    /**
-     * 方法描述：得到当前公司和当前组织下面人员
-     * 作   者：LY
-     * 日   期：2016/8/3 17:17
-     * @param  companyId 公司Id  orgId 组织Id
-     *
-     */
-    List<CompanyUserDataDTO> getUserList(String companyId, String orgId) throws Exception;
 
     /**
      * 方法描述：我的报销列表
@@ -94,14 +62,6 @@ public interface ExpMainService extends BaseService<ExpMainEntity>{
      */
     int recallExpMain(ExpAuditDTO dto) throws Exception;
 
-    /**
-     * 方法描述：报销详情
-     * 作   者：LY
-     * 日   期：2016/7/29 10:53
-     * @param id--报销单id
-     *
-     */
-    ExpMainDTO getExpMainPageDetail(String id) throws Exception;
 
     /**
      * 方法描述：删除报销
@@ -115,9 +75,8 @@ public interface ExpMainService extends BaseService<ExpMainEntity>{
      * 方法描述：同意报销
      * 作   者：LY
      * 日   期：2016/8/1 15:08
-     * @param  id--报销单id
      */
-    int agreeExpMain(String id, String companyUserId, String versionNum) throws Exception;
+    int agreeExpMain(SaveExpMainDTO dto) throws Exception;
 
 
     /**
@@ -126,7 +85,7 @@ public interface ExpMainService extends BaseService<ExpMainEntity>{
      * 日   期：2016/8/1 15:08
      * @param  id--报销单id auditPerson--新审批人  userId用户Id
      */
-    int agreeAndTransAuditPerExpMain(String id, String userId, String auditPerson, String versionNum,String accountId) throws Exception;
+    int agreeAndTransAuditPerExpMain(SaveExpMainDTO dto) throws Exception;
 
     /**
      * 方法描述：报销详情与审批记录
@@ -137,19 +96,20 @@ public interface ExpMainService extends BaseService<ExpMainEntity>{
     Map<String, Object> getExpMainDetail(String id) throws Exception;
 
     /**
+     * 方法描述：报销详情与审批记录
+     * 作   者：LY
+     * 日   期：2016/8/2 14:13
+     */
+    Map<String, Object> getExpMainDetail2(ExpMainDTO expMainDTO) throws Exception;
+
+    /**
      * 方法描述：报销汇总List
      * 作   者：LY
      * 日   期：2016/7/28 16:34
      * @param  param 查询条件
      */
     List<ExpMainDTO> getExpMainPageForSummary(Map<String, Object> param);
-    /**
-     * 方法描述：报销汇总ListInterface
-     * 作   者：LY
-     * 日   期：2016/7/28 16:34
-     * @param  param 查询条件
-     */
-    List<ExpMainDTO> getExpMainPageForSummaryInterface(Map<String, Object> param);
+
     /**
      * 方法描述：报销汇总数量
      * 作   者：LY
@@ -158,23 +118,6 @@ public interface ExpMainService extends BaseService<ExpMainEntity>{
      */
     int getExpMainPageForSummaryCount(Map<String, Object> param);
 
-    /**
-     * 方法描述：查询报销类型
-     * 用于我要报销界面，报销类型选择
-     * 作        者：MaoSF
-     * 日        期：2015年12月7日-上午11:21:49
-     * @return
-     */
-    List<ExpTypeDTO> getExpTypeList(String companyId);
-
-    /**
-     * 方法描述：根据companyId查询所有有效项目(我要报销 选择项目下拉框 )
-     * 作   者：LY
-     * 日   期：2016/7/27 17:39
-     * @return
-     *
-     */
-    List<ProjectDTO> getProjectList(String companyId);
 
 
 
@@ -194,34 +137,11 @@ public interface ExpMainService extends BaseService<ExpMainEntity>{
      *
      */
     ExpMainDTO selectExpMainDetail(String mainId);
-    /**
-     * 方法描述:saveOrUpdateCategoryBaseData
-     * 作   者：LY
-     * 日   期：2016/7/27 17:39
-     * @return
-     *
-     */
-    AjaxMessage saveOrUpdateCategoryBaseData(ExpTypeOutDTO dto, String companyId)throws Exception;
-    /**
-     * 方法描述:deleteCategoryBaseData
-     * 作   者：LY
-     * 日   期：2016/7/27 17:39
-     * @return
-     *
-     */
-    AjaxMessage deleteCategoryBaseData(String id)throws Exception;
-    /**
-     * 方法描述:初始化报销类别基础数据(每个组织初始化)
-     * 作   者：CZJ
-     * 日   期：2016/10/11 17:39
-     * @return
-     *
-     */
-    AjaxMessage initInsertCategory(String companyId)throws Exception;
+
+
 
     //===============================2.0=================================
 
-    /*****======================================v2==================================================***/
     /**
      * 方法描述：我的报销列表
      * 作   者：CZJ
@@ -247,4 +167,30 @@ public interface ExpMainService extends BaseService<ExpMainEntity>{
      */
     Map<String, Object> getMaxExpNo(Map<String, Object> param) throws Exception;
 
+    /**
+     * 待审批的,我提交的(type=1:我提交的，type=2：待审核的,type=3:我已经审核的)
+     */
+    List<AuditDataDTO> getAuditDataDTO(QueryAuditDTO query) throws Exception;
+
+    List<AuditDataDTO> getCcAuditData(QueryAuditDTO query) throws Exception;
+
+    /**
+     * 出差审核通过的（不包含退回的）
+     */
+    List<AuditDataDTO> getPassAuditData(QueryAuditDTO query) throws Exception;
+
+    /**
+     * 财务拨款
+     */
+    int financialAllocation(String id, String currentCompanyUserId, String accountId) throws Exception;
+
+    /**
+     * 发送消息
+     */
+    void sendMessageForAudit(String mainId, String companyId, String companyUserId,Integer type,String accountId,String auditId,String approveStatus) throws Exception;
+
+    HomeDTO getApproveDataForHome(Map<String,Object> param) throws Exception;
+
+    AuditStaticDataDTO getAuditStaticData(QueryAuditDTO query) throws Exception;
+    
 }

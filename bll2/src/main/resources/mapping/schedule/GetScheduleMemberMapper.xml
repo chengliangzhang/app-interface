@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetScheduleMemberMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.schedule.dto.ScheduleMemberDTO" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="schedule_id" property="scheduleId" jdbcType="VARCHAR" />
+    <result column="member_id" property="memberId" jdbcType="VARCHAR" />
+    <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="user_id" property="userId" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <result column="refuse_reason" property="refuseReason" jdbcType="VARCHAR" />
+    <result column="reminder_time" property="reminderTime" jdbcType="INTEGER" />
+    <result column="file_full_path" property="fileFullPath" jdbcType="VARCHAR" />
+    <result column="user_name" property="userName" jdbcType="VARCHAR" />
+    <result column="schedule_member_id" property="scheduleMemberId" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <select id="listMemberByScheduleId" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select a.id as schedule_member_id,a.member_id as id,a.schedule_id,a.member_id,a.status,a.refuse_reason,b.user_id,b.user_name,b.company_id,
+    c.oss_file_path as file_full_path
+    from maoding_web_schedule_member a
+    LEFT JOIN maoding_web_company_user b on b.id = a.member_id
+    LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) c on b.user_id = c.user_id and c.attach_type = '5'
+    where schedule_id = #{scheduleId}  and a.deleted = 0
+  </select>
+
+</mapper>

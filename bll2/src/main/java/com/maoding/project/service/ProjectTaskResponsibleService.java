@@ -1,6 +1,7 @@
 package com.maoding.project.service;
 
 import com.maoding.core.base.service.BaseService;
+import com.maoding.core.bean.AjaxMessage;
 import com.maoding.core.bean.ResponseBean;
 import com.maoding.project.dto.ProjectTaskResponsibleDTO;
 import com.maoding.project.entity.ProjectTaskResponsiblerEntity;
@@ -12,7 +13,7 @@ import com.maoding.project.entity.ProjectTaskResponsiblerEntity;
  * 作    者：ChenZJ
  * 日    期：2016年7月19日-下午5:28:54
  */
-public interface ProjectTaskResponsibleService extends BaseService<ProjectTaskResponsiblerEntity>{
+public interface ProjectTaskResponsibleService{
 
 
     /**
@@ -25,13 +26,22 @@ public interface ProjectTaskResponsibleService extends BaseService<ProjectTaskRe
     ResponseBean insertTaskResponsible(String projectId,String companyId,String targetId,String taskId,String accountId,String currentCompanyId) throws Exception;
 
     /**
-     * 方法描述：保存设计负责人（新增）-- 未发布版本
+     * 方法描述：保存设计负责人（新增)(用于处理未发布版本)
      * 作者：MaoSF
      * 日期：2017/5/20
      * @param:
      * @return:
      */
     ResponseBean insertTaskResponsible(String projectId, String companyId, String companyUserId, String taskId, String accountId) throws Exception;
+
+    /**
+     * 方法描述：保存设计负责人（新增）-- 未发布版本
+     * 作者：MaoSF
+     * 日期：2017/5/20
+     * @param:
+     * @return:
+     */
+    ResponseBean insertTaskResponsibleForPublishTask(String projectId, String companyId, String taskId, String accountId,String currentCompanyId) throws Exception;
 
 
     /***********************v2接口************************/

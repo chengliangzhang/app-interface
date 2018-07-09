@@ -18,7 +18,7 @@
         <repository>
             <id>nexus</id>
             <name>maven-public</name>
-            <url>http://192.168.17.168:8081/repository/maven-public/</url>
+            <url>http://192.168.1.253:8081/repository/maven-public</url>
             <layout>default</layout>
             <releases>
                 <enabled>true</enabled>
@@ -27,12 +27,16 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
+        <repository>
+            <id>spring-releases</id>
+            <url>https://repo.spring.io/jcenter-cache</url>
+        </repository>
     </repositories>
     <pluginRepositories>
         <pluginRepository>
             <id>nexus</id>
             <name>maven-public</name>
-            <url>http://192.168.17.168:8081/repository/maven-public/</url>
+            <url>http://192.168.1.253:8081/repository/maven-public</url>
             <layout>default</layout>
             <releases>
                 <enabled>true</enabled>
@@ -40,6 +44,10 @@
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
+        </pluginRepository>
+        <pluginRepository>
+            <id>spring-releases</id>
+            <url>https://repo.spring.io/jcenter-cache</url>
         </pluginRepository>
     </pluginRepositories>
 
@@ -346,7 +354,6 @@
                 <artifactId>spring-context-support</artifactId>
                 <version>${spring.version}</version>
             </dependency>
-
             <!-- Apache -->
             <dependency>
                 <groupId>org.apache.commons</groupId>

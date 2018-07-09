@@ -1,7 +1,7 @@
 package com.maoding.projectcost.dao;
 
 import com.maoding.core.base.dao.BaseDao;
-import com.maoding.projectcost.dto.ProjectCostDTO;
+import com.maoding.projectcost.dto.*;
 import com.maoding.projectcost.entity.ProjectCostEntity;
 
 import java.util.List;
@@ -27,4 +27,20 @@ public interface ProjectCostDao extends BaseDao<ProjectCostEntity> {
      * @return:
      */
     int updateHasNoChildPoint();
+
+    /**
+     * 项目综合数据 -- 费用部分数据
+     */
+    ProjectAmountFee getProjectAmountFee(String projectId,String companyId);
+
+    /**
+     * 项目费用汇总
+     */
+    List<ProjectCostSummaryDTO> getProjectCostSummary(ProjectCostQueryDTO query);
+
+
+    /**
+     * 合作设计费查费汇总界面
+     */
+    List<ProjectCooperatorCostDTO> getProjectCooperatorFee(String projectId, String companyId);
 }

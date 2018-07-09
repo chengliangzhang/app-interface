@@ -24,21 +24,34 @@
   </sql>
 
   <select id="getMessage" resultMap="BaseResultMap" parameterType="java.lang.String" >
-    select a.id, message_title, message_content, message_type, a.company_id, user_id, project_id,a.status,
+    select a.id, message_title, message_content, message_type, a.company_id, user_id, project_id,a.status,param1,param2,
     target_id, DATE_FORMAT(a.create_date,'%Y-%m-%d') as  send_date,a.create_date
     from maoding_web_message a
-    where user_id = #{accountId,jdbcType=VARCHAR}
+    where status != 1
+    AND user_id = #{accountId}
+    <if test="status!=null">
+      and status = #{status}
+    </if>
+    <if test="param2 != null" >
+      and param2= #{param2}
+    </if>
     order by a.create_date desc
+    <if test="lastMessage!=null">
+      limit 1
+    </if>
     <if test="_parameter.containsKey('startPage')">
       limit #{startPage},#{endPage}
     </if>
-
   </select>
 
   <select id="getMessageCount" resultType="java.lang.Integer" parameterType="java.util.Map" >
     select COUNT(1)
     from maoding_web_message a
-    where user_id = #{accountId,jdbcType=VARCHAR}
+    where 1=1 and status != 1
+    AND user_id = #{accountId}
+    <if test="status!=null">
+      and status = #{status}
+    </if>
     <if test="param2 != null" ><!--搜索未读数量-->
       and param2= #{param2,jdbcType=VARCHAR}
     </if>

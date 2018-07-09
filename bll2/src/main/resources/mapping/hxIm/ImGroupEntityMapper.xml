@@ -19,12 +19,14 @@
     <result column="create_by" property="createBy" jdbcType="VARCHAR" />
     <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
     <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="node_id" property="nodeId" jdbcType="VARCHAR" />
+
   </resultMap>
 
   <sql id="Base_Column_List" >
     id, group_no, group_name, group_type, group_owner, group_status, group_img, root_org_id,
     org_id, top_hold, last_queue_no, up_version, deleted, create_date, create_by, update_date,
-    update_by
+    update_by,node_id
   </sql>
   
   <select id="selectById" resultMap="BaseResultMap" parameterType="java.lang.String" >
@@ -50,13 +52,13 @@
       group_img, root_org_id, org_id,
       top_hold, last_queue_no, up_version,
       deleted, create_date, create_by,
-      update_date, update_by)
+      update_date, update_by,node_id)
     values (#{id,jdbcType=VARCHAR}, #{groupNo,jdbcType=VARCHAR}, #{groupName,jdbcType=VARCHAR},
       #{groupType,jdbcType=TINYINT}, #{groupOwner,jdbcType=VARCHAR}, #{groupStatus,jdbcType=TINYINT},
       #{groupImg,jdbcType=VARCHAR}, #{rootOrgId,jdbcType=VARCHAR}, #{orgId,jdbcType=VARCHAR},
       #{topHold,jdbcType=TINYINT}, #{lastQueueNo,jdbcType=BIGINT}, #{upVersion,jdbcType=BIGINT},
       #{deleted,jdbcType=TINYINT}, #{createDate,jdbcType=TIMESTAMP}, #{createBy,jdbcType=VARCHAR},
-      #{updateDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR})
+      #{updateDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR},#{nodeId,jdbcType=VARCHAR})
   </insert>
 
   <update id="updateById" parameterType="com.maoding.hxIm.entity.ImGroupEntity" >
@@ -110,6 +112,9 @@
       <if test="updateBy != null" >
         update_by = #{updateBy,jdbcType=VARCHAR},
       </if>
+      <if test="nodeId != null" >
+        node_id = #{nodeId,jdbcType=VARCHAR},
+      </if>
     </set>
     where id = #{id,jdbcType=VARCHAR}
   </update>
@@ -128,14 +133,13 @@
       last_queue_no = #{lastQueueNo,jdbcType=BIGINT},
       up_version = #{upVersion,jdbcType=BIGINT},
       deleted = #{deleted,jdbcType=TINYINT},
+      node_id = #{nodeId,jdbcType=VARCHAR},
       create_date = #{createDate,jdbcType=TIMESTAMP},
       create_by = #{createBy,jdbcType=VARCHAR},
       update_date = #{updateDate,jdbcType=TIMESTAMP},
       update_by = #{updateBy,jdbcType=VARCHAR}
     where id = #{id,jdbcType=VARCHAR}
   </update>
-
-
 
   <!-- 查询 -->
   <select id="selectByParam" resultMap="BaseResultMap" parameterType="java.util.Map" >
@@ -154,6 +158,9 @@
     </if>
     <if test="groupType != null" >
       and  group_type = #{groupType,jdbcType=VARCHAR}
+    </if>
+    <if test="nodeId != null" >
+      and  node_id = #{nodeId,jdbcType=VARCHAR}
     </if>
     <if test="rootOrgId != null" >
       and (root_org_id is null or root_org_id = '')

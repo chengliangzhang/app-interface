@@ -2,6 +2,7 @@ package com.maoding.hxIm.dao;
 
 import com.maoding.core.base.dao.BaseDao;
 import com.maoding.hxIm.dto.ImGroupDataDTO;
+import com.maoding.hxIm.dto.ImGroupListDTO;
 import com.maoding.hxIm.dto.ImGroupQuery;
 import com.maoding.hxIm.entity.ImGroupEntity;
 
@@ -52,6 +53,13 @@ public interface ImGroupDao extends BaseDao<ImGroupEntity> {
      * 日        期：2017年8月8日-下午2:17:17
      */
     List<ImGroupDataDTO> listAllGroupByUserIdAndCompanyId(ImGroupQuery query);
+
+    /**
+     * 方法描述：查询userId所在当前公司下的所有群组（按类型分组）
+     * 作        者：MaoSF
+     * 日        期：2017年8月8日-下午2:17:17
+     */
+    List<ImGroupListDTO> listGroupByUserIdAndCompanyId(ImGroupQuery query);
 
     /**
      * 根据参数查找群组（暂时）

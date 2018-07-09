@@ -3,7 +3,7 @@
 <mapper namespace="ExpMainEntityMapper" >
   <resultMap id="BaseResultMap" type="com.maoding.financial.entity.ExpMainEntity" >
     <id column="id" property="id" jdbcType="VARCHAR" />
-    <result column="user_id" property="userId" jdbcType="VARCHAR" />
+    <result column="company_user_id" property="companyUserId" jdbcType="VARCHAR" />
     <result column="exp_date" property="expDate" jdbcType="DATE" />
     <result column="approve_status" property="approveStatus" jdbcType="VARCHAR" />
     <result column="company_id" property="companyId" jdbcType="VARCHAR" />
@@ -16,14 +16,19 @@
     <result column="version_num" property="versionNum" jdbcType="INTEGER" />
     <result column="exp_no" property="expNo" jdbcType="VARCHAR" />
     <result column="exp_flag" property="expFlag" jdbcType="INTEGER" />
+    <result column="type" property="type" jdbcType="INTEGER" />
+    <result column="allocation_date" property="allocationDate" jdbcType="DATE" />
+    <result column="allocation_user_id" property="allocationUserId" jdbcType="VARCHAR" />
+    <result column="enterprise_id" property="enterpriseId" jdbcType="VARCHAR" />
   </resultMap>
   <sql id="Base_Column_List" >
-    id, user_id,  exp_date,  approve_status, company_id, depart_id,
-    remark, create_date, create_by, update_date, update_by,version_num,exp_no,exp_flag
+    id, company_user_id,  exp_date,  approve_status, company_id, depart_id,
+    remark, create_date, create_by, update_date, update_by,version_num,exp_no,exp_flag,
+     type,allocation_date,allocation_user_id,enterprise_id
   </sql>
   <resultMap id="BaseResultMapWithUserName" type="com.maoding.financial.dto.ExpMainDTO" >
     <id column="id" property="id" jdbcType="VARCHAR" />
-    <result column="user_id" property="userId" jdbcType="VARCHAR" />
+    <result column="company_user_id" property="companyUserId" jdbcType="VARCHAR" />
     <result column="user_name" property="userName" jdbcType="VARCHAR" />
     <result column="exp_date" property="expDate" jdbcType="DATE" />
     <result column="remark" property="remark" jdbcType="VARCHAR" />
@@ -31,23 +36,29 @@
 
   </resultMap>
 
-  <select id="selectByIdWithUserName" resultType="com.maoding.financial.dto.ExpMainDTO" parameterType="java.lang.String" >
-    select 
-    a.id as id,a.user_id as userId,b.user_name as userName,a.exp_date as expDate,a.remark as remark,a.approve_status as approveStatus,
-    IF(d.file_group IS NULL ,NULL,CONCAT(#{fastdfsUrl,jdbcType=VARCHAR},d.file_group,'/',d.attach_path)) AS imgUrl
+
+  <select id="selectByIdWithUserNameByParam" resultType="com.maoding.financial.dto.ExpMainDataDTO" parameterType="java.util.Map" >
+    select
+    a.id as id,a.company_user_id as companyUserId,b.user_id as accountId,b.user_name as userName,a.exp_date as expDate,
+    a.remark as remark,a.approve_status as approveStatus,a.type,
+    d.oss_file_path AS fileFullPath,
+    company.company_name,company.id as companyId
     from maoding_web_exp_main a
-    LEFT JOIN maoding_web_company_user b on a.user_id = b.id
-     LEFT JOIN maoding_web_user_attach d on b.user_id = d.user_id and d.attach_type = 5
+    LEFT JOIN maoding_web_company_user b on a.company_user_id = b.id
+    LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) d on b.user_id = d.user_id and d.attach_type = 5
+    left join maoding_web_company company on (b.company_id = company.id)
     where a.id = #{id,jdbcType=VARCHAR}
   </select>
 
-  <select id="selectByIdWithUserNameByParam" resultType="com.maoding.financial.dto.ExpMainDTO" parameterType="java.util.Map" >
+  <select id="selectAllocationUser" resultType="com.maoding.financial.dto.ExpMainDataDTO" parameterType="java.util.Map" >
     select
-    a.id as id,a.user_id as userId,b.user_name as userName,a.exp_date as expDate,a.remark as remark,a.approve_status as approveStatus,
-    IF(d.file_group IS NULL ,NULL,CONCAT(#{fastdfsUrl,jdbcType=VARCHAR},d.file_group,'/',d.attach_path)) AS imgUrl
+    a.id as id,a.allocation_user_id as companyUserId,b.user_id as accountId,b.user_name as userName,a.allocation_date as expDate,a.remark as remark,a.approve_status as approveStatus,
+    d.oss_file_path AS imgUrl,
+    company.company_name,company.id as companyId
     from maoding_web_exp_main a
-    LEFT JOIN maoding_web_company_user b on a.user_id = b.id
-    LEFT JOIN maoding_web_user_attach d on b.user_id = d.user_id and d.attach_type = 5
+    LEFT JOIN maoding_web_company_user b on a.allocation_user_id = b.id
+    LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) d on b.user_id = d.user_id and d.attach_type = 5
+    left join maoding_web_company company on (b.company_id = company.id)
     where a.id = #{id,jdbcType=VARCHAR}
   </select>
 
@@ -64,27 +75,28 @@
   </delete>
 
   <insert id="insert" parameterType="com.maoding.financial.entity.ExpMainEntity" >
-    insert into maoding_web_exp_main (id, user_id,
+    insert into maoding_web_exp_main (id, company_user_id,
       exp_date,  approve_status,
       company_id, depart_id, remark, 
       create_date, create_by, update_date, 
-      update_by,exp_no,exp_flag)
-    values (#{id,jdbcType=VARCHAR}, #{userId,jdbcType=VARCHAR},
+      update_by,exp_no,exp_flag,type,allocation_date,allocation_user_id,enterprise_id)
+    values (#{id,jdbcType=VARCHAR}, #{companyUserId,jdbcType=VARCHAR},
       now(), #{approveStatus,jdbcType=VARCHAR},
       #{companyId,jdbcType=VARCHAR}, #{departId,jdbcType=VARCHAR}, #{remark,jdbcType=VARCHAR}, 
       now(), #{createBy,jdbcType=VARCHAR}, now(),
       #{updateBy,jdbcType=VARCHAR},
-      #{expNo,jdbcType=VARCHAR}, #{expFlag,jdbcType=INTEGER})
+      #{expNo,jdbcType=VARCHAR}, #{expFlag,jdbcType=INTEGER},
+      #{type,jdbcType=INTEGER}, #{allocationDate,jdbcType=DATE},#{allocationUserId,jdbcType=VARCHAR},#{enterpriseId})
   </insert>
 
   <update id="updateById" parameterType="com.maoding.financial.entity.ExpMainEntity" >
     update maoding_web_exp_main
     <set >
-      <if test="userId != null" >
-        user_id = #{userId,jdbcType=VARCHAR},
+      <if test="companyUserId != null" >
+        company_user_id = #{companyUserId,jdbcType=VARCHAR},
       </if>
       <if test="expDate != null" >
-        exp_date = now(),
+        exp_date =#{expDate},
       </if>
       <if test="approveStatus != null" >
         approve_status = #{approveStatus,jdbcType=VARCHAR},
@@ -117,6 +129,18 @@
       <if test="expFlag != null" >
         exp_flag = (#{expFlag,jdbcType=INTEGER}),
       </if>
+      <if test="type != null" >
+        type = #{type,jdbcType=INTEGER},
+      </if>
+      <if test="allocationDate != null" >
+        allocation_date = #{allocationDate,jdbcType=DATE},
+      </if>
+      <if test="allocationUserId != null" >
+        allocation_user_id = #{allocationUserId,jdbcType=VARCHAR},
+      </if>
+      <if test="enterpriseId != null" >
+        enterprise_id = #{enterpriseId,jdbcType=VARCHAR},
+      </if>
     </set>
     where id = #{id,jdbcType=VARCHAR}
     <if test="versionNum != null" >
@@ -126,16 +150,20 @@
 
   <update id="update" parameterType="com.maoding.financial.entity.ExpMainEntity" >
     update maoding_web_exp_main
-    set user_id = #{userId,jdbcType=VARCHAR},
+    set company_user_id = #{companyUserId,jdbcType=VARCHAR},
       exp_date = #{expDate,jdbcType=DATE},
       approve_status = #{approveStatus,jdbcType=VARCHAR},
       company_id = #{companyId,jdbcType=VARCHAR},
       depart_id = #{departId,jdbcType=VARCHAR},
+       type = #{type,jdbcType=INTEGER},
+      allocation_date = #{allocationDate,jdbcType=DATE},
+      allocation_user_id = #{allocationUserId,jdbcType=VARCHAR},
       remark = #{remark,jdbcType=VARCHAR},
       create_date = #{createDate,jdbcType=TIMESTAMP},
       create_by = #{createBy,jdbcType=VARCHAR},
       update_date = #{updateDate,jdbcType=TIMESTAMP},
-      update_by = #{updateBy,jdbcType=VARCHAR}
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      enterprise_id = #{enterpriseId}
     where id = #{id,jdbcType=VARCHAR}
   </update>
 
@@ -147,8 +175,15 @@
     <if test="expNo != null" >
       and m.exp_no=#{expNo,jdbcType=VARCHAR}
     </if>
-
   </select>
 
+
+  <select id="getMyExpAmount" resultType="com.maoding.financial.dto.ExpAmountDTO" parameterType="java.lang.String">
+    SELECT truncate(ifnull(sum(if(a.approve_status=1 and date_format(a.exp_date,'%Y-%m')=date_format(now(),'%Y-%m') ,  b.exp_amount,0)),0),2) as approvalAmount,
+    truncate(ifnull(sum(if((a.approve_status=0 or a.approve_status = 5) , b.exp_amount,0)),0),2) as notApprovalAmount
+    from maoding_web_exp_main a
+    INNER JOIN maoding_web_exp_detail b on a.id = b.main_id
+    where a.company_user_id = #{companyUserId,jdbcType=VARCHAR}
+  </select>
 
 </mapper>

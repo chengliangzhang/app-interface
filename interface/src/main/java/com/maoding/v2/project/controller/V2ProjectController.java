@@ -3,8 +3,9 @@ package com.maoding.v2.project.controller;
 import com.maoding.core.bean.AjaxMessage;
 import com.maoding.core.bean.ResponseBean;
 import com.maoding.core.constant.SystemParameters;
-import com.maoding.project.dto.ProjectDTO;
-import com.maoding.project.dto.ProjectDesignContentDTO;
+import com.maoding.partner.dto.PartnerQueryDTO;
+import com.maoding.partner.service.PartnerService;
+import com.maoding.project.dto.*;
 import com.maoding.project.service.ProjectService;
 import com.maoding.projectmember.dto.ProjectMemberGroupDTO;
 import com.maoding.projectmember.service.ProjectMemberService;
@@ -47,6 +48,8 @@ public class V2ProjectController extends BaseWSController {
     @Autowired
     private ProjectMemberService projectMemberService;
 
+    @Autowired
+    PartnerService partnerService;
 
     @Value("${project}")
     private String projectUrl;
@@ -64,7 +67,7 @@ public class V2ProjectController extends BaseWSController {
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean getProjectType(@RequestBody Map<String, Object> map) throws Exception {
-        List<DataDictionaryDTO> projectTypeList = dataDictionaryService.getSubDataByCodeToDTO(SystemParameters.PRO_CONSTRUCTFUNCTION);//项目类别
+        List<DataDictionaryDTO> projectTypeList = dataDictionaryService.getSubDataByCodeToDTO(SystemParameters.PRO_Type);//项目类别
         return ResponseBean.responseSuccess("查询成功").addData("projectTypeList", projectTypeList);
     }
 
@@ -88,9 +91,6 @@ public class V2ProjectController extends BaseWSController {
      * 方法描述：设计阶段
      * 作者：MaoSF
      * 日期：2016/7/28
-     *
-     * @param:[id]
-     * @return:com.maoding.core.bean.AjaxMessage
      */
     @RequestMapping("/getDesignContentList")
     @ResponseBody
@@ -113,9 +113,6 @@ public class V2ProjectController extends BaseWSController {
      * 方法描述：设计范围
      * 作者：MaoSF
      * 日期：2016/7/28
-     *
-     * @param:[id]
-     * @return:com.maoding.core.bean.AjaxMessage
      */
     @RequestMapping("/getDesignRangeList")
     @ResponseBody
@@ -138,15 +135,40 @@ public class V2ProjectController extends BaseWSController {
     }
 
 
+    /**
+     * 方法描述：功能分类
+     * 作者：MaoSF
+     * 日期：2016/7/28
+     */
+    @RequestMapping("/getProjectFunctionList")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getProjectFunctionList(@RequestBody Map<String, Object> map) {
+        try {
+            List<ProjectBuiltTypeDTO> list = projectService.getProjectBuildType((String)map.get("projectId"));//设计范围
+  //          List<Map<String, String>> list = new ArrayList<Map<String, String>>();
+//            Map<String, String> map1 = null;
+//            for (ProjectBuiltTypeDTO dto : designRangeList) {
+//                map1 = new HashMap<String, String>();
+//                map1.put("designRange", dto.getName());
+//                list.add(map1);
+//            }
+            return ResponseBean.responseSuccess("查询成功").addData("projectFunctionList", list);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseBean.responseError("查询设计范围失败！");
+        }
+    }
+
+
+
+
 /********************************************************v2***************************************/
 
     /**
      * 方法描述：删除项目
      * 作者：MaoSF
      * 日期：2016/7/29
-     *
-     * @param:
-     * @return:
      */
     @RequestMapping("deleteProject")
     @ResponseBody
@@ -163,9 +185,6 @@ public class V2ProjectController extends BaseWSController {
      * 方法描述：项目详情
      * 作者：MaoSF
      * 日期：2016/7/28
-     *
-     * @param:[id]
-     * @return:
      */
     @RequestMapping("/getProject")
     @ResponseBody
@@ -178,28 +197,9 @@ public class V2ProjectController extends BaseWSController {
     }
 
     /**
-     * 方法描述：项目相关信息详情
-     * 作者：Chenzhujie
-     * 日期：2016/12/13
-     *
-     * @param:
-     * @return:
-     */
-    @RequestMapping("/getProjectAbouts")
-    @ResponseBody
-    @AuthorityCheckable
-    public ResponseBean getProjectAbouts(@RequestBody Map<String, Object> param) throws Exception {
-        return ResponseBean.responseSuccess("查询成功").addData(projectService.getProjectsAbouts(param));
-    }
-
-
-    /**
      * 方法描述：获取添加项目的基础数据
      * 作者：MaoSF
      * 日期：2016/12/7
-     *
-     * @param:
-     * @return:
      */
     @RequestMapping("/getAddProjectBaseData")
     @ResponseBody
@@ -221,9 +221,6 @@ public class V2ProjectController extends BaseWSController {
      * 方法描述：项目立项(必要参数)
      * 作者：MaoSF
      * 日期：2016/12/7
-     *
-     * @param:
-     * @return:
      */
     @RequestMapping("/saveNewProject")
     @ResponseBody
@@ -240,11 +237,13 @@ public class V2ProjectController extends BaseWSController {
      */
     @RequestMapping("/v2GetProjectList")
     @ResponseBody
+    @AuthorityCheckable
     public ResponseBean v2GetProjectList(@RequestBody Map<String,Object> paraMap){
         try{
             List<V2ProjectTableDTO>  projectList = projectService.getV2ProjectList(paraMap);
-            int totalCount = projectService.getProjectListByConditionCount(paraMap);
-            return  ResponseBean.responseSuccess("查询成功").addData("projectList",projectList).addData("totalCount",totalCount);
+         //   int totalCount = projectService.getProjectListByConditionCount(paraMap);
+            return  ResponseBean.responseSuccess("查询成功").addData("projectList",projectList);
+                    //.addData("totalCount",totalCount);
         }catch (Exception e){
             return ResponseBean.responseError("查询失败");
         }
@@ -288,31 +287,90 @@ public class V2ProjectController extends BaseWSController {
 
 
     /**
-     * 方法描述：获取项目菜单权限
+     * 方法描述：项目综合数据
      * 作者：MaoSF
-     * 日期：2017/03/26
+     * 日期：2016/7/29
      */
-    @RequestMapping("/projectNavigationRoleInterface")
+    @RequestMapping(value = {"/getProjectInfo"}, method = RequestMethod.POST)
     @ResponseBody
     @AuthorityCheckable
-    public ResponseBean projectNavigationRoleInterface(@RequestBody Map<String, Object> paraMap) throws Exception {
-        return projectService.projectNavigationRoleInterface(paraMap);
+    public ResponseBean getProjectInfo(@RequestBody Map<String, Object> paraMap) throws Exception {
+        return ResponseBean.responseSuccess("查询成功").addDataFromObject(this.projectService.getProjectInfo((String)paraMap.get("projectId"),
+                (String)paraMap.get("appOrgId"),
+                (String)paraMap.get("accountId")));
+    }
+
+
+
+    /**
+     * 方法描述：项目成员
+     * 作者：MaoSF
+     * 日期：2016/7/29
+     */
+    @RequestMapping(value = {"/listProjectAllMember"}, method = RequestMethod.POST)
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean listProjectAllMember(@RequestBody Map<String, Object> paraMap) throws Exception {
+        return ResponseBean.responseSuccess("查询成功").addData("projectMembers",this.projectMemberService.listProjectAllMember(paraMap));
     }
 
     /**
-     * 方法描述：保存设计阶段
+     * 方法描述：项目综合数据
      * 作者：MaoSF
      * 日期：2016/7/29
-     *
-     * @param:
-     * @return:
      */
-    @RequestMapping(value = {"/saveOrUpdateProjectDesign"}, method = RequestMethod.POST)
+    @RequestMapping(value = {"/getProjectListForLaborHour"}, method = RequestMethod.POST)
     @ResponseBody
     @AuthorityCheckable
-    public ResponseBean saveOrUpdateProjectDesign(@RequestBody ProjectDesignContentDTO dto) throws Exception {
-        dto.setCompanyId(dto.getAppOrgId());
-        return this.projectService.saveOrUpdateProjectDesign(dto);
+    public ResponseBean getProjectListForLaborHour(@RequestBody Map<String, Object> paraMap) throws Exception {
+        return ResponseBean.responseSuccess("查询成功").addData("projectList",projectService.getProjectListForLaborHour(paraMap));
+    }
+
+    /**
+     * 方法描述：首页--项目板块数据
+     * 作者：MaoSF
+     * 日期：2016/7/29
+     */
+    @RequestMapping(value = {"/getProjectForHome"}, method = RequestMethod.POST)
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getProjectForHome(@RequestBody Map<String, Object> paraMap) throws Exception {
+        return ResponseBean.responseSuccess("查询成功").addData("homeData",projectService.getProjectForHome(paraMap));
+    }
+
+    /**
+     * 方法描述：外部合组织列表
+     * 作者：MaoSF
+     * 日期：2017/5/9
+     */
+    @RequestMapping(value = "/getProjectPartnerList")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getProjectPartnerList(@RequestBody PartnerQueryDTO dto) throws Exception {
+        dto.setFromCompanyId(dto.getAppOrgId());
+        List<ProjectPartnerDTO> list = partnerService.getProjectPartnerList(dto);
+        int editFlag = this.projectService.getProjectEditRole(dto.getProjectId(),dto.getAppOrgId(),dto.getAccountId());
+        return ResponseBean.responseSuccess("查询成功").addData("partnerList",list).addData("editFlag",editFlag);
+
+    }
+
+    /**
+     * 方法：获取项目基础信息的自定义字段
+     * 作者：Zhangchengliang
+     * 日期：2017/8/15
+     */
+    @RequestMapping(value = "/loadProjectCustomFields", method = RequestMethod.POST)
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean loadProjectCustomFields(@RequestBody ProjectCustomFieldQueryDTO query) throws Exception {
+        if (query.getCompanyId() == null) {
+            query.setCompanyId(query.getAppOrgId());
+        }
+        CustomProjectPropertyEditDTO result = projectService.loadProjectCustomFields(query);
+        result.setCompanyId(query.getCompanyId());
+        result.setProjectId(query.getProjectId());
+        result.setOperatorId(query.getAccountId());
+        return ResponseBean.responseSuccess("查询成功").addDataFromObject(result);
     }
 }
 

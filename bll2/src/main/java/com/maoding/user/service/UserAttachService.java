@@ -42,6 +42,13 @@ public interface UserAttachService extends BaseService<UserAttachEntity>{
 	 * @return
 	 */
 	public List<UserAttachDTO> getAttachByTypeToDTO(Map<String,Object>paraMap) throws Exception;
+
+	/**
+	 *
+	 * @param userId
+	 * @return
+	 */
+	UserAttachDTO getHeadImg(String userId) throws Exception;
 	
 	
 	/**
@@ -83,4 +90,8 @@ public interface UserAttachService extends BaseService<UserAttachEntity>{
 	 * 日    期 : 2016/12/23
 	 */
 	public Object v2SaveUserAttach(MultipartFile file,Map<String,Object>param)throws Exception;
+
+	String getHeadImgUrl(String userId) throws Exception;
+
+	String getHeadImgNotFullPath(String userId) throws Exception;
 }

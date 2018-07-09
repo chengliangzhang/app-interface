@@ -1,10 +1,16 @@
 package com.maoding.mytask.service;
 
+import com.maoding.core.base.dto.QueryDTO;
 import com.maoding.core.base.service.BaseService;
 import com.maoding.core.bean.ResponseBean;
-import com.maoding.mytask.dto.MyTaskListDTO;
+import com.maoding.core.constant.SystemParameters;
+import com.maoding.mytask.dto.*;
 import com.maoding.mytask.entity.MyTaskEntity;
+import com.maoding.org.entity.CompanyUserEntity;
+import com.maoding.task.dto.ApproveCount;
+import com.maoding.task.dto.HomeDTO;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -62,21 +68,21 @@ public interface MyTaskService extends BaseService<MyTaskEntity> {
      * 作者：MaoSF
      * 日期：2016/12/21
      */
-    ResponseBean saveMyTask(String targetId, int taskType, String companyId, String companyUserId) throws Exception;
+    ResponseBean saveMyTask(String targetId, int taskType, String companyId, String companyUserId,String createBy,String currentCompanyId) throws Exception;
 
     /**
      * 方法描述：保存我的任务（发送给指定的人）
      * 作者：MaoSF
      * 日期：2016/12/21
      */
-    ResponseBean saveMyTask(String targetId, int taskType, String companyId, String companyUserId,boolean isSendMessage) throws Exception;
+    ResponseBean saveMyTask(String targetId, int taskType, String companyId, String companyUserId,boolean isSendMessage,String createBy,String currentCompanyId) throws Exception;
 
     /**
      * 方法描述：技术审查费付款确认，合作技术费付款确认（taskType=4 or 6）
      * 作者：MaoSF
      * 日期：2017/3/6
      */
-    ResponseBean saveMyTask(String targetId, int taskType, String companyId) throws Exception;
+    ResponseBean saveMyTask(String targetId, int taskType, String companyId,String createBy,String currentCompanyId) throws Exception;
 
 
     /**
@@ -87,28 +93,19 @@ public interface MyTaskService extends BaseService<MyTaskEntity> {
     ResponseBean saveMyTask(MyTaskEntity entity, boolean isSendMessage) throws Exception;
 
     /**
-     * 方法描述：处理我的任务(taskType==0)
+     * 方法描述：保存轻量级任务
      * 作者：MaoSF
      * 日期：2016/12/21
      */
-    ResponseBean handleMyTask(String id, String result, String status,String accountId) throws Exception;
-
-    /**
-     * 方法描述：处理我的任务
-     * 作者：MaoSF
-     * 日期：2016/12/21
-     */
-    ResponseBean handleMyTask(String id, String result, String status, String accountId, String paidDate) throws Exception;
+    ResponseBean saveMyTask(SaveMyTaskDTO dto) throws Exception;
 
 
     /**
      * 方法描述：处理我的任务
      * 作者：MaoSF
      * 日期：2016/12/21
-     * @param:
-     * @return:
      */
-    ResponseBean handleMyTask(String targetId, int taskType, String companyUserId) throws Exception;
+    ResponseBean handleMyTask(HandleMyTaskDTO dto) throws Exception;
 
     /**
      * 方法描述：处理我的任务(专门处理报销任务)
@@ -137,6 +134,7 @@ public interface MyTaskService extends BaseService<MyTaskEntity> {
      */
     ResponseBean ignoreMyTask(String targetId) throws Exception;
 
+    ResponseBean getMyTaskDetail_old(String id,String accountId) throws Exception;
 
     /**
      * 方法描述：查询我的任务详情
@@ -147,6 +145,16 @@ public interface MyTaskService extends BaseService<MyTaskEntity> {
      */
     ResponseBean getMyTaskDetail(String id,String accountId) throws Exception;
 
+
+    /**
+     * 方法描述：查询我的任务详情
+     * 作者：MaoSF
+     * 日期：2017/1/11
+     * @param:
+     * @return:
+     */
+    TaskDetailDTO getMyTaskById(String id,String accountId) throws Exception;
+
     /**
      * 作用：激活已完成的任务
      * 作者：ZCL
@@ -156,4 +164,32 @@ public interface MyTaskService extends BaseService<MyTaskEntity> {
      * @throws Exception
      */
     int activeMyTask(MyTaskEntity entity,String accountId) throws Exception;
+
+    /**
+     * 我的任务统计
+     */
+    MyTaskCountDTO selectMyTaskCount(String companyId,String accountId)  throws Exception;
+
+
+    List<MyTaskDTO> getOvertimeTask(Map<String, Object> param);
+
+    List<MyTaskDTO> getDueTask(Map<String, Object> param);
+
+
+    ApproveCount getTaskCount(String companyId, String handlerId,String accountId);
+
+    /**
+     * 我提交的任务
+     */
+    List<TaskDataDTO> getMySubmitTask(QueryDTO dto);
+
+    /**
+     * 删除轻量任务
+     */
+    ResponseBean deleteMyTask(SaveMyTaskDTO dto);
+
+
+    HomeDTO getTaskForHome(Map<String, Object> param) throws Exception ;
+
+    Map<String,Object> myTaskCountForNotHandle(Map<String, Object> param) throws Exception ;
 }

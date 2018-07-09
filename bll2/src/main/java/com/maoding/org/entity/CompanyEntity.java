@@ -151,6 +151,8 @@ public class CompanyEntity extends BaseEntity implements java.io.Serializable{
      */
     private String aliasName;
 
+    private String typeId;
+
     public String getFilePath() {
         return filePath;
     }
@@ -384,5 +386,13 @@ public class CompanyEntity extends BaseEntity implements java.io.Serializable{
 
     public void setAliasName(String aliasName) {
         this.aliasName = aliasName;
+    }
+
+    public String getTypeId() {
+        return typeId;
+    }
+
+    public void setTypeId(String typeId) {
+        this.typeId = typeId;
     }
 }

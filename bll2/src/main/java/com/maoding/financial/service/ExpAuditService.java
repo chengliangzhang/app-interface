@@ -3,6 +3,9 @@ package com.maoding.financial.service;
 import com.maoding.core.base.service.BaseService;
 import com.maoding.financial.entity.ExpAuditEntity;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * 深圳市设计同道技术有限公司
  * 类    名 : ExpAuditService
@@ -11,4 +14,6 @@ import com.maoding.financial.entity.ExpAuditEntity;
  * 日    期 : 2016/7/26-15:56
  */
 public interface ExpAuditService extends BaseService<ExpAuditEntity>{
+
+    String getAuditPerson(String mainId,String accountId);
 }

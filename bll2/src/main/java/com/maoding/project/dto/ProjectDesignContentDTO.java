@@ -1,6 +1,7 @@
 package com.maoding.project.dto;
 
 import com.maoding.core.base.dto.BaseDTO;
+import com.maoding.core.util.StringUtil;
 
 /**
  * 深圳市设计同道技术有限公司
@@ -42,7 +43,14 @@ public class ProjectDesignContentDTO extends BaseDTO {
      */
     private String endTime;
 
-    private int flag;//是否变更>1有变更，否则没有
+    /**
+     * 变更原因
+     */
+    private String memo;
+
+    private int changeFlag;//后台给予标识，判断前端是否出现 变更 字眼
+
+    private int flag;//是否变更>1有变更，否则没有 ，前端给以后台，用于判断是否有变更
 
     public String getProjectId() {
         return projectId;
@@ -100,11 +108,30 @@ public class ProjectDesignContentDTO extends BaseDTO {
         this.endTime = endTime;
     }
 
+    public String getMemo() {
+        return memo;
+    }
+
+    public void setMemo(String memo) {
+        this.memo = memo;
+    }
+
     public int getFlag() {
         return flag;
     }
 
     public void setFlag(int flag) {
         this.flag = flag;
+    }
+
+    public int getChangeFlag() {
+        if(!StringUtil.isNullOrEmpty(this.startTime) || !StringUtil.isNullOrEmpty(this.endTime)){
+            changeFlag = 1;
+        }
+        return changeFlag;
+    }
+
+    public void setChangeFlag(int changeFlag) {
+        this.changeFlag = changeFlag;
     }
 }

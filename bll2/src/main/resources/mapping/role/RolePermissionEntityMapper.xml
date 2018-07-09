@@ -10,10 +10,11 @@
     <result column="create_by" property="createBy" jdbcType="VARCHAR" />
     <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
     <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="forbid_relation_type_id" property="forbidRelationTypeId" jdbcType="VARCHAR" />
   </resultMap>
 
   <sql id="Base_Column_List" >
-    id, role_id, permission_id,company_id, create_date, create_by, update_date, update_by
+    id, role_id, permission_id,forbid_relation_type_id,company_id, create_date, create_by, update_date, update_by
   </sql>
 
   <select id="getAllDefaultPermission" resultMap="BaseResultMap" parameterType="java.lang.String" >
@@ -54,10 +55,12 @@
   </delete>
 
   <insert id="insert" parameterType="com.maoding.role.entity.RolePermissionEntity" >
-    insert into maoding_web_role_permission (id, role_id, permission_id, company_id,
-      create_date, create_by, update_date, 
+     insert into maoding_web_role_permission (id, role_id,forbid_relation_type_id,
+     permission_id, company_id,
+      create_date, create_by, update_date,
       update_by)
-    values (#{id,jdbcType=VARCHAR}, #{roleId,jdbcType=VARCHAR}, #{permissionId,jdbcType=VARCHAR},  #{companyId,jdbcType=VARCHAR},
+    values (#{id,jdbcType=VARCHAR}, #{roleId,jdbcType=VARCHAR}, #{forbidRelationTypeId,jdbcType=VARCHAR},
+    #{permissionId,jdbcType=VARCHAR},  #{companyId,jdbcType=VARCHAR},
       now(), #{createBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP},
       #{updateBy,jdbcType=VARCHAR})
   </insert>
@@ -70,6 +73,9 @@
       </if>
       <if test="permissionId != null" >
         permission_id = #{permissionId,jdbcType=VARCHAR},
+      </if>
+      <if test="forbidRelationTypeId != null" >
+        forbid_relation_type_id = #{forbidRelationTypeId,jdbcType=VARCHAR},
       </if>
       <if test="companyId != null" >
         company_id = #{companyId,jdbcType=VARCHAR},

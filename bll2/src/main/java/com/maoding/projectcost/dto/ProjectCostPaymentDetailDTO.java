@@ -57,6 +57,7 @@ public class ProjectCostPaymentDetailDTO extends BaseDTO {
 
     private String myTaskId;
 
+    private int taskType;//对应的任务类型
 
     public String getProjectId() {
         return projectId;
@@ -128,5 +129,13 @@ public class ProjectCostPaymentDetailDTO extends BaseDTO {
 
     public void setMyTaskId(String myTaskId) {
         this.myTaskId = myTaskId;
+    }
+
+    public int getTaskType() {
+        return taskType;
+    }
+
+    public void setTaskType(int taskType) {
+        this.taskType = taskType;
     }
 }

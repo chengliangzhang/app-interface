@@ -126,6 +126,16 @@
     where id = #{id,jdbcType=VARCHAR}
   </update>
 
+  <select id="getMemberCount" parameterType="com.maoding.projectmember.entity.ProjectMemberEntity" resultType="int">
+    SELECT
+    count(DISTINCT account_id)
+    FROM maoding_web_project_member
+    <where >
+      deleted = 0
+      <include refid="whereExample" />
+    </where>
+  </select>
+
   <select id="listProjectMember" parameterType="com.maoding.projectmember.entity.ProjectMemberEntity" resultMap="BaseResultMap">
     SELECT
     <include refid="Base_Column_List" />

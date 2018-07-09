@@ -15,6 +15,12 @@ import java.util.List;
 public class InvitatParentDTO extends BaseDTO{
 
 	private String type;
+
+	/**
+	 * 项目ID（外部合作必传参数）
+	 */
+	private String projectId;
+
     private List<String> cellphoneList = new ArrayList<String>();
 
 	public List<String> getCellphoneList() {
@@ -31,5 +37,13 @@ public class InvitatParentDTO extends BaseDTO{
 
 	public void setType(String type) {
 		this.type = type;
+	}
+
+	public String getProjectId() {
+		return projectId;
+	}
+
+	public void setProjectId(String projectId) {
+		this.projectId = projectId;
 	}
 }

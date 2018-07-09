@@ -64,6 +64,12 @@ public class MessageDTO {
 
     private String isComplete;//messageType:11,14,17是否已经完成
 
+    private String myTaskId; //对应我的任务的id
+
+    private int isNotice;//是否是通知类型
+
+    private String fileFullPath; // 组织logo
+
     public String getId() {
         return id;
     }
@@ -190,5 +196,29 @@ public class MessageDTO {
 
     public void setProjectName(String projectName) {
         this.projectName = projectName;
+    }
+
+    public String getMyTaskId() {
+        return myTaskId;
+    }
+
+    public void setMyTaskId(String myTaskId) {
+        this.myTaskId = myTaskId;
+    }
+
+    public int getIsNotice() {
+        return isNotice;
+    }
+
+    public void setIsNotice(int isNotice) {
+        this.isNotice = isNotice;
+    }
+
+    public String getFileFullPath() {
+        return fileFullPath;
+    }
+
+    public void setFileFullPath(String fileFullPath) {
+        this.fileFullPath = fileFullPath;
     }
 }

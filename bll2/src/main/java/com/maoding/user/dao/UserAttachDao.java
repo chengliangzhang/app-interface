@@ -44,4 +44,12 @@ public interface UserAttachDao extends BaseDao<UserAttachEntity>{
 	 * @return
 	 */
 	public int delUserAttachByUserId(String userId);
+
+
+	/**
+	 * 方法描述：获取头像
+	 * 作        者：MaoSF
+	 * 日        期：2016年3月21日-上午10:29:56
+	 */
+	public  String  getHeadImg(String userId);
 }

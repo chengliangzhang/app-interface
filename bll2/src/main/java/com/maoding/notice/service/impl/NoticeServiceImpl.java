@@ -3,22 +3,40 @@ package com.maoding.notice.service.impl;
 import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.core.base.service.GenericService;
 import com.maoding.core.bean.AjaxMessage;
+import com.maoding.core.bean.ResponseBean;
+import com.maoding.core.constant.NetFileType;
 import com.maoding.core.constant.SystemParameters;
 import com.maoding.core.util.StringUtil;
 import com.maoding.dynamic.service.OrgDynamicService;
+import com.maoding.hxIm.dto.ImSendMessageDTO;
+import com.maoding.hxIm.service.ImQueueProducer;
+import com.maoding.message.dto.SendMessageDataDTO;
 import com.maoding.notice.constDefine.NotifyDestination;
 import com.maoding.notice.dao.NoticeDao;
 import com.maoding.notice.dao.NoticeOrgDao;
+import com.maoding.notice.dao.NoticeReadDao;
 import com.maoding.notice.dto.NoticeDTO;
 import com.maoding.notice.dto.NoticeDataDTO;
-import com.maoding.notice.dto.NoticeMessageDTO;
 import com.maoding.notice.dto.NoticeOrgDTO;
 import com.maoding.notice.entity.NoticeEntity;
 import com.maoding.notice.entity.NoticeOrgEntity;
+import com.maoding.notice.entity.NoticeReadEntity;
 import com.maoding.notice.service.NoticeService;
+import com.maoding.org.dao.CompanyDao;
 import com.maoding.org.dao.CompanyUserDao;
+import com.maoding.org.entity.CompanyEntity;
 import com.maoding.org.entity.CompanyUserEntity;
 import com.maoding.org.service.CompanyUserService;
+import com.maoding.project.dao.ProjectDao;
+import com.maoding.project.dao.ProjectDesignContentDao;
+import com.maoding.project.dto.ProjectDesignContentDTO;
+import com.maoding.project.entity.ProjectDesignContentEntity;
+import com.maoding.project.entity.ProjectEntity;
+import com.maoding.project.service.ProjectSkyDriverService;
+import com.maoding.task.dao.ProjectTaskDao;
+import com.maoding.task.entity.ProjectTaskEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jms.core.JmsTemplate;
@@ -26,6 +44,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.jms.MapMessage;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +61,8 @@ import java.util.regex.Pattern;
 @Service("noticeService")
 public class NoticeServiceImpl extends GenericService<NoticeEntity> implements NoticeService {
 
+    protected final Logger log=LoggerFactory.getLogger(this.getClass());
+
     @Autowired
     private NoticeDao noticeDao;
 
@@ -56,6 +77,24 @@ public class NoticeServiceImpl extends GenericService<NoticeEntity> implements N
 
     @Autowired
     private OrgDynamicService orgDynamicService;
+
+    @Autowired
+    private ProjectSkyDriverService projectSkyDriverService;
+
+    @Autowired
+    private NoticeReadDao noticeReadDao;
+
+    @Autowired
+    private ProjectDao projectDao;
+
+    @Autowired
+    private CompanyDao companyDao;
+
+    @Autowired
+    private ProjectDesignContentDao projectDesignContentDao;
+
+    @Autowired
+    private ImQueueProducer imQueueProducer;
 
     @Autowired
     @Qualifier("notifyJmsTemplate")
@@ -170,31 +209,44 @@ public class NoticeServiceImpl extends GenericService<NoticeEntity> implements N
      * @return:
      */
     private void sendMessageForNotice(NoticeDTO dto) throws Exception {
-        NoticeMessageDTO msgDto = new NoticeMessageDTO();
-
-        msgDto.setNoticeTitle(dto.getNoticeTitle());
-        msgDto.setMessageType(SystemParameters.NOTICE_TYPE);
         Map<String, Object> orgList = new HashMap<>();
         orgList.put("orgList", dto.getOrgList());
-        msgDto.setReceiverList(this.companyUserDao.getUserByOrgIdForNotice(orgList));
-
-        //蛋疼的又转回Map
-        Map<String, Object> map = new HashMap<>();
-        BaseDTO.copyFields(msgDto, map);
-
-        notify(NotifyDestination.WEB, map);
-        notify(NotifyDestination.APP, map);
+        List<String> userList = this.companyUserDao.getUserByOrgIdForNotice(orgList);
+        if (!CollectionUtils.isEmpty(userList)) {
+            //推送给web端
+            SendMessageDataDTO notifyMsg = new SendMessageDataDTO();
+            notifyMsg.setMessageType(SystemParameters.NOTICE_TYPE);
+            notifyMsg.setReceiverList(userList);
+            notifyMsg.setContent(dto.getNoticeTitle());
+            this.notify(NotifyDestination.WEB, notifyMsg);
+            this.notify(NotifyDestination.APP, notifyMsg);
+//            //app端环信通知
+//            Map<String, Object> msgMap = new HashMap<>();
+//            msgMap.put("type", "txt");
+//            msgMap.put("msg", "你有一条新的消息："+dto.getNoticeTitle());
+//            ImSendMessageDTO imSendMessageDTO = new ImSendMessageDTO();
+//            imSendMessageDTO.setFromUser(SystemParameters.NOTICE_MESSAGE_ID);//通知公告助手账号
+//            String[] users = new String[userList.size()];
+//            userList.toArray(users);
+//            imSendMessageDTO.setToUsers(users);
+//            imSendMessageDTO.setTargetType("users");//接收主体（users:个人，chatgroups：群组），如果为空，则默认为个人
+//            imSendMessageDTO.setExt(null);
+//            imSendMessageDTO.setMsgMap(msgMap);
+//            try {
+//                imQueueProducer.sendMessage(imSendMessageDTO);//推送给APP
+//            } catch (Exception e) {
+//                log.error("MessageServiceImpl失败 推送消息失败 app端", e);
+//            }
+        }
+        //notify(NotifyDestination.APP, map);
     }
 
-    public void notify(String destination, Map<String, Object> map) {
-        try {
-            jmsTemplate.send(destination, session -> {
-                MapMessage objectMessage = session.createMapMessage();
-                objectMessage.setObject("messageEntity", map);
-                return objectMessage;
-            });
-        } catch (Exception e) {
-
+    @Override
+    public void notify(String destination, SendMessageDataDTO map) {
+        try{
+            jmsTemplate.convertAndSend(destination, map);
+        }catch (Exception e){
+            e.printStackTrace();
         }
     }
 
@@ -211,7 +263,18 @@ public class NoticeServiceImpl extends GenericService<NoticeEntity> implements N
             param.put("startPage", page * pageSize);
             param.put("endPage", pageSize);
         }
-        return this.noticeDao.getNoticeByParam(param);
+        List<NoticeDTO> list = this.noticeDao.getNoticeByParam(param);
+        Map<String,String> logos = new HashMap<>();
+        for(NoticeDTO dto:list){
+            if(logos.containsKey(dto.getCompanyId())){
+                dto.setFileFullPath(logos.get(dto.getCompanyId()));
+            }else {
+                dto.setFileFullPath(projectSkyDriverService.getCompanyLogo(dto.getCompanyId()));
+                logos.put(dto.getCompanyId(),dto.getFileFullPath());
+            }
+        }
+        readNotice(param);
+        return list;
     }
 
     /**
@@ -263,6 +326,12 @@ public class NoticeServiceImpl extends GenericService<NoticeEntity> implements N
             List<NoticeOrgDTO> noticeOrgList = this.noticeOrgDao.getByNoticeId(id);
             dto.setNoticeOrgList(noticeOrgList);
         }
+
+        //获取附件
+        Map<String,Object> map = new HashMap<>();
+        map.put("targetId",id);
+        map.put("type", NetFileType.NOTICE_ATTACH);
+        dto.setAttachList(projectSkyDriverService.getAttachList(map));
         return dto;
     }
 
@@ -336,6 +405,86 @@ public class NoticeServiceImpl extends GenericService<NoticeEntity> implements N
             param.put("startPage", page * pageSize);
             param.put("endPage", pageSize);
         }
-        return noticeDao.getNoticeGroupTime(param);
+        List<NoticeDataDTO> list = noticeDao.getNoticeGroupTime(param);
+        readNotice(param);
+        return list;
+    }
+
+    private void readNotice(Map<String, Object> param) {
+        param.put("accountId",param.get("userId"));
+        List<NoticeDTO> list = this.noticeDao.getNotReadNotice(param);
+        for (NoticeDTO dto : list) {
+            NoticeReadEntity noticeRead = new NoticeReadEntity();
+            noticeRead.initEntity();
+            noticeRead.setNoticeId(dto.getId());
+            noticeRead.setCompanyId(dto.getCompanyId());
+            noticeRead.setUserId((String) param.get("accountId"));
+            this.noticeReadDao.insert(noticeRead);
+        }
+    }
+
+
+    /**
+     * 立项动态生成
+     */
+    @Override
+    public void saveNoticeForProject(String projectId, String companyId, String accountId, String currentCompanyUserId, List<ProjectDesignContentDTO> designContent) throws Exception {
+        ProjectEntity projectEntity = projectDao.selectById(projectId);
+        //生成公告
+        CompanyEntity c = this.companyDao.selectById(companyId);
+        String companyName = (c == null ? "" : c.getAliasName());
+        NoticeDTO noticeDTO = new NoticeDTO();
+        noticeDTO.setCompanyId(companyId);
+        noticeDTO.setCurrentCompanyId(companyId);
+        noticeDTO.setNoticeTitle("项目立项 - " + projectEntity.getProjectName());
+        noticeDTO.setNoticePublisher(currentCompanyUserId);
+        noticeDTO.setAccountId(accountId);
+        if (designContent != null) {
+            noticeDTO.setNoticeContent("立项组织：" + companyName + "<br/><br/>" + "设计任务：" + getDesignContent(designContent));
+        } else {
+            noticeDTO.setNoticeContent("立项组织：" + companyName + "<br/><br/>" + "设计任务：" + getDesignContent(projectId));
+        }
+        List<String> orgList = new ArrayList<String>();
+        orgList.add(companyId);
+        noticeDTO.setOrgList(orgList);
+        noticeDTO.setNoticeType(0);
+        this.saveNotice(noticeDTO);
+    }
+
+    private String getDesignContent(String id) {
+        if (StringUtil.isNullOrEmpty(id)) {
+            return "";
+        }
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("projectId", id);
+        map.put("taskType", 1);//只查询根任务
+        List<ProjectDesignContentEntity> list = this.projectDesignContentDao.getProjectDesignContentByProjectId(id);
+        if (list == null) {
+            return "";
+        }
+        StringBuffer content = new StringBuffer();
+        for (ProjectDesignContentEntity e : list) {
+            if (content.length() > 0) {
+                content.append(",");
+            }
+            content.append(e.getContentId());
+        }
+        return content.toString();
+    }
+
+    private String getDesignContent(List<ProjectDesignContentDTO> designContent) {
+        if (designContent == null) {
+            return "";
+        }
+
+        StringBuffer content = new StringBuffer();
+        for (ProjectDesignContentDTO d : designContent) {
+            if (content.length() > 0) {
+                content.append(",");
+            }
+            content.append(d.getContentName());
+        }
+        return content.toString();
     }
 }

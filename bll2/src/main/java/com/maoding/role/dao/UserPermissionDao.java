@@ -21,18 +21,14 @@ public interface UserPermissionDao extends BaseDao<UserPermissionEntity> {
      * 作者：MaoSF
      * 日期：2016/11/2
      * @param:userId,companyId
-     * @return:
      */
     int deleteByUserId(Map<String, Object> map);
-
-
 
     /**
      * 方法描述：userId
      * 作者：MaoSF
      * 日期：2016/11/2
-     * @param:userId,companyId，permissionList
-     * @return:
+     * userId,companyId，permissionList
      */
     int deleteByUserIdAndPermission(Map<String, Object> map);
 
@@ -41,7 +37,6 @@ public interface UserPermissionDao extends BaseDao<UserPermissionEntity> {
      * 作者：MaoSF
      * 日期：2016/11/2
      * @param:userId,companyId，permissionList
-     * @return:
      */
     int deleteByPermissionId(Map<String, Object> map);
 
@@ -49,8 +44,6 @@ public interface UserPermissionDao extends BaseDao<UserPermissionEntity> {
      * 方法描述：根据userId，roleList查询用户所在的权限
      * 作者：MaoSF
      * 日期：2016/11/10
-     * @param:
-     * @return:
      */
     List<String> getPermissionByUserAndRole(Map<String, Object> map);
 
@@ -59,7 +52,6 @@ public interface UserPermissionDao extends BaseDao<UserPermissionEntity> {
      * 作者：MaoSF
      * 日期：2016/11/2
      * @param:companyId，permissionId
-     * @return:
      */
     int deleteAllByPermissionId(String companyId, String permissionId);
 
@@ -68,19 +60,8 @@ public interface UserPermissionDao extends BaseDao<UserPermissionEntity> {
      * 方法描述：查询公司具有权限的人的userId(用于保存权限，给相关人发送消息使用)
      * 作者：MaoSF
      * 日期：2017/2/17
-     * @param:
-     * @return:
      */
     List<String> getHasPermissionUserId(String companyId);
-
-    /**
-     * 方法描述：用户权限
-     * 作者：Czj
-     * 日期：2016/11/30
-     * @param:map
-     * @return:List<AccountEntity>
-     */
-    List<UserPermissionEntity> selectByParma(Map<String, Object> param);
 
     /**
      * 方法描述：获取最大的seq

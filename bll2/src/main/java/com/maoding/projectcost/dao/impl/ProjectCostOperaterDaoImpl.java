@@ -24,10 +24,6 @@ public class ProjectCostOperaterDaoImpl extends GenericDao<ProjectCostOperaterEn
      * 方法描述：查询费用详情处理人
      * 作者：MaoSF
      * 日期：2017/3/6
-     *
-     * @param map
-     * @param:
-     * @return:
      */
     @Override
     public List<ProjectCostOperaterDTO> getCostOperator(Map<String, Object> map) {
@@ -39,13 +35,14 @@ public class ProjectCostOperaterDaoImpl extends GenericDao<ProjectCostOperaterEn
      * 方法描述：根据详情删除操作
      * 作者：MaoSF
      * 日期：2017/3/10
-     *
-     * @param costDetailId
-     * @param:
-     * @return:
      */
     @Override
     public int deleteByCostDetailId(String costDetailId) {
         return this.sqlSession.delete("ProjectCostOperaterEntityMapper.deleteByCostDetailId",costDetailId);
+    }
+
+    @Override
+    public List<ProjectCostOperaterEntity> selectByType(ProjectCostOperaterEntity param) {
+        return this.sqlSession.selectList("ProjectCostOperaterEntityMapper.selectByType",param);
     }
 }

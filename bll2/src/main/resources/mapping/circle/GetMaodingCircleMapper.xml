@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetMaodingCircleMapper" >
+
+  <resultMap id="BaseResultMap" type="com.maoding.circle.dto.MaodingCircleDataDTO" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="project_id" property="projectId" jdbcType="VARCHAR" />
+    <result column="publish_user_id" property="publishUserId" jdbcType="VARCHAR" />
+    <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="current_user_org_id" property="currentUserOrgId" jdbcType="VARCHAR" />
+    <result column="circle_type" property="circleType" jdbcType="INTEGER" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="content" property="content" jdbcType="LONGVARCHAR" />
+    <association property="companyName" select="CompanyEntityMapper.getAliasName" column="company_id" fetchType="eager"  />
+    <association property="publishUser" column="{companyUserId=publish_user_id,projectId=project_id}" select="GetProjectMemberMapper.getMemberById" fetchType="eager" />
+  </resultMap>
+
+  <resultMap id="detailMap" type="com.maoding.circle.dto.MaodingCircleDataDTO">
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="project_id" property="projectId" jdbcType="VARCHAR" />
+    <result column="publish_user_id" property="publishUserId" jdbcType="VARCHAR" />
+    <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="current_user_org_id" property="currentUserOrgId" jdbcType="VARCHAR" />
+    <result column="circle_type" property="circleType" jdbcType="INTEGER" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="content" property="content" jdbcType="LONGVARCHAR" />
+    <association property="companyName" select="CompanyEntityMapper.getAliasName" column="company_id" fetchType="eager"  />
+    <association property="publishUser" column="{companyUserId=publish_user_id,projectId=project_id}" select="GetProjectMemberMapper.getMemberById" fetchType="eager" />
+    <collection property="commentList" column="id" select="getCommentList" fetchType="eager" />
+    <collection property="praiseList" column="id" select="praiseList" fetchType="eager" />
+  </resultMap>
+
+  <resultMap id="commentMap" type="com.maoding.circle.dto.MaodingCircleCommentDataDTO" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="project_id" property="projectId" jdbcType="VARCHAR" />
+    <result column="circle_id" property="circleId" jdbcType="VARCHAR" />
+    <result column="reply_user_id" property="replyUserId" jdbcType="VARCHAR" />
+    <result column="comment_user_id" property="commentUserId" jdbcType="VARCHAR" />
+    <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="comment" property="comment" jdbcType="VARCHAR" />
+    <result column="comment_type" property="commentType" jdbcType="INTEGER" />
+    <result column="comment_account_id" property="commentAccountId" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <association property="commentUser" column="{companyUserId=comment_user_id,projectId=project_id}" select="GetProjectMemberMapper.getMemberById" fetchType="eager" />
+    <association property="replyUser" column="{companyUserId=reply_user_id,projectId=project_id}" select="GetProjectMemberMapper.getMemberById" fetchType="eager" />
+  </resultMap>
+
+  <select id="getMaodingCircleById"  parameterType="com.maoding.circle.dto.QueryCircleDTO" resultMap="detailMap">
+     select a.*,ifnull(b.company_id,ifnull(c.company_id,null)) as current_user_org_id
+     from maoding_circle a
+     LEFT JOIN maoding_circle_read b on a.id = b.circle_id and b.user_id = #{accountId}
+     LEFT JOIN maoding_web_company_user c on a.publish_user_id = c.id and c.user_id = #{accountId}
+     where a.id = #{id}
+     group by a.id
+     ORDER BY b.create_date desc
+     limit 1
+  </select>
+
+  <select id="listMaodingCircle"  parameterType="com.maoding.circle.dto.QueryCircleDTO" resultMap="BaseResultMap">
+    select a.*,ifnull(b.company_id,ifnull(c.company_id,null)) as current_user_org_id
+    from maoding_circle a
+    LEFT JOIN maoding_circle_read b on a.id = b.circle_id and b.user_id = #{accountId}
+    LEFT JOIN maoding_web_company_user c on a.publish_user_id = c.id and c.user_id = #{accountId}
+    where a.deleted = 0
+    <if test="companyId!=null">
+      and a.company_id = #{companyId}
+    </if>
+    <if test="projectId!=null">
+      and a.project_id = #{projectId}
+    </if>
+    group by a.id
+    ORDER by a.create_date desc
+    <if test="startPage!=null">
+      limit #{startPage},#{endPage}
+    </if>
+  </select>
+
+  <select id="getCommentList" parameterType="java.lang.String" resultMap="commentMap">
+    select a.*,b.project_id
+    from maoding_circle_comment a
+    INNER JOIN maoding_circle b on a.circle_id = b.id
+    where circle_id = #{circleId}
+    and a.deleted = 0
+    and a.comment_type = 2
+    ORDER by a.create_date
+  </select>
+
+  <select id="praiseList" parameterType="java.lang.String" resultMap="commentMap">
+    select a.id,a.circle_id,a.reply_user_id,a.comment_user_id,a.company_id,a.comment,a.comment_type
+    from maoding_circle_comment a
+    where  circle_id = #{circleId}
+    and a.comment_type = 1
+    and a.deleted = 0
+    ORDER by a.create_date
+  </select>
+  
+  <select id="getAllCommentByCircleId" parameterType="java.lang.String" resultMap="commentMap">
+    select a.id,a.circle_id,a.reply_user_id,a.comment_user_id,a.company_id,a.comment,
+    a.comment_type, b.user_id as comment_account_id, c.project_id
+    from maoding_circle_comment a
+    INNER JOIN maoding_web_company_user b on a.comment_user_id = b.id
+    INNER JOIN maoding_circle c on a.circle_id = c.id
+    where a.circle_id = #{circleId}
+    and a.deleted = 0
+  </select>
+
+  <select id="getCircleCommentById" parameterType="java.lang.String" resultMap="commentMap">
+    select a.*,b.project_id
+    from maoding_circle_comment a
+    INNER JOIN maoding_circle b on a.circle_id = b.id
+    where a.id = #{commentId}
+  </select>
+
+  <select id="getPartInCompany" parameterType="com.maoding.circle.dto.QueryCircleDTO" resultType="java.lang.String">
+    select DISTINCT a.company_id
+    from maoding_web_project_member a
+    INNER JOIN maoding_web_company_user b on a.account_id = b.user_id
+    where a.project_id = #{projectId}
+    and b.audit_status = 1
+    and a.account_id = #{accountId}
+    ORDER BY IF(a.company_id = #{appOrgId},1,2)
+    limit 1
+  </select>
+
+</mapper>

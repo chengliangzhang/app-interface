@@ -1,13 +1,11 @@
 package com.maoding.org.controller;
 
-import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.core.bean.AjaxMessage;
 import com.maoding.core.bean.ResponseBean;
 import com.maoding.core.constant.SystemParameters;
 import com.maoding.core.util.MD5Helper;
 import com.maoding.core.util.StringUtil;
 import com.maoding.org.dto.*;
-import com.maoding.org.entity.CompanyEntity;
 import com.maoding.org.entity.CompanyUserEntity;
 import com.maoding.org.service.*;
 import com.maoding.role.dto.InterfaceGroupAndRoleDTO;
@@ -17,7 +15,6 @@ import com.maoding.system.controller.BaseWSController;
 import com.maoding.system.dto.DataDictionaryDTO;
 import com.maoding.system.service.DataDictionaryService;
 import com.maoding.user.dto.ShareInvateDTO;
-import com.maoding.user.dto.UserAttachDTO;
 import com.maoding.user.service.UserAttachService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -194,42 +191,6 @@ public class OrgController extends BaseWSController {
 
             returList.addAll(list);
 
-            //根公司
-           /* String id = companyService.getRootCompanyId(companyDto.getId());
-            //要把
-
-            if(idAll.indexOf(id) != -1){
-                break outer;
-            }
-            idAll = idAll + ","+id;
-            CompanyDTO cDto = companyService.getCompanyById(id);
-            *//**公司开始标识:1*//*
-            cDto.setCompanyStartFlag(1);
-            //查询所有的子节点，
-            List<CompanyEntity> listOld = companyService.getAllChilrenCompany(id);
-            List<CompanyDTO> listOldList = BaseDTO.copyFields(listOld,CompanyDTO.class);
-
-            List<CompanyDTO> list = new ArrayList<>();
-            for(CompanyDTO ce : listOldList){
-                if(companyIds.indexOf(ce.getId()) != -1){
-                    ce.setIsInCompanyFlag(1);
-                    list.add(ce);
-                }else{
-                    list.add(ce);
-                }
-            }
-            if(companyIds.indexOf(cDto.getId()) != -1){
-                cDto.setIsInCompanyFlag(1);
-            }
-            list.add(0,cDto);
-            returList.addAll(list);*/
-        }
-        for (CompanyDTO dto : returList) {
-            Map<String, Object> param = new HashMap<String, Object>();
-            param.put("userId", mapass.get("accountId"));
-            param.put("companyId", dto.getId());
-            String roleCodes = permissionService.getPermissionCodeByUserId(param);
-            dto.setRoleCodes(roleCodes);
         }
         //.addData("companyData", dataMap)
         return responseSuccess().addData("companyData", returList);
@@ -265,51 +226,6 @@ public class OrgController extends BaseWSController {
             list.add(dataMap);
         }
         return responseSuccess().addData("list", list);
-    }
-
-    /**
-     * 方法描述：通讯录人员
-     * 作        者：MaoSF
-     * 日        期：2016年7月11日-上午11:58:59
-     */
-    @RequestMapping("/getOrgUsers")
-    @ResponseBody
-    public ResponseBean getOrgUsers(@RequestBody Map<String, Object> dto) throws Exception {
-        Map<String, Object> param = new HashMap<String, Object>();
-        if (null != dto.get("orgId")) {
-            param.put("orgId", dto.get("orgId"));
-        }
-        if (null != dto.get("pageSize")) {
-            param.put("pageSize", dto.get("pageSize"));
-        }
-        if (null != dto.get("pageIndex")) {
-            param.put("pageNumber", dto.get("pageIndex"));
-        }
-        param.put("auditStatus", "1");
-        List<CompanyUserTableDTO> data = companyUserService.getCompanyUserByOrgIdOfWork(param);
-        for (CompanyUserTableDTO companyUserTableDTO : data) {
-            Map<String, Object> paramPass = new HashMap<String, Object>();
-            paramPass.put("userId", companyUserTableDTO.getUserId());
-            paramPass.put("attachType", "5");
-            List<UserAttachDTO> list = userAttachService.getAttachByTypeToDTO(paramPass);
-            if (list != null && list.size() > 0) {
-                String img = list.get(0).getAttachPath();
-                String lastStr = img.substring(img.lastIndexOf('.') + 1);
-                String firstStr = img.substring(0, img.lastIndexOf('.'));
-                String newImg = "";
-                if (firstStr.endsWith("_cut")) {
-                    newImg = img;
-                } else {
-                    newImg = firstStr + "_cut" + "." + lastStr;
-                }
-                companyUserTableDTO.setHeadImg(newImg);
-            }
-        }
-        int totalNumber = companyUserService.getCompanyUserByOrgIdCountOfWork(param);
-        param.clear();
-        param.put("data", data);
-        param.put("total", totalNumber);
-        return responseSuccess().addData(param);
     }
 
 
@@ -349,19 +265,6 @@ public class OrgController extends BaseWSController {
         }
     }
 
-    /**
-     * 方法描述：获取企业登录（组织选择列表）
-     * 作        者：MaoSF
-     * 日        期：2016年7月8日-下午3:14:31
-     */
-    @RequestMapping("/get_adminofcompanybyuserid")
-    @ResponseBody
-    @AuthorityCheckable
-    public ResponseBean getAdminOfCompanyByUserId(@RequestBody Map<String, String> dto) throws Exception {
-
-        List<CompanyDTO> list = companyService.getAdminOfCompanyByUserId(dto.get("accountId"));
-        return responseSuccess().addData("companyList", list);
-    }
 
 
     /**
@@ -442,31 +345,6 @@ public class OrgController extends BaseWSController {
         return responseSuccess().addData("treeMap", dataMap);
     }
 
-    /**
-     * 方法描述： 查询分公司或合作伙伴
-     * 作        者：MaoSF
-     * 日        期：2016年7月11日-上午11:58:59
-     */
-    @RequestMapping("/get_partenerOrsubcompany")
-    @ResponseBody
-    public ResponseBean getPartenerOrsubcompany(@RequestBody Map<String, String> paraMap) throws Exception {
-        String companyId = paraMap.get("companyId");
-        String selectType = paraMap.get("selectType");
-        if (null == paraMap.get("companyId")) {
-            companyId = paraMap.get("appOrgId");
-        }
-        List<CompanyEntity> companyList = new ArrayList<CompanyEntity>();
-        List<CompanyEntity> companyes = companyService.getAllChilrenCompanyWs(companyId);
-        for (CompanyEntity c : companyes) {
-            if ("2".equals(c.getCompanyType()) && selectType.equals("1")) {//如果是分公司
-                companyList.add(c);
-            }
-            if ("3".equals(c.getCompanyType()) && selectType.equals("2")) {//如果是合作伙伴
-                companyList.add(c);
-            }
-        }
-        return responseSuccess().addData("companyList", companyList);
-    }
 
 /*******************************部门信息*******************************************/
     /**
@@ -534,8 +412,8 @@ public class OrgController extends BaseWSController {
         Map<String, Object> param = new HashMap<String, Object>();
         param.put("companyId", companyId);
         param.put("type", "0");
-        List<DepartDTO> list = departService.getDepartByCompanyIdWS(param);
-        for (DepartDTO departDTO : list) {
+        List<DepartDataDTO> list = departService.getDepartByCompanyIdWS(param);
+        for (DepartDataDTO departDTO : list) {
             departDTO.setType("depart");
         }
 //        DepartDTO dto = new DepartDTO();
@@ -574,7 +452,7 @@ public class OrgController extends BaseWSController {
 
             // dto.setClearlyAdminPassword(dto.getAdminPassword());
             // dto.setAdminPassword(MD5Helper.getMD5For32(dto.getAdminPassword()));
-            return returnResponseBean(companyService.createBusinessPartner(dto));
+            return companyService.createBusinessPartner(dto);
         } else {
             return returnResponseBean(companyService.updateBusinessPartner(dto));
         }
@@ -619,45 +497,10 @@ public class OrgController extends BaseWSController {
     @RequestMapping("/get_companyuser")
     @ResponseBody
     public ResponseBean getCompanyUser(@RequestBody CompanyUserTableDTO dto) throws Exception {
-        CompanyUserTableDTO companyUser = companyUserService.getCompanyUserByIdInterface(dto.getId());
+        CompanyUserDetailDTO companyUser = companyUserService.getCompanyUserByIdInterface(dto.getId(),dto.getNeedUserStatus());
         return responseSuccess().addData("companyUser", companyUser);
     }
 
-    /**
-     * 方法描述：组织成员列表信息【组织界面-组织人员列表，人员选择列表】
-     * 作        者：MaoSF
-     * 日        期：2016年7月7日-下午6:25:03
-     */
-    @RequestMapping("/get_orguser")
-    @ResponseBody
-    public ResponseBean getOrgUser(@RequestBody Map<String, Object> paraMap) {
-        try {
-            Map<String, Object> param = new HashMap<String, Object>();
-            param.put("orgId", paraMap.get("orgId"));
-            param.put("pageSize", paraMap.get("pageSize"));
-            param.put("pageNumber", paraMap.get("pageIndex"));
-            param.put("auditStatus", "1");
-            param.put("fastdfsUrl", this.fastdfsUrl);
-            if (null == param.get("orgId")) {
-                param.put("orgId", paraMap.get("appOrgId"));
-            }
-            List<CompanyUserTableDTO> data = companyUserService.getCompanyUserByOrgIdOfAdmin(param);
-//            for(CompanyUserTableDTO companyUserTableDTO :data){
-//                Map<String,Object> paramRoleCodes = new HashMap<String,Object>();
-//                paramRoleCodes.put("userId",companyUserTableDTO.getUserId());
-//                paramRoleCodes.put("companyId",companyUserTableDTO.getCompanyId());
-//                String roleCodes =permissionService.getPermissionCodeByUserId(paramRoleCodes);
-//                if(null != roleCodes && !"".equals(roleCodes)){
-//                    companyUserTableDTO.setRoleCodes(roleCodes);
-//                }
-//            }
-
-            return responseSuccess().addData("userList", data);
-        } catch (Exception e) {
-            log.error("查询组织员工失败", e);
-            return ResponseBean.responseError("查询组织员工失败！");
-        }
-    }
 
 
     /**
@@ -712,68 +555,7 @@ public class OrgController extends BaseWSController {
         return returnResponseBean(companyUserAuditService.auditShareInvate(dto));
     }
 
-    /**
-     * 方法描述：批量添加员工
-     * 作        者：Chenxj
-     * 日        期：2016年4月19日-下午2:22:24
-     */
-    @RequestMapping("/batch_add_personal")
-    @ResponseBody
-    @AuthorityCheckable
-    public ResponseBean batchAddPersonal(@RequestBody BatchCompanyUserDTO batchCompanyUserDTO) throws Exception {
-        try {
-            Map<String, Object> param = new HashMap<String, Object>();
-            param.put("orgId", batchCompanyUserDTO.getOrgId());
-            param.put("auditStatus", "1");
-            if (null == param.get("orgId")) {
-                param.put("orgId", batchCompanyUserDTO.getAppOrgId());
-            }
-            List<CompanyUserTableDTO> existUser = companyUserService.getCompanyUserByOrgIdOfAdmin(param);
-            List<CompanyUserTableDTO> importUser = batchCompanyUserDTO.getCompayUserList();
-            Map<String, Object> successImport = new HashMap<String, Object>();
-            List<String> successCellphone = new ArrayList<>();
-            Map<String, Object> alreadyExit = new HashMap<String, Object>();
-            List<String> alreadyCellphone = new ArrayList<>();
-            for (CompanyUserTableDTO cuImport : importUser) {
-                String cellphone = cuImport.getCellphone();
-                boolean flag = false;
-                outer:
-                for (CompanyUserTableDTO cuExist : existUser) {
-                    if (cellphone.equals(cuExist.getCellphone())) {
-                        flag = true;
-                        break outer;
-                    }
-                }
-                if (flag) {
-                    alreadyCellphone.add(cellphone);
-                } else {
-                    successCellphone.add(cellphone);
-                }
-            }
-            successImport.put("successImport", successCellphone);
-            alreadyExit.put("alreadyExit", alreadyCellphone);
-            List<CompanyUserTableDTO> compayUserList = new ArrayList<CompanyUserTableDTO>();
-            if (null != batchCompanyUserDTO.getCompayUserList()) {
-                compayUserList = batchCompanyUserDTO.getCompayUserList();
-            }
-            for (CompanyUserTableDTO dto : compayUserList) {
-                String userId = batchCompanyUserDTO.getAccountId();
-                CompanyDTO company = companyService.getCompanyById(batchCompanyUserDTO.getAppOrgId());
-                dto.setCompanyName(company.getCompanyName());
-                dto.setAccountId(userId);
-                AjaxMessage ajax = companyUserService.saveCompanyUser(dto);
-                if (ajax.getCode().equals("1")) {
-                    return ResponseBean.responseError(ajax.getInfo().toString());
-                }
-            }
 
-
-            return ResponseBean.responseSuccess("批量导入成功").addData("successImport", successImport).addData("alreadyExit", alreadyExit);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseBean.responseError("批量导入失败");
-        }
-    }
 
     /**
      * 方法描述：申请成为分公司,合作伙伴(当前公司的id为orgId，选择公司的id为orgPid）
@@ -1001,7 +783,7 @@ public class OrgController extends BaseWSController {
         map.clear();
         map.put("companyId", companyId);
         map.put("selectVal", mappass.get("companyName"));
-        List<DepartDTO> departList = departService.getDepartByCompanyId(map);
+        List<DepartDataDTO> departList = departService.getDepartByCompanyId(map);
         company.setDepartList(departList);
         list.add(0, company);
         return responseSuccess().addData("designOrgList", list);
@@ -1037,167 +819,10 @@ public class OrgController extends BaseWSController {
             }
             interfaceGroupAndRoleDTO.setCompanyName(companyName);
             interfaceGroupAndRoleDTO.setCompanyShortName(companyShortName);
-
-
-            Map<String, Object> param = new HashMap<String, Object>();
-            param.put("userId", userId);
-            param.put("companyId", companyId);
-            String roleCodes = permissionService.getPermissionCodeByUserId(param);
-            interfaceGroupAndRoleDTO.setRoleCodes(roleCodes);
             interfaceGroupAndRoleDTOList.add(interfaceGroupAndRoleDTO);
-
-
         }
         return responseSuccess()
                 .addData("interfaceGroupAndRoleDTOList", interfaceGroupAndRoleDTOList);
     }
-
-
-    /**
-     * 方法描述：组织架构树(数据）
-     * 作        者：ChenZhujie
-     * 日        期：2016年12月19日-上午11:58:59
-     */
-    @RequestMapping("/newGetcompanyDatabac")
-    @ResponseBody
-    @AuthorityCheckable
-    public ResponseBean newGetcompanyDatabac(@RequestBody Map<String, Object> mapass) throws Exception {
-        //所在的所有公司
-        List<CompanyDTO> orgList = companyService.getCompanyByUserId(mapass.get("accountId").toString());
-        //所在的公司id
-        String inCompanyIds = "";
-        int i = 0;
-        for (CompanyDTO companyDto : orgList) {
-            if (i == 0) {
-                inCompanyIds = companyDto.getId();
-            } else {
-                inCompanyIds = inCompanyIds + "," + companyDto.getId();
-            }
-            i++;
-        }
-        String[] rootIdsAttr = inCompanyIds.split(",");
-        //返回数据
-        List<Object> returnList = new ArrayList<>();
-        //已经存在的公司
-        String exitCompanyIds = "";
-
-        for (String rId : rootIdsAttr) {
-            if (!exitCompanyIds.contains(rId)) {
-                //根公司
-                CompanyEntity companyEntity = companyService.selectById(rId);
-                //所有子公司
-                List<CompanyEntity> list = companyService.getAllChilrenCompany(rId);
-                list.add(0, companyEntity);
-                List<CompanyDTO> listDto = BaseDTO.copyFields(list, CompanyDTO.class);
-                //查询权限
-                for (CompanyDTO dto : listDto) {
-                    //加入到存在的公司
-                    exitCompanyIds = exitCompanyIds + "," + dto.getId();
-                    Map<String, Object> param = new HashMap<String, Object>();
-                    param.put("userId", mapass.get("accountId"));
-                    param.put("companyId", dto.getId());
-                    String roleCodes = permissionService.getPermissionCodeByUserId(param);
-                    //设置权限
-                    dto.setRoleCodes(roleCodes);
-                    if (inCompanyIds.contains(dto.getId())) {
-                        //1：在公司，0不在公司
-                        dto.setIsInCompanyFlag(1);
-                    }
-                    Map<String, Object> map = new HashMap<String, Object>();
-                    map.put("orgId", dto.getId());
-                    map.put("auditStatus", "1");
-                    //公司用户
-                    List<CompanyUserTableDTO> data = companyUserService.getCompanyUserByOrgIdOfAdmin(map);
-                    //设置公司用户数量
-                    dto.setCompanyUserNum(data.size());
-                }
-                returnList.add(listDto);
-            }
-        }
-        return responseSuccess().addData("companyData", returnList);
-    }
-
-    /**
-     * 方法描述：组织架构树(数据）
-     * 作        者：ChenZhujie
-     * 日        期：2016年12月19日-上午11:58:59
-     */
-    @RequestMapping("/newGetcompanyData")
-    @ResponseBody
-    @AuthorityCheckable
-    public ResponseBean newGetcompanyData(@RequestBody Map<String, Object> mapass) throws Exception {
-        //所在的所有公司
-        List<CompanyDTO> orgList = companyService.getCompanyByUserId(mapass.get("accountId").toString());
-        //所有的根的公司
-        String rootIds = "";
-        //根公司id临时变量
-        String rootId = "";
-        //所在的公司id
-        String inCompanyIds = "";
-        for (int i = 0; i < orgList.size(); i++) {
-            if (i == 0) {
-                rootId = companyService.getRootCompanyId(orgList.get(i).getId());
-                rootIds = rootId;
-                inCompanyIds = orgList.get(i).getId();
-            } else {
-
-                rootId = companyService.getRootCompanyId(orgList.get(i).getId());
-                inCompanyIds = inCompanyIds + "," + orgList.get(i).getId();
-                if (!rootIds.contains(rootId)) {
-                    rootIds = rootIds + "," + rootId;
-                }
-            }
-        }
-        //返回数据
-        List<Object> returnList = new ArrayList<>();
-        if (!StringUtil.isNullOrEmpty(rootIds)) {
-            String[] rootIdsAttr = rootIds.split(",");
-            for (String rId : rootIdsAttr) {
-                //根公司
-                CompanyEntity companyEntity = companyService.selectById(rId);
-                //所有子公司
-                List<CompanyEntity> list = companyService.getAllChilrenCompany(rId);
-                list.add(0, companyEntity);
-                List<CompanyDTO> listDto = BaseDTO.copyFields(list, CompanyDTO.class);
-
-                //公司，分公司
-                List<CompanyDTO> companyFilialeList = new ArrayList<>();
-                //排序，把事业合伙人放到最后
-                List<CompanyDTO> businessPartnerList = new ArrayList<>();
-                //查询权限
-                for (CompanyDTO dto : listDto) {
-                    Map<String, Object> param = new HashMap<String, Object>();
-                    param.put("userId", mapass.get("accountId"));
-                    param.put("companyId", dto.getId());
-                    String roleCodes = permissionService.getPermissionCodeByUserId(param);
-                    //设置权限
-                    dto.setRoleCodes(roleCodes);
-                    if (inCompanyIds.contains(dto.getId())) {
-                        //1：在公司，0不在公司
-                        dto.setIsInCompanyFlag(1);
-                    }
-                    Map<String, Object> map = new HashMap<String, Object>();
-                    map.put("orgId", dto.getId());
-                    map.put("auditStatus", "1");
-                    //公司用户
-                    List<CompanyUserTableDTO> data = companyUserService.getCompanyUserByOrgIdOfAdmin(map);
-                    //设置公司用户数量
-                    dto.setCompanyUserNum(data.size());
-
-                    if ("3".equals(dto.getCompanyType())) {
-                        businessPartnerList.add(dto);
-                    } else {
-                        companyFilialeList.add(dto);
-                    }
-                }
-                //拼在一起
-                companyFilialeList.addAll(businessPartnerList);
-                returnList.add(companyFilialeList);
-            }
-        }
-
-        return responseSuccess().addData("companyData", returnList);
-    }
-
 
 }

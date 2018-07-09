@@ -2,6 +2,7 @@ package com.maoding.project.dao;
 
 
 import com.maoding.core.base.dao.BaseDao;
+import com.maoding.project.dto.NetFileDTO;
 import com.maoding.project.entity.ProjectSkyDriveEntity;
 import com.maoding.v2.project.dto.ProjectSkyDriveListDTO;
 
@@ -23,8 +24,6 @@ public interface ProjectSkyDriverDao extends BaseDao<ProjectSkyDriveEntity> {
      * 方法描述：根据项目id，父级id，文件名查询
      * 作者：MaoSF
      * 日期：2016/12/18
-     * @param:
-     * @return:
      */
     ProjectSkyDriveEntity getSkyDriveByPidAndFileName(String pid, String fileName, String projectId);
 
@@ -32,8 +31,6 @@ public interface ProjectSkyDriverDao extends BaseDao<ProjectSkyDriveEntity> {
      * 方法描述：查询文件id为pid的所有文件及文件夹
      * 作者：MaoSF
      * 日期：2016/12/18
-     * @param:
-     * @return:
      */
     List<ProjectSkyDriveEntity> getSkyDriveByPid(String pid, String projectId);
 
@@ -42,32 +39,14 @@ public interface ProjectSkyDriverDao extends BaseDao<ProjectSkyDriveEntity> {
      * 方法描述：根据项目id，父级id，文件名查询
      * 作者：MaoSF
      * 日期：2016/12/18
-     *
-     * @param:
-     * @return:
      */
     ProjectSkyDriveEntity getSkyDriveByTaskId(String taskId);
-
-    /**
-     * 方法描述：查询文件
-     * 作者：MaoSF
-     * 日期：2016/12/18
-     *
-     * @param map
-     * @param:
-     * @return:
-     */
-    List<ProjectSkyDriveEntity> getSkyDriveByParam(Map<String, Object> map);
 
 
     /**
      * 方法描述：查询文件(包含子文件个数)
      * 作者：MaoSF
      * 日期：2016/12/18
-     *
-     * @param map
-     * @param:
-     * @return:
      */
     List<ProjectSkyDriveListDTO> getSkyDrive(Map<String, Object> map);
 
@@ -75,8 +54,6 @@ public interface ProjectSkyDriverDao extends BaseDao<ProjectSkyDriveEntity> {
      * 方法描述：获取所有
      * 作者：MaoSF
      * 日期：2017/1/16
-     * @param:
-     * @return:
      */
     List<ProjectSkyDriveListDTO> getProjectUploadFile(String projectId);
 
@@ -84,8 +61,6 @@ public interface ProjectSkyDriverDao extends BaseDao<ProjectSkyDriveEntity> {
      * 方法描述：查询公司是否存在“设计成果”中的文件
      * 作者：MaoSF
      * 日期：2017/4/12
-     * @param:
-     * @return:
      */
     List<ProjectSkyDriveEntity> getProjectSkyByCompanyId(String projectId,String companyId);
 
@@ -94,7 +69,6 @@ public interface ProjectSkyDriverDao extends BaseDao<ProjectSkyDriveEntity> {
      * 作者：MaoSF
      * 日期：2017/4/21
      * @param:map(skyDrivePath)
-     * @return:
      */
     int updateSkyDriveStatus(Map<String,Object> map);
 
@@ -102,8 +76,16 @@ public interface ProjectSkyDriverDao extends BaseDao<ProjectSkyDriveEntity> {
      * 方法描述：获取远程文件
      * 作者：MaoSF
      * 日期：2017/6/1
-     * @param:
-     * @return:
      */
-    List<ProjectSkyDriveEntity> getNetFileByParam(Map<String, Object> map);
+    List<NetFileDTO> getNetFileByParam(Map<String, Object> map);
+
+    /**
+     * 获取成果文件发给甲方
+     */
+    ProjectSkyDriveEntity getOwnerProject(Map<String, Object> map);
+
+    /**
+     * 查询文件夹顺序
+     */
+    List<ProjectSkyDriveEntity> getDirectoryDTOList(Map<String, Object> map);
 }

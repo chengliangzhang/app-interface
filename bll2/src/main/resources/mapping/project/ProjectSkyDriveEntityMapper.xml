@@ -22,14 +22,33 @@
     <result column="task_id" property="taskId" jdbcType="VARCHAR"/>
     <result column="status" property="status" jdbcType="VARCHAR"/>
     <result column="target_id" property="targetId" jdbcType="VARCHAR"/>
+    <result column="bucket" property="bucket" jdbcType="VARCHAR"/>
+    <result column="oss_file_path" property="ossFilePath" jdbcType="VARCHAR"/>
+    <result column="object_key" property="objectKey" jdbcType="VARCHAR"/>
+    <result column="from_company_id" property="fromCompanyId" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <resultMap id="NetFileMap" type="com.maoding.project.dto.NetFileDTO" extends="BaseResultMap">
+    <result column="crt_file_path" property="crtFilePath" jdbcType="VARCHAR" />
   </resultMap>
 
   <sql id="Base_Column_List" >
     id, project_id, pid, sky_drive_path, file_name, file_path, company_id, type, file_size,
     file_group, is_customize, file_ext_name, param4,  task_id,status,target_id,
-    create_date, create_by, update_date, update_by
+    create_date, create_by, update_date, update_by,bucket,oss_file_path,object_key
   </sql>
 
+  <sql id ="getFilePath">
+    SELECT id, project_id, pid, sky_drive_path, file_name, file_path, company_id, type, file_size,
+    file_group, is_customize, file_ext_name, param4,  task_id,status,target_id,
+    create_date, create_by, update_date, update_by, CONCAT(file_group,'/',file_path) as oss_file_path from maoding_web_project_sky_drive
+  </sql>
+
+  <select id="getPhotos" resultType="java.lang.String" parameterType="java.lang.String">
+      select oss_file_path
+      from maoding_web_project_sky_drive
+      where target_id = #{targetId,jdbcType=VARCHAR}
+  </select>
   <select id="selectById" resultMap="BaseResultMap" parameterType="java.lang.String" >
     select
     <include refid="Base_Column_List" />
@@ -37,30 +56,40 @@
     where id = #{id,jdbcType=VARCHAR}
   </select>
 
-    <select id="getNetFileByParam" resultMap="BaseResultMap" parameterType="java.util.Map">
-        select
-        <include refid="Base_Column_List"/>
-        from maoding_web_project_sky_drive
-        WHERE status='0'
-        <if test="projectId != null">
-            AND project_id = #{projectId,jdbcType=VARCHAR}
-        </if>
-        <if test="companyId != null">
-            AND company_id = #{companyId,jdbcType=VARCHAR}
-        </if>
-      <if test="targetId != null">
-        AND target_id = #{targetId,jdbcType=VARCHAR}
+    <select id="getNetFileByParam" resultMap="NetFileMap" parameterType="java.util.Map">
+      select
+      a.*,b.crt_file_path
+      from maoding_web_project_sky_drive a
+      LEFT JOIN maoding_web_net_file_crt b on a.id = b.id
+      WHERE a.status='0'
+      <if test="projectId != null">
+        AND a.project_id = #{projectId}
       </if>
-        <if test="type != null">
-            AND type = #{type,jdbcType=VARCHAR}
+      <if test="companyId != null">
+        AND a.company_id = #{companyId}
+      </if>
+      <if test="targetId != null">
+        AND a.target_id = #{targetId}
+      </if>
+      <if test="type != null">
+        AND a.type = #{type}
+      </if>
+      <if test="param4 != null">
+        AND a.param4 = #{param4}
+      </if>
+      <if test="pid != null">
+        AND a.pid = #{pid}
+      </if>
+      <if test="personalFile!=null">
+        AND (type = 100 or type = 101)
+        <if test="pid==null">
+          AND a.pid is NULL
         </if>
-        <if test="param4 != null">
-            AND param4 = #{param4,jdbcType=INTEGER}
+        <if test="createBy!=null">
+          AND a.create_by = #{createBy}
         </if>
-        <if test="pid != null">
-            AND pid = #{pid,jdbcType=VARCHAR}
-        </if>
-        ORDER BY param4,create_date
+      </if>
+      ORDER BY a.param4,a.create_date
     </select>
 
   <select id="getSkyDriveByPidAndFileName" resultMap="BaseResultMap" parameterType="java.util.Map" >
@@ -117,20 +146,40 @@
 
   <select id="getSkyDrive" resultType="com.maoding.v2.project.dto.ProjectSkyDriveListDTO" parameterType="java.util.Map" >
     select a.id,a.project_id as projectId, a.pid, a.file_name as fileName,a.file_path as filePath,a.is_customize as isCustomize, a.task_id as taskId,
-    a.file_group as fileGroup,a.company_id as companyId,a.type, a.file_size as fileSize,a.update_by as createBy,b.user_name as uploadUserName,
+    a.file_group as fileGroup,a.company_id as companyId,if(a.type=1,1,0) as type, a.file_size as fileSize,a.update_by as createBy,b.user_name as uploadUserName,
     DATE_FORMAT(a.create_date,'%Y/%m/%d') uploadDate,
+    c.company_name,
     (SELECT count(1) from maoding_web_project_sky_drive s where a.id = s.pid and s.status='0') as fileCount
     from maoding_web_project_sky_drive a
     LEFT JOIN maoding_web_company_user b on a.company_id = b.company_id and a.update_by = b.user_id
-    where  a.status='0' and (type = 0 or type = 1)
-    <if test="projectId != null" >
-      AND a.project_id = #{projectId,jdbcType=VARCHAR}
+    LEFT JOIN maoding_web_company c on c.id=a.`company_id`
+    where a.status='0'
+    <choose>
+      <when test="type!=null">
+        and  (type = 0 or type = 1 or type = 2)
+      </when>
+      <otherwise>
+        and  (type = 0 or type = 1 or type = 2 or type = 30  or type = 40 or type=50)
+      </otherwise>
+    </choose>
+    <if test="projectId != null">
+      AND project_id = #{projectId,jdbcType=VARCHAR}
     </if>
-    <if test="pid != null" >
-      AND a.pid = #{pid,jdbcType=VARCHAR}
+    <if test="companyId != null">
+      AND a.company_id= #{companyId,jdbcType=VARCHAR}
     </if>
-    <if test="pid == null" >
-      AND a.pid is NULL
+    <if test="pid != null">
+      AND pid = #{pid,jdbcType=VARCHAR}
+    </if>
+    <if test="pid == null">
+      AND pid is NULL
+    </if>
+    <if test="fileNames != null">
+      and (
+      <foreach collection="fileNames" item="fileName" separator="or">
+        file_name=#{fileName}
+      </foreach>
+      )
     </if>
     order by a.create_date desc,a.file_name
   </select>
@@ -247,7 +296,16 @@
       update_by = #{accountId,jdbcType=VARCHAR}
     </set>
     <where>
-      sky_drive_path like '%' #{skyDrivePath} '%'
+      1=1
+      <if test="skyDrivePath!=null">
+       AND sky_drive_path like '%' #{skyDrivePath} '%'
+      </if>
+      <if test="targetId!=null">
+        AND target_id = #{targetId}
+      </if>
+      <if test="attachIds!=null">
+        AND FIND_IN_SET(id,#{attachIds})
+      </if>
     </where>
   </update>
 
@@ -259,5 +317,82 @@
     and b.pid is null
     and b.file_name='设计成果'
     and a.company_id = #{companyId,jdbcType=VARCHAR} and a.type = '0'
+  </select>
+
+
+
+
+  <!--查询归档文件夹是否已发布-->
+  <select id="getProjectSkyDriveEntityByProjectIdAndFileName" resultMap="BaseResultMap" parameterType="java.util.Map">
+    SELECT
+    t.id,
+    t.pid,
+    t.sky_drive_path
+    FROM
+    maoding_web_project_sky_drive t
+    LEFT JOIN maoding_web_project_sky_drive dev
+    ON t.`pid` = dev.id
+    WHERE dev.`file_name` = #{fileName}
+    AND t.`project_id` = #{projectId}
+    AND t.`status` = '0'
+    <if test="companyId!=null">
+      AND t.company_id = #{companyId}
+    </if>
+  </select>
+
+
+
+  <!--获取甲方组织id-->
+  <select id="getOwnerProject" resultMap="BaseResultMap" parameterType="java.util.Map">
+    SELECT
+    task.id,
+    task.company_id,
+    task.`from_company_id`,
+    task.project_id,
+    task.`task_name` AS file_name,
+    company.`company_name`
+    FROM
+    maoding_web_project_task task
+    LEFT JOIN maoding_web_project_sky_drive t
+    ON t.`company_id` = task.`from_company_id`
+    LEFT JOIN maoding_web_project_sky_drive t1
+    ON t.`file_name` = t1.file_name
+    LEFT JOIN maoding_web_project_sky_drive t2
+    ON t1.pid = t2.id
+    LEFT JOIN `maoding_web_company` company
+    ON task.`from_company_id` = company.`id`
+    WHERE task.company_id = #{companyId}
+    AND task.project_id =  #{projectId}
+    AND task.`task_name` = t.`file_name`
+    AND t.`project_id` = #{projectId}
+    AND t1.id = #{pid}
+    AND task.from_company_id !=  #{companyId}
+    GROUP BY from_company_id
+  </select>
+
+  <select id="getDirectoryDTOList" resultMap="BaseResultMap" parameterType="java.util.Map">
+    SELECT
+    <include refid="Base_Column_List"/>
+    FROM
+    maoding_web_project_sky_drive t
+    where  1=1
+    and (
+    <foreach collection="id" item="id" separator="or">
+      pid=#{id}
+    </foreach>
+    )
+    <if test="companyId != null">
+      and company_id=#{companyId}
+    </if>
+    <if test="projectId != null">
+      and project_id=#{projectId}
+    </if>
+    <if test="ids != null">
+      and (
+      <foreach collection="ids" item="id" separator="or">
+        pid=#{id}
+      </foreach>
+      )
+    </if>
   </select>
 </mapper>

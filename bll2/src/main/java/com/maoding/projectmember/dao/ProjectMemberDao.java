@@ -1,12 +1,15 @@
 package com.maoding.projectmember.dao;
 
 import com.maoding.core.base.dao.BaseDao;
+import com.maoding.org.dto.CompanyUserAppDTO;
+import com.maoding.org.dto.CompanyUserGroupDTO;
 import com.maoding.project.dto.ProjectTaskProcessNodeDTO;
 import com.maoding.projectmember.dto.ProjectMemberDTO;
 import com.maoding.projectmember.dto.UserPositionDTO;
 import com.maoding.projectmember.entity.ProjectMemberEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Idccapp22 on 2017/6/6.
@@ -78,4 +81,22 @@ public interface ProjectMemberDao extends BaseDao<ProjectMemberEntity> {
      * 日期：2017/6/21
      */
     List<ProjectMemberEntity> listProjectMemberByTaskId(String taskId);
+
+    /**
+     *
+     * 获取成员总数
+     */
+    int getMemberCount(ProjectMemberEntity projectMember);
+
+    /**
+     * 项目成员
+     * @param map(projectId,fastdfsUrl)
+     */
+    List<CompanyUserGroupDTO> listProjectAllMember(Map<String,Object> map);
+
+    /**
+     * 项目成员(另外一种形式)，项目群组人员选择使用
+     * @param map(projectId,fastdfsUrl)
+     */
+    List<CompanyUserAppDTO> listProjectMember(Map<String,Object> map);
 }

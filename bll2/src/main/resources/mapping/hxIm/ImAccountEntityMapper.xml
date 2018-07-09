@@ -28,7 +28,7 @@
     where id = #{id,jdbcType=VARCHAR}
   </delete>
   <insert id="insert" parameterType="com.maoding.hxIm.entity.ImAccountEntity" >
-    insert into maoding_im_account (id, account_status, last_queue_no, 
+    replace into maoding_im_account (id, account_status, last_queue_no,
       up_version, deleted, create_date, 
       create_by, update_date, update_by
       )

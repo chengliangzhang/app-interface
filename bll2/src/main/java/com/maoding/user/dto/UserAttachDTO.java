@@ -20,6 +20,13 @@ public class UserAttachDTO extends BaseDTO{
      */
     private String fileGroup;
 
+    /**
+     * 全路径
+     */
+    private String filePath;
+
+    private String ossFilePath;
+
     public String getFileGroup() {
         return fileGroup;
     }
@@ -60,4 +67,19 @@ public class UserAttachDTO extends BaseDTO{
         this.attachPath = attachPath == null ? null : attachPath.trim();
     }
 
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+
+    public String getOssFilePath() {
+        return ossFilePath;
+    }
+
+    public void setOssFilePath(String ossFilePath) {
+        this.ossFilePath = ossFilePath;
+    }
 }

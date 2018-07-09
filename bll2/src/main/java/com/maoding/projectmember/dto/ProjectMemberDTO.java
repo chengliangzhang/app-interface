@@ -1,6 +1,8 @@
 package com.maoding.projectmember.dto;
 
-public class ProjectMemberDTO {
+import com.maoding.attach.dto.FilePathDTO;
+
+public class ProjectMemberDTO extends FilePathDTO {
 
     private String id;
 

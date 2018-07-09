@@ -163,6 +163,11 @@ public class ExpMainDTO extends BaseDTO {
     private Integer versionNum;
 
     /**
+     * 报销单号
+     */
+    private String expNo;
+
+    /**
      *审批人头像
      */
     private String imgUrl;
@@ -421,5 +426,13 @@ public class ExpMainDTO extends BaseDTO {
 
     public void setCompanyUserId(String companyUserId) {
         this.companyUserId = companyUserId;
+    }
+
+    public String getExpNo() {
+        return expNo;
+    }
+
+    public void setExpNo(String expNo) {
+        this.expNo = expNo;
     }
 }

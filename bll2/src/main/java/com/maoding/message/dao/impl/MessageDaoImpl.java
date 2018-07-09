@@ -3,6 +3,7 @@ package com.maoding.message.dao.impl;
 import com.maoding.core.base.dao.GenericDao;
 import com.maoding.message.dao.MessageDao;
 import com.maoding.message.dto.MessageDTO;
+import com.maoding.message.dto.QueryMessageDTO;
 import com.maoding.message.entity.MessageEntity;
 import org.springframework.stereotype.Service;
 
@@ -57,6 +58,11 @@ public class MessageDaoImpl extends GenericDao<MessageEntity> implements Message
         return this.sqlSession.update("MessageEntityMapper.updateRead",userId);
     }
 
+    @Override
+    public int updateMessageStatus(String userId) {
+        return this.sqlSession.update("MessageEntityMapper.updateMessageStatus",userId);
+    }
+
     /**
      * 方法描述：根据关键字删除（逻辑删除）
      * 作者：MaoSF
@@ -70,5 +76,10 @@ public class MessageDaoImpl extends GenericDao<MessageEntity> implements Message
     public int deleteMessage(String field) {
         //此处使用update逻辑删除
         return this.sqlSession.update("MessageEntityMapper.deleteMessage",field);
+    }
+
+    @Override
+    public List<MessageEntity> selectByParam(QueryMessageDTO query) {
+        return  this.sqlSession.selectList("MessageEntityMapper.selectByParam",query);
     }
 }

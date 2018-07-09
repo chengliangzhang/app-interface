@@ -1,9 +1,9 @@
 package com.maoding.projectmember.service.impl;
 
-import com.maoding.conllaboration.SyncCmd;
 import com.maoding.conllaboration.service.CollaborationService;
 import com.maoding.core.constant.ProjectMemberType;
 import com.maoding.core.constant.SystemParameters;
+import com.maoding.core.util.DateUtils;
 import com.maoding.core.util.StringUtil;
 import com.maoding.message.entity.MessageEntity;
 import com.maoding.message.service.MessageService;
@@ -13,10 +13,13 @@ import com.maoding.mytask.service.MyTaskService;
 import com.maoding.org.dao.CompanyDao;
 import com.maoding.org.dao.CompanyUserDao;
 import com.maoding.org.dto.CompanyUserAppDTO;
+import com.maoding.org.dto.CompanyUserDataDTO;
+import com.maoding.org.dto.CompanyUserGroupDTO;
 import com.maoding.org.dto.CompanyUserTableDTO;
 import com.maoding.org.entity.CompanyEntity;
 import com.maoding.org.entity.CompanyUserEntity;
 import com.maoding.project.dao.ProjectDao;
+import com.maoding.project.dto.ProjectDesignUserList;
 import com.maoding.project.dto.ProjectTaskProcessNodeDTO;
 import com.maoding.project.entity.ProjectEntity;
 import com.maoding.project.service.ProjectProcessService;
@@ -27,6 +30,7 @@ import com.maoding.projectmember.dto.UserPositionDTO;
 import com.maoding.projectmember.entity.ProjectMemberEntity;
 import com.maoding.projectmember.service.ProjectMemberService;
 import com.maoding.task.dao.ProjectTaskDao;
+import com.maoding.task.entity.ProjectTaskEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -59,9 +63,6 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
     private MessageService messageService;
 
     @Autowired
-    private CollaborationService collaborationService;
-
-    @Autowired
     private ProjectTaskDao projectTaskDao;
 
     @Autowired
@@ -79,7 +80,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * 日期：2017/6/6
      */
     @Override
-    public ProjectMemberEntity saveProjectMember(String projectId, String companyId, String companyUserId, String accountId,Integer memberType, String targetId, String nodeId, Integer seq,String createBy,boolean isSendMessage)  throws Exception{
+    public ProjectMemberEntity saveProjectMember(String projectId, String companyId, String companyUserId, String accountId,Integer memberType, String targetId, String nodeId, Integer seq,String createBy,boolean isSendMessage,String currentCompanyId)  throws Exception{
         ProjectMemberEntity projectMember = new ProjectMemberEntity();
         projectMember.setId(StringUtil.buildUUID());
         projectMember.setProjectId(projectId);
@@ -98,7 +99,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
         int i= projectMemberDao.insert(projectMember);
 
         //TODO 推送任务
-        this.sendTaskToUser(projectId,companyId,companyUserId,memberType,targetId,nodeId,isSendMessage);
+        this.sendTaskToUser(projectId,companyId,companyUserId,memberType,targetId,nodeId,isSendMessage,createBy,currentCompanyId);
 
         //TODO 把人员添加到项目群组中
         //this.imGroupService.addUserToProjectGroup(projectId,companyUserId,accountId,targetId,memberType);
@@ -112,7 +113,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * 日期：2017/6/6
      */
     @Override
-    public ProjectMemberEntity saveProjectMember(String projectId, String companyId, String companyUserId, String targetId, Integer memberType,Integer seq,String createBy)  throws Exception{
+    public ProjectMemberEntity saveProjectMember(String projectId, String companyId, String companyUserId, String targetId, Integer memberType,Integer seq,String createBy,String currentCompanyId)  throws Exception{
         ProjectMemberEntity projectMember = new ProjectMemberEntity();
         projectMember.setId(StringUtil.buildUUID());
         projectMember.setProjectId(projectId);
@@ -141,8 +142,8 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * 日期：2017/6/6
      */
     @Override
-    public ProjectMemberEntity saveProjectMember(String projectId, String companyId, String companyUserId, String accountId, Integer memberType,String createBy)  throws Exception{
-        return this.saveProjectMember(projectId,companyId,companyUserId,accountId,memberType,null,null,null,createBy,true);
+    public ProjectMemberEntity saveProjectMember(String projectId, String companyId, String companyUserId, String accountId, Integer memberType,String createBy,String currentCompanyId)  throws Exception{
+        return this.saveProjectMember(projectId,companyId,companyUserId,accountId,memberType,null,null,null,createBy,true,currentCompanyId);
     }
 
     /**
@@ -151,8 +152,8 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * 日期：2017/6/6
      */
     @Override
-    public ProjectMemberEntity saveProjectMember(String projectId, String companyId, String companyUserId, String accountId, Integer memberType,String targetId, String createBy,boolean isSendMessage) throws Exception {
-        return this.saveProjectMember(projectId,companyId,companyUserId,accountId,memberType,targetId,null,null,createBy,isSendMessage);
+    public ProjectMemberEntity saveProjectMember(String projectId, String companyId, String companyUserId, String accountId, Integer memberType,String targetId, String createBy,boolean isSendMessage,String currentCompanyId) throws Exception {
+        return this.saveProjectMember(projectId,companyId,companyUserId,accountId,memberType,targetId,null,null,createBy,isSendMessage,currentCompanyId);
     }
 
     /**
@@ -161,8 +162,8 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * 日期：2017/6/6
      */
     @Override
-    public ProjectMemberEntity saveProjectMember(String projectId, String companyId, String companyUserId, String accountId, Integer memberType, String createBy, boolean isSendMessage)  throws Exception{
-        return this.saveProjectMember(projectId,companyId,companyUserId,accountId,memberType,null,null,null,createBy,isSendMessage);
+    public ProjectMemberEntity saveProjectMember(String projectId, String companyId, String companyUserId, String accountId, Integer memberType, String createBy, boolean isSendMessage,String currentCompanyId)  throws Exception{
+        return this.saveProjectMember(projectId,companyId,companyUserId,accountId,memberType,null,null,null,createBy,isSendMessage,currentCompanyId);
     }
 
     /**
@@ -171,7 +172,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * 日期：2017/6/6
      */
     @Override
-    public ProjectMemberEntity saveProjectMember(String projectId, String companyId, String companyUserId, Integer memberType, String createBy,boolean isSendMessage) throws Exception {
+    public ProjectMemberEntity saveProjectMember(String projectId, String companyId, String companyUserId, Integer memberType, String createBy,boolean isSendMessage,String currentCompanyId) throws Exception {
 
         ProjectMemberEntity projectMember = new ProjectMemberEntity();
         projectMember.setId(StringUtil.buildUUID());
@@ -225,7 +226,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
             sendMessageTaskDesigner(projectMember.getProjectId(),companyUserId,projectMember.getCompanyId(),null);
         }
         if(ProjectMemberType.PROJECT_TASK_RESPONSIBLE==projectMember.getMemberType()){
-            sendTaskForChangeMember(projectMember.getProjectId(),projectMember.getCompanyId(),companyUserId,oldCompanyUserId,projectMember.getMemberType(),projectMember.getTargetId(),isSendMessage);
+            sendTaskForChangeMember(projectMember.getProjectId(),projectMember.getCompanyId(),companyUserId,oldCompanyUserId,projectMember.getMemberType(),projectMember.getTargetId(),isSendMessage,updateBy);
         }
         //把人员添加到项目群组中
         //imGroupService.addUserToProjectGroup(projectMember.getProjectId(),companyUserId,accountId,projectMember.getTargetId(),projectMember.getMemberType());
@@ -338,7 +339,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * 日期：2017/6/6
      */
     @Override
-    public List<ProjectMemberEntity> listProjectMember(String projectId, String companyId, Integer memberType, String targetId) throws Exception {
+    public List<ProjectMemberEntity> listProjectMember(String projectId, String companyId, Integer memberType, String targetId) {
         ProjectMemberEntity projectMember = new ProjectMemberEntity();
         projectMember.setProjectId(projectId);
         projectMember.setCompanyId(companyId);
@@ -353,7 +354,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * 日期：2017/6/6
      */
     @Override
-    public ProjectMemberEntity getProjectMember(String projectId, String companyId, Integer memberType, String targetId) throws Exception {
+    public ProjectMemberEntity getProjectMember(String projectId, String companyId, Integer memberType, String targetId) {
         List<ProjectMemberEntity> list = this.listProjectMember(projectId,companyId,memberType,targetId);
         if(!CollectionUtils.isEmpty(list)){
             return list.get(0);
@@ -374,11 +375,11 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
         projectMember.setMemberType(memberType);
         projectMember.setTargetId(targetId);
         List<ProjectMemberDTO> list = this.projectMemberDao.listProjectMemberByParam(projectMember);
-        for(ProjectMemberDTO dto:list){
-            if(!StringUtil.isNullOrEmpty(dto.getImgUrl())){
-                dto.setImgUrl(fastdfsUrl+dto.getImgUrl());
-            }
-        }
+//        for(ProjectMemberDTO dto:list){
+//            if(!StringUtil.isNullOrEmpty(dto.getImgUrl())){
+//                dto.setImgUrl(fastdfsUrl+dto.getImgUrl());
+//            }
+//        }
         return list;
     }
 
@@ -398,8 +399,8 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
         if(project==null){
             return groupList;
         }
-        List<CompanyEntity> companylist = this.companyDao.getCompanyByProjectId(projectId);
-        for(CompanyEntity c : companylist){
+        List<CompanyEntity> companyList = this.companyDao.getCompanyByProjectId(projectId);
+        for(CompanyEntity c : companyList){
             ProjectMemberEntity projectMember = new ProjectMemberEntity();
             projectMember.setProjectId(projectId);
             projectMember.setCompanyId(c.getId());
@@ -423,8 +424,18 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * 日期：2017/6/12
      */
     @Override
-    public ProjectMemberEntity getOperatorManager(String projectId, String companyId) throws Exception {
+    public ProjectMemberEntity getOperatorManager(String projectId, String companyId) {
         return this.getProjectMember(projectId,companyId,ProjectMemberType.PROJECT_OPERATOR_MANAGER,null);
+    }
+
+    /**
+     * 方法描述：经营助理
+     * 作者：MaoSF
+     * 日期：2017/6/12
+     */
+    @Override
+    public ProjectMemberEntity getOperatorAssistant(String projectId, String companyId)  {
+        return this.getProjectMember(projectId, companyId, ProjectMemberType.PROJECT_OPERATOR_MANAGER_ASSISTANT, null);
     }
 
     /**
@@ -433,8 +444,37 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * 日期：2017/6/12
      */
     @Override
-    public ProjectMemberEntity getDesignManager(String projectId, String companyId) throws Exception {
+    public ProjectMemberEntity getDesignManager(String projectId, String companyId) {
         return this.getProjectMember(projectId,companyId,ProjectMemberType.PROJECT_DESIGNER_MANAGER,null);
+    }
+
+    @Override
+    public List<ProjectMemberEntity> listDesignManagerAndAssist(String projectId, String companyId){
+        List<ProjectMemberEntity> list = new ArrayList<>();
+        ProjectMemberEntity member = this.getDesignManager(projectId, companyId);
+        if (member != null ) {
+            list.add(member);
+        }
+        ProjectMemberEntity assistant = this.getDesignManagerAssistant(projectId, companyId);//设计助理
+        if (assistant != null) {
+            list.add(assistant);
+        }
+        return list;
+    }
+
+    @Override
+    public ProjectMemberEntity getDesignManagerAssistant(String projectId, String companyId)  {
+        return this.getProjectMember(projectId, companyId, ProjectMemberType.PROJECT_DESIGNER_MANAGER_ASSISTANT, null);
+    }
+
+    /**
+     * 方法描述：设计负责人
+     * 作者：MaoSF
+     * 日期：2017/6/12
+     */
+    @Override
+    public ProjectMemberEntity getTaskDesigner(String taskId) {
+        return this.getProjectMember(null,null,ProjectMemberType.PROJECT_TASK_RESPONSIBLE,taskId);
     }
 
     /**
@@ -443,7 +483,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * 日期：2017/6/6
      */
     @Override
-    public ProjectMemberEntity getProjectMember(String companyUserId, Integer memberType, String targetId) throws Exception {
+    public ProjectMemberEntity getProjectMember(String companyUserId, Integer memberType, String targetId) {
         ProjectMemberEntity projectMember = new ProjectMemberEntity();
         projectMember.setCompanyUserId(companyUserId);
         projectMember.setMemberType(memberType);
@@ -462,7 +502,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * 日期：2017/6/12
      */
     @Override
-    public ProjectMemberDTO getProjectCreatorDTO(String projectId, String companyId) throws Exception {
+    public ProjectMemberDTO getProjectCreatorDTO(String projectId, String companyId) {
         return this.getProjectMemberByParam(projectId,companyId,ProjectMemberType.PROJECT_CREATOR,null);
     }
 
@@ -472,7 +512,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * 日期：2017/6/12
      */
     @Override
-    public ProjectMemberDTO getOperatorManagerDTO(String projectId, String companyId) throws Exception {
+    public ProjectMemberDTO getOperatorManagerDTO(String projectId, String companyId)  {
         return this.getProjectMemberByParam(projectId,companyId,ProjectMemberType.PROJECT_OPERATOR_MANAGER,null);
     }
 
@@ -482,7 +522,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * 日期：2017/6/12
      */
     @Override
-    public ProjectMemberDTO getDesignManagerDTO(String projectId, String companyId) throws Exception {
+    public ProjectMemberDTO getDesignManagerDTO(String projectId, String companyId) {
         return this.getProjectMemberByParam(projectId,companyId,ProjectMemberType.PROJECT_DESIGNER_MANAGER,null);
     }
 
@@ -492,7 +532,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * 日期：2017/6/12
      */
     @Override
-    public ProjectMemberDTO getTaskDesignerDTO(String taskId) throws Exception {
+    public ProjectMemberDTO getTaskDesignerDTO(String taskId) {
         return this.getProjectMemberByParam(null,null,ProjectMemberType.PROJECT_TASK_RESPONSIBLE,taskId);
     }
 
@@ -505,7 +545,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * @param companyId
      */
     @Override
-    public List<ProjectMemberDTO> listProjectManager(String projectId, String companyId) throws Exception {
+    public List<ProjectMemberDTO> listProjectManager(String projectId, String companyId) {
         List<ProjectMemberDTO> list = this.listProjectMemberByParam(projectId,companyId,null,null);
         List<ProjectMemberDTO> result = new ArrayList<>();
         for(ProjectMemberDTO dto:list){
@@ -534,8 +574,72 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * @param taskId
      */
     @Override
-    public List<ProjectTaskProcessNodeDTO> listDesignUser(String taskId) throws Exception {
+    public List<ProjectTaskProcessNodeDTO> listDesignUser(String taskId) {
         List<ProjectTaskProcessNodeDTO> list = this.projectMemberDao.listProjectDesignMember(taskId,fastdfsUrl);
+        return list;
+    }
+
+    @Override
+    public ProjectDesignUserList listDesignMemberList(String taskId) {
+        ProjectDesignUserList dto = new ProjectDesignUserList();
+        List<ProjectTaskProcessNodeDTO> list = listDesignUser(taskId);
+        for (ProjectTaskProcessNodeDTO design :list) {
+            if (design.getMemberType() == ProjectMemberType.PROJECT_DESIGNER) {
+                dto.setDesignUser(design);
+
+            }
+            if (design.getMemberType() == ProjectMemberType.PROJECT_PROOFREADER) {
+                dto.setCheckUser(design);
+            }
+            if (design.getMemberType() == ProjectMemberType.PROJECT_AUDITOR) {
+                dto.setExamineUser(design);
+            }
+        }
+        return dto;
+    }
+
+    @Override
+    public List<ProjectTaskProcessNodeDTO> listDesignMember(String taskId) {
+        ProjectTaskEntity task = this.projectTaskDao.selectById(taskId);
+        List<ProjectTaskProcessNodeDTO> list = new ArrayList<>();
+        if(task == null){
+            return list;
+        }
+        int taskState = this.projectTaskDao.getTaskState(taskId,task.getProjectId());
+
+        ProjectMemberDTO design = getTaskDesignerDTO(taskId);
+        if(design!=null){
+            ProjectTaskProcessNodeDTO designUser = new ProjectTaskProcessNodeDTO();
+            designUser.setMemberType(ProjectMemberType.PROJECT_TASK_RESPONSIBLE);
+            CompanyUserAppDTO userAppDTO = new CompanyUserAppDTO();
+            userAppDTO.setId(design.getCompanyUserId());
+            userAppDTO.setUserName(design.getCompanyUserName());
+            userAppDTO.setAccountName(design.getAccountName());
+            userAppDTO.setCellphone(design.getCellphone());
+            userAppDTO.setUserId(design.getUserId());
+            userAppDTO.setFileFullPath(design.getFileFullPath());
+            userAppDTO.setTaskState(taskState);
+            userAppDTO.setEmail(design.getEmail());
+            designUser.getUserList().add(userAppDTO);
+            list.add(designUser);
+        }
+        List<ProjectTaskProcessNodeDTO> designUserList = listDesignUser(taskId);
+        //设置状态
+        for(ProjectTaskProcessNodeDTO dto:designUserList){
+            for(CompanyUserAppDTO userDTO:dto.getUserList()){
+                userDTO.setTaskState(taskState);
+                if(!StringUtil.isNullOrEmpty(userDTO.getCompleteTime())){
+                    userDTO.setTaskState(3);//已完成
+                    if(!StringUtil.isNullOrEmpty(task.getEndTime())){
+                        if(DateUtils.datecompareDate(userDTO.getCompleteTime(),task.getEndTime())>0){
+                            userDTO.setTaskState(4);//超时完成
+                        }
+                    }
+                }
+            }
+        }
+        //
+        list.addAll(designUserList);
         return list;
     }
 
@@ -549,6 +653,32 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
     @Override
     public String getDesignUserByTaskId(String taskId) {
         return this.projectMemberDao.getDesignUserByTaskId(taskId);
+    }
+
+    @Override
+    public int getMemberCount(String projectId) {
+        ProjectMemberEntity entity = new ProjectMemberEntity();
+        entity.setProjectId(projectId);
+        return this.projectMemberDao.getMemberCount(entity);
+    }
+
+    @Override
+    public List<CompanyUserGroupDTO> listProjectAllMember(Map<String, Object> map) {
+        ProjectEntity project = projectDao.selectById(map.get("projectId"));
+        if(project==null){
+            return new ArrayList<>();
+        }
+        map.put("projectCompanyId",project.getCompanyId());//为了排序，把立项方排放在第一位
+        map.put("fastdfsUrl",this.fastdfsUrl);
+        return projectMemberDao.listProjectAllMember(map);
+    }
+
+    @Override
+    public List<CompanyUserAppDTO> listProjectMember(String projectId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("fastdfsUrl",this.fastdfsUrl);
+        map.put("projectId",projectId);
+        return projectMemberDao.listProjectMember(map);
     }
 
     private void setPermission(List<ProjectTaskProcessNodeDTO> list,String companyId, String currentCompanyId,String accountId){
@@ -575,7 +705,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
         }
         map.put("companyId",currentCompanyId);
         map.put("userId", accountId);
-        List<CompanyUserTableDTO> companyUserList = this.companyUserDao.getCompanyUserByPermissionId(map);
+        List<CompanyUserDataDTO> companyUserList = this.companyUserDao.getCompanyUserByPermissionId(map);
         if(!CollectionUtils.isEmpty(companyUserList)){
             user.setIsUpdateOperator(1);
         }
@@ -610,19 +740,19 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * 作者：MaoSF
      * 日期：2017/6/7
      */
-    private void sendTaskToUser(String projectId, String companyId, String companyUserId, Integer memberType, String targetId, String nodeId,boolean isSendMessage) throws Exception{
+    private void sendTaskToUser(String projectId, String companyId, String companyUserId, Integer memberType, String targetId, String nodeId,boolean isSendMessage,String accountId,String currentCompanyId) throws Exception{
         switch (memberType){
             case 1:
-                myTaskService.saveMyTask(projectId, SystemParameters.ISSUE_TASK, companyId, companyUserId, isSendMessage);
+                myTaskService.saveMyTask(projectId, SystemParameters.ISSUE_TASK, companyId, companyUserId, isSendMessage,accountId,currentCompanyId);
                 break;
             case 3:
                 //给负责人发送任务负责人
-                this.myTaskService.saveMyTask(targetId, SystemParameters.PRODUCT_TASK_RESPONSE,companyId,companyUserId,isSendMessage);
+                this.myTaskService.saveMyTask(targetId, SystemParameters.PRODUCT_TASK_RESPONSE,companyId,companyUserId,isSendMessage,accountId,currentCompanyId);
                 break;
             case 4:
             case 5:
             case 6:
-                this.myTaskService.saveMyTask(targetId, SystemParameters.PROCESS_DESIGN, companyId, companyUserId,isSendMessage);
+                this.myTaskService.saveMyTask(targetId, SystemParameters.PROCESS_DESIGN, companyId, companyUserId,isSendMessage,accountId,currentCompanyId);
                 break;
             default:
         }
@@ -693,14 +823,18 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
                 this.myTaskService.saveMyTask(myTask,isSendMessage);
             }
             //把所有的任务设置为无效
-            param.put("status","2");
+            param.put("param4","1");
             this.myTaskDao.updateStatesByTargetId(param);
         }else {//如果是乙方，没有任务的时候，则只推送消息
             if(isSendMessage){
                 CompanyUserEntity user = this.companyUserDao.selectById(newCompanyUserId);
-                if(user==null) return;
+                if(user==null){
+                    return;
+                }
                 ProjectEntity project = this.projectDao.selectById(projectId);
-                if(project==null) return;
+                if(project==null){
+                    return;
+                }
                 MessageEntity messageEntity = new MessageEntity();
                 messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_1);
                 messageEntity.setProjectId(projectId);
@@ -749,7 +883,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
      * 作者：MaoSF
      * 日期：2017/6/7
      */
-    private void sendTaskForChangeMember(String projectId, String companyId, String companyUserId, String oldCompanyUserId,Integer memberType,String targetId,boolean isSendMessage) throws Exception{
+    private void sendTaskForChangeMember(String projectId, String companyId, String companyUserId, String oldCompanyUserId,Integer memberType,String targetId,boolean isSendMessage,String accountId) throws Exception{
 
         int taskType = 0;
         if(memberType == ProjectMemberType.PROJECT_OPERATOR_MANAGER){
@@ -765,7 +899,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
                 myTaskService.ignoreMyTask(targetId,taskType,oldCompanyUserId);
             }
             //给新的任务负责人推送任务
-            this.myTaskService.saveMyTask(targetId, taskType,companyId,companyUserId,isSendMessage);
+            this.myTaskService.saveMyTask(targetId, taskType,companyId,companyUserId,isSendMessage,accountId,companyId);
         }
     }
 
@@ -789,7 +923,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
         }
         if(oldMember==null){
             //新增
-            this.saveProjectMember(projectId,companyId,modifyMemberId,null,ProjectMemberType.PROJECT_TASK_RESPONSIBLE,targetId,accountId,isSendMessage);
+            this.saveProjectMember(projectId,companyId,modifyMemberId,null,ProjectMemberType.PROJECT_TASK_RESPONSIBLE,targetId,accountId,isSendMessage,companyId);
         }else {
             //更新
             updateProjectMember(oldMember,modifyMemberId,null,accountId,isSendMessage);
@@ -881,7 +1015,7 @@ public class ProjectMemberServiceImpl implements ProjectMemberService{
             //保存设计流程
             String nodeId = this.projectProcessService.saveProjectProcessNode(projectId,memberType,m.getSeq(),targetId,m.getCompanyUserId());
             //保存成员
-            this.saveProjectMember(projectId,companyId,m.getCompanyUserId(),null, memberType,nodeId,targetId,m.getSeq(),accountId,isSendMessage);
+            this.saveProjectMember(projectId,companyId,m.getCompanyUserId(),null, memberType,nodeId,targetId,m.getSeq(),accountId,isSendMessage,companyId);
         }
     }
 }

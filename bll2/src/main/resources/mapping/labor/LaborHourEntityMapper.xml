@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="LaborHourEntityMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.labor.entity.LaborHourEntity" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="company_user_id" property="companyUserId" jdbcType="VARCHAR" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+    <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="project_id" property="projectId" jdbcType="VARCHAR" />
+    <result column="labor_date" property="laborDate" jdbcType="DATE" />
+    <result column="labor_hours" property="laborHours" jdbcType="VARCHAR" />
+    <result column="deleted" property="deleted" jdbcType="INTEGER" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <sql id="Base_Column_List" >
+    id, company_user_id, remark, company_id, project_id, labor_date, labor_hours, deleted, 
+    create_date, create_by, update_date, update_by
+  </sql>
+
+  <select id="selectById" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from maoding_web_labor_hour
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+
+  <select id="getLaborHourByDate" resultMap="BaseResultMap" parameterType="java.util.Map">
+    select
+    <include refid="Base_Column_List" />
+    from maoding_web_labor_hour
+    where deleted = 0
+    and labor_date = DATE_FORMAT(#{laborDate},'%Y-%m-%d')
+    and company_user_id = #{companyUserId}
+  </select>
+
+  <select id="getLaborHourDataByDate" resultType="com.maoding.labor.dto.LaborHourDTO" parameterType="java.util.Map">
+    select a.id,a.labor_hours as laborHours,
+     b.id as projectId,b.project_name as projectName
+    from maoding_web_labor_hour a
+    INNER JOIN maoding_web_project b on a.project_id = b.id
+     where a.deleted = 0
+     and labor_date = DATE_FORMAT(#{laborDate},'%Y-%m-%d')
+     and company_user_id = #{companyUserId}
+  </select>
+
+  <select id="getLaborDate" resultType="java.lang.String" parameterType="com.maoding.labor.dto.QueryLaborHourDTO">
+      SELECT DISTINCT labor_date
+      from maoding_web_labor_hour
+      where deleted = 0
+      and company_user_id = #{companyUserId}
+      and  DATE_FORMAT(labor_date,'%Y-%m') = #{date}
+  </select>
+
+  <delete id="deleteById" parameterType="java.lang.String" >
+    delete from maoding_web_labor_hour
+    where id = #{id,jdbcType=VARCHAR}
+  </delete>
+
+  <insert id="insert" parameterType="com.maoding.labor.entity.LaborHourEntity" >
+    insert into maoding_web_labor_hour (id, company_user_id, remark, 
+      company_id, project_id, labor_date, 
+      labor_hours, deleted, create_date, 
+      create_by, update_date, update_by
+      )
+    values (#{id,jdbcType=VARCHAR}, #{companyUserId,jdbcType=VARCHAR}, #{remark,jdbcType=VARCHAR}, 
+      #{companyId,jdbcType=VARCHAR}, #{projectId,jdbcType=VARCHAR}, #{laborDate,jdbcType=DATE}, 
+      #{laborHours,jdbcType=VARCHAR}, #{deleted,jdbcType=INTEGER}, #{createDate,jdbcType=TIMESTAMP}, 
+      #{createBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}
+      )
+  </insert>
+
+  <update id="updateById" parameterType="com.maoding.labor.entity.LaborHourEntity" >
+    update maoding_web_labor_hour
+    <set >
+      <if test="companyUserId != null" >
+        company_user_id = #{companyUserId,jdbcType=VARCHAR},
+      </if>
+      <if test="remark != null" >
+        remark = #{remark,jdbcType=VARCHAR},
+      </if>
+      <if test="companyId != null" >
+        company_id = #{companyId,jdbcType=VARCHAR},
+      </if>
+      <if test="projectId != null" >
+        project_id = #{projectId,jdbcType=VARCHAR},
+      </if>
+      <if test="laborDate != null" >
+        labor_date = #{laborDate,jdbcType=DATE},
+      </if>
+      <if test="laborHours != null" >
+        labor_hours = #{laborHours,jdbcType=VARCHAR},
+      </if>
+      <if test="deleted != null" >
+        deleted = #{deleted,jdbcType=INTEGER},
+      </if>
+      <if test="createDate != null" >
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createBy != null" >
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+        update_date = now(),
+      <if test="updateBy != null" >
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+
+  <update id="update" parameterType="com.maoding.labor.entity.LaborHourEntity" >
+    update maoding_web_labor_hour
+    set company_user_id = #{companyUserId,jdbcType=VARCHAR},
+      remark = #{remark,jdbcType=VARCHAR},
+      company_id = #{companyId,jdbcType=VARCHAR},
+      project_id = #{projectId,jdbcType=VARCHAR},
+      labor_date = #{laborDate,jdbcType=DATE},
+      labor_hours = #{laborHours,jdbcType=VARCHAR},
+      deleted = #{deleted,jdbcType=INTEGER},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+
+  <update id="deleteLaborHour" parameterType="com.maoding.labor.dto.SaveLaborHourDTO">
+    update maoding_web_labor_hour
+    set  deleted = 1
+    where labor_date =  DATE_FORMAT(#{laborDate},'%Y-%m-%d')
+    and company_user_id = #{companyUserId}
+  </update>
+</mapper>

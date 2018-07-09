@@ -1,19 +1,14 @@
 package com.maoding.user.service;
 
-import java.util.List;
-import java.util.Map;
-
-import com.maoding.core.bean.AjaxMessage;
-import com.maoding.org.entity.CompanyUserEntity;
-import com.maoding.user.dto.AppUseDTO;
-import com.maoding.user.dto.UserInfoDTO;
-import com.maoding.user.entity.*;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.maoding.core.base.service.BaseService;
+import com.maoding.core.bean.AjaxMessage;
 import com.maoding.user.dto.AccountDTO;
 import com.maoding.user.dto.UserDTO;
+import com.maoding.user.dto.UserInfoDTO;
+import com.maoding.user.entity.*;
+
+import java.util.List;
+import java.util.Map;
 
 public interface UserService extends BaseService<UserEntity>{
 
@@ -25,8 +20,7 @@ public interface UserService extends BaseService<UserEntity>{
 	 * @return:
 	 */
 	UserInfoDTO getUserInfo(String id);
-	
-	
+
 	/**
 	 * 方法描述：保存人员信息
 	 * 作        者：MaoSF
@@ -36,14 +30,6 @@ public interface UserService extends BaseService<UserEntity>{
 	 */
 	AjaxMessage saveOrUpdateUser(AccountDTO entity)throws Exception;
 
-	/**
-	 * 方法描述：saveOrUpdateAppUse
-	 * 作        者：MaoSF
-	 * 日        期：2015年11月26日-下午4:51:31
-	 * @param entity
-	 * @return
-	 */
-	AjaxMessage saveOrUpdateAppUse(AppUseDTO entity)throws Exception;
 	/**
 	 * 方法描述：根据id获取人员信息
 	 * 作        者：MaoSF
@@ -313,15 +299,6 @@ public interface UserService extends BaseService<UserEntity>{
 	List<UserAttachEntity>  getAttachByType(Map<String, Object> paraMap);
 
 	/**
-	 * 方法描述：getAppUseList
-	 * 作        者：MaoSF
-	 * 日        期：2016年3月18日-上午9:50:00
-	 * @param paraMap
-	 * @return
-	 */
-	List<AppUseEntity> getAppUseList();
-	
-	/**
 	 * 方法描述：保存员工其他附件信息
 	 * 作        者：MaoSF
 	 * 日        期：2015年7月6日-下午4:32:25
@@ -329,29 +306,6 @@ public interface UserService extends BaseService<UserEntity>{
 	 * @throws Exception 
 	 */
 	int saveOrUpdateAttach(UserAttachEntity entity);
-	
-	
-	/**
-	 * 方法描述：上传原图
-	 * 作        者：MaoSF
-	 * 日        期：2016年7月13日-下午7:49:34
-	 * @param file
-	 * @param param
-	 * @return
-	 * @throws Exception
-	 */
-	AjaxMessage uploadHeadOriginalImg(MultipartFile file, Map<String, String> param) throws Exception;
-	
-	/**
-	 * 方法描述：上传头像
-	 * 作        者：MaoSF
-	 * 日        期：2016年7月13日-下午6:38:43
-	 * @param param
-	 * @return
-	 * @throws Exception
-	 */
-	AjaxMessage uploadHeadImg(@RequestBody Map<String, Object> param)throws Exception;
-
 
 
 	/*******************************v2******************************************/

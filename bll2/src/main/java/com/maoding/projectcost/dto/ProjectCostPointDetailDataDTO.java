@@ -88,6 +88,8 @@ public class ProjectCostPointDetailDataDTO {
 
     private String field1;
 
+    private int level = 1; //给app端区分父子节点的type值
+
     /**
      * 权限map:
      * 4.付款（技术审查费-确认付款款（经营负责人）），
@@ -270,5 +272,13 @@ public class ProjectCostPointDetailDataDTO {
 
     public void setPaymentFee(BigDecimal paymentFee) {
         this.paymentFee = paymentFee;
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    public void setLevel(int level) {
+        this.level = level;
     }
 }

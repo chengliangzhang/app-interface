@@ -142,6 +142,8 @@ public class ProjectTaskDTO{
      */
     private String taskStatus;
 
+    private String nodeName;//我的任务中，设校审（项目名称+父集名称）
+
     public String getId() {
         return id;
     }
@@ -359,5 +361,13 @@ public class ProjectTaskDTO{
 
     public void setTaskStatus(String taskStatus) {
         this.taskStatus = taskStatus;
+    }
+
+    public String getNodeName() {
+        return nodeName;
+    }
+
+    public void setNodeName(String nodeName) {
+        this.nodeName = nodeName;
     }
 }

@@ -19,6 +19,11 @@ public class ProjectTaskEntity extends BaseEntity {
     private String companyId;
 
     /**
+     * 签发公司Id（在草稿版本中，fromCompanyId为修改方的公司id，如果是正式版本，则为签发方公司id）
+     */
+    private String fromCompanyId;
+
+    /**
      * 项目Id
      */
     private String projectId;
@@ -92,6 +97,10 @@ public class ProjectTaskEntity extends BaseEntity {
      * 被修改记录的id，用于修改任务，新增一条未被发布的数据，该字段记录被修改记录的id
      */
     private String beModifyId;
+    /**
+     * 结束状态：0=未开始，1=已完成，2=已终止
+     */
+    private Integer endStatus;
 
     public String getCompanyId() {
         return companyId;
@@ -220,5 +229,21 @@ public class ProjectTaskEntity extends BaseEntity {
 
     public void setEndTime(String endTime) {
         this.endTime = endTime;
+    }
+
+    public String getFromCompanyId() {
+        return fromCompanyId;
+    }
+
+    public void setFromCompanyId(String fromCompanyId) {
+        this.fromCompanyId = fromCompanyId;
+    }
+
+    public Integer getEndStatus() {
+        return endStatus;
+    }
+
+    public void setEndStatus(Integer endStatus) {
+        this.endStatus = endStatus;
     }
 }

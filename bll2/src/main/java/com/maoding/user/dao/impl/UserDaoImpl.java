@@ -17,11 +17,6 @@ public class UserDaoImpl extends GenericDao<UserEntity> implements UserDao{
      * 方法描述：获取个人信息
      * 作者：MaoSF
      * 日期：2017/5/23
-     *
-     * @param id
-     * @param fastdfsUrl
-     * @param:
-     * @return:
      */
     @Override
     public UserInfoDTO getUserInfo(String id, String fastdfsUrl) {
@@ -30,7 +25,6 @@ public class UserDaoImpl extends GenericDao<UserEntity> implements UserDao{
         map.put("fastdfsUrl",fastdfsUrl);
         return this.sqlSession.selectOne("UserEntityMapper.getUserInfo",map);
     }
-
 
 //	@Override
 //	public List<UserEntity> findUserByPage(Map<String, Object> map) {

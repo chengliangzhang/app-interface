@@ -31,8 +31,8 @@
 		<result column="company_comment" property="companyComment" jdbcType="LONGVARCHAR" />
 		<result column="file_path" property="filePath" jdbcType="VARCHAR" />
 		<result column="alias_name" property="aliasName" jdbcType="VARCHAR" />
+		<result column="type_id" property="typeId" jdbcType="VARCHAR" />
 	</resultMap>
-
 
 	<sql id="Base_Column_List" >
 		id, company_name, major_type, certificate, main_field, is_authentication, operator_name,
@@ -59,7 +59,7 @@
 		a.company_name,
 		a.company_short_name,a.province,a.city,c.org_type as company_type,server_type,
 		IF(d.file_path is not null,CONCAT(d.file_group,'/',d.file_path ),null) as file_path,
-		e.nick_name as alias_name
+		e.nick_name as alias_name,b.type_id
 		from maoding_web_company a
 		LEFT JOIN maoding_web_company_relation b on a.id =  b.org_id
 		LEFT JOIN maoding_web_org c on b.id=c.id

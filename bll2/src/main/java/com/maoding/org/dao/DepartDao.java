@@ -2,6 +2,7 @@ package com.maoding.org.dao;
 
 import com.maoding.core.base.dao.BaseDao;
 import com.maoding.org.dto.DepartDTO;
+import com.maoding.org.dto.DepartDataDTO;
 import com.maoding.org.dto.DepartRoleDTO;
 import com.maoding.org.dto.UserDepartDTO;
 import com.maoding.org.entity.DepartEntity;
@@ -25,16 +26,7 @@ public interface DepartDao extends BaseDao<DepartEntity>{
 	 * @param paraMap（companyId（公司ID）,departLevel（部门层级）,pid（部门父ID）,departType（部门type）type:0:部门，1：分公司）
 	 * @return
 	 */
-	List<DepartDTO> getDepartByCompanyId(Map<String, Object> paraMap);
-
-	/**
-	 * 方法描述：根据companyId和userId查询Departs（部门）
-	 * 作        者：TangY
-	 * 日        期：2016年7月8日-下午3:32:16
-	 * @param paraMap（companyId（公司ID）,userId（用户Id））
-	 * @return
-	 */
-	List<DepartEntity> getDepartByCompanyIdAndUserId(Map<String, Object> paraMap);
+	List<DepartDataDTO> getDepartByCompanyId(Map<String, Object> paraMap);
 
 
 	/**
@@ -98,24 +90,6 @@ public interface DepartDao extends BaseDao<DepartEntity>{
 	 * @return
 	 */
 	List<Map<String, Object>>selectDepartEdgesByCompanyIds(Map<String, Object> param);
-	
-	/**
-	 * 方法描述：获取用户所在组织的部门信息（param:companyId,必填，departType=1:查询独立部门）
-	 * 作        者：MaoSF
-	 * 日        期：2016年7月11日-下午5:07:48
-	 * @param param
-	 * @return
-	 */
-	List<UserDepartDTO> selectUserDpartByParam(Map<String, Object> param);
-	
-	/**
-	 * 方法描述：获取公司部门数
-	 * 作        者：MaoSF
-	 * 日        期：2016年7月14日-下午8:21:40
-	 * @param companyId
-	 * @return
-	 */
-	int getDepartByCompanyIdCount(String companyId);
 
 	/**
 	 * 方法描述：根据departPath删除（批量删除，删除自己及所有子部门）逻辑删除
@@ -126,34 +100,6 @@ public interface DepartDao extends BaseDao<DepartEntity>{
 	 */
 	int deleteByDepartPath(String departPath);
 
-
-
-	/**
-	 * 方法描述：根据departPath删除（批量删除，删除自己及所有子部门）  物理删除
-	 * 作        者：MaoSF
-	 * 日        期：2016年7月14日-下午8:21:40
-	 * @param departPath
-	 * @return
-	 */
-	int deleteByDepartPath2(String departPath);
-
-	/**
-	 * 方法描述：获取具有某些角色的部门（当前人在当前组织下的部门）
-	 * 作者：MaoSF
-	 * 日期：2016/8/16
-	 * @param:
-	 * @return:
-	 */
-	List<DepartRoleDTO> getDepartByRole(Map<String, Object> paraMap);
-
-	/**
-	 * 方法描述：获取所有组织的角色（在当前公司下）
-	 * 作者：MaoSF
-	 * 日期：2016/8/16
-	 * @param:
-	 * @return:
-	 */
-	List<DepartRoleDTO> getOrgRole(Map<String, Object> paraMap);
 
 	/**
 	 * 方法描述：根据companyId查询Departs（部门）
@@ -180,21 +126,6 @@ public interface DepartDao extends BaseDao<DepartEntity>{
 	 * @return
 	 */
 	List<DepartEntity> selectStairDepartCompanyId(Map<String, Object> params);
-
-	/**
-	 *查询没有创建群组的一级部门群
-	 * 作        者：TangY
-	 * 日        期：2016年7月8日-下午3:32:16
-	 * @return
-	 */
-	List<DepartEntity> selectNotCreateGroupDepart(Map<String, Object> paraMap);
-	/**
-	 *查询创建群组的一级部门群
-	 * 作        者：TangY
-	 * 日        期：2016年7月8日-下午3:32:16
-	 * @return
-	 */
-	List<DepartEntity> selectCreateGroupDepart(Map<String, Object> paraMap);
 
 	/**
 	 * 方法描述：获取我所在一级部门群

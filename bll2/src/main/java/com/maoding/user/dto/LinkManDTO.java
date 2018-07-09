@@ -1,7 +1,5 @@
 package com.maoding.user.dto;
 
-import com.maoding.core.base.dto.BaseDTO;
-
 /**
  * 深圳市设计同道技术有限公司
  * 类    名：LinkManDTO

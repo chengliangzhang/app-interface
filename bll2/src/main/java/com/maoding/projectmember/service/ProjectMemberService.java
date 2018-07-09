@@ -1,5 +1,8 @@
 package com.maoding.projectmember.service;
 
+import com.maoding.org.dto.CompanyUserAppDTO;
+import com.maoding.org.dto.CompanyUserGroupDTO;
+import com.maoding.project.dto.ProjectDesignUserList;
 import com.maoding.project.dto.ProjectTaskProcessNodeDTO;
 import com.maoding.projectmember.dto.ProjectMemberDTO;
 import com.maoding.projectmember.dto.ProjectMemberGroupDTO;
@@ -7,6 +10,7 @@ import com.maoding.projectmember.dto.UserPositionDTO;
 import com.maoding.projectmember.entity.ProjectMemberEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Idccapp22 on 2017/6/6.
@@ -19,14 +23,14 @@ public interface ProjectMemberService {
      * 作者：MaoSF
      * 日期：2017/6/6
      */
-    ProjectMemberEntity saveProjectMember(String projectId,String companyId,String companyUserId,String accountId,Integer memberType,String targetId,String nodeId,Integer seq,String createBy,boolean isSendMessage) throws Exception;
+    ProjectMemberEntity saveProjectMember(String projectId,String companyId,String companyUserId,String accountId,Integer memberType,String targetId,String nodeId,Integer seq,String createBy,boolean isSendMessage,String currentCompanyId) throws Exception;
 
     /**
      * 方法描述：保存项目成员（未发布版本的数据：status=2）
      * 作者：MaoSF
      * 日期：2017/6/6
      */
-    ProjectMemberEntity saveProjectMember(String projectId,String companyId,String companyUserId,String targetId,Integer memberType,Integer seq,String createBy)  throws Exception;
+    ProjectMemberEntity saveProjectMember(String projectId,String companyId,String companyUserId,String targetId,Integer memberType,Integer seq,String createBy,String currentCompanyId) throws Exception ;
 
 
     /**
@@ -34,27 +38,27 @@ public interface ProjectMemberService {
      * 作者：MaoSF
      * 日期：2017/6/6
      */
-    ProjectMemberEntity saveProjectMember(String projectId,String companyId,String companyUserId,String accountId,Integer memberType,String createBy)  throws Exception;
+    ProjectMemberEntity saveProjectMember(String projectId,String companyId,String companyUserId,String accountId,Integer memberType,String createBy,String currentCompanyId)  throws Exception;
 
     /**
      * 方法描述：保存项目成员
      * 作者：MaoSF
      * 日期：2017/6/6
      */
-    ProjectMemberEntity saveProjectMember(String projectId,String companyId,String companyUserId,String accountId,Integer memberType,String targetId, String createBy,boolean isSendMessage)  throws Exception;
+    ProjectMemberEntity saveProjectMember(String projectId,String companyId,String companyUserId,String accountId,Integer memberType,String targetId, String createBy,boolean isSendMessage,String currentCompanyId)  throws Exception;
     /**
      * 方法描述：保存项目成员
      * 作者：MaoSF
      * 日期：2017/6/6
      */
-    ProjectMemberEntity saveProjectMember(String projectId,String companyId,String companyUserId,String accountId,Integer memberType,String createBy,boolean isSendMessage)  throws Exception;
+    ProjectMemberEntity saveProjectMember(String projectId,String companyId,String companyUserId,String accountId,Integer memberType,String createBy,boolean isSendMessage,String currentCompanyId)  throws Exception;
 
       /**
      * 方法描述：保存项目成员(只推送消息，不发送任务)
      * 作者：MaoSF
      * 日期：2017/6/6
      */
-      ProjectMemberEntity saveProjectMember(String projectId,String companyId,String companyUserId,Integer memberType,String createBy,boolean isSendMessage)  throws Exception;
+      ProjectMemberEntity saveProjectMember(String projectId,String companyId,String companyUserId,Integer memberType,String createBy,boolean isSendMessage,String currentCompanyId)  throws Exception;
 
 
     /**
@@ -112,14 +116,14 @@ public interface ProjectMemberService {
      * 作者：MaoSF
      * 日期：2017/6/6
      */
-    List<ProjectMemberEntity> listProjectMember(String projectId, String companyId, Integer memberType, String targetId) throws Exception;
+    List<ProjectMemberEntity> listProjectMember(String projectId, String companyId, Integer memberType, String targetId) ;
 
     /**
      * 方法描述：获取成员信息
      * 作者：MaoSF
      * 日期：2017/6/6
      */
-    ProjectMemberEntity getProjectMember(String projectId, String companyId, Integer memberType, String targetId) throws Exception;
+    ProjectMemberEntity getProjectMember(String projectId, String companyId, Integer memberType, String targetId) ;
 
     /**
      * 方法描述：获取成员信息(带有个人资料信息)
@@ -147,56 +151,82 @@ public interface ProjectMemberService {
      * 作者：MaoSF
      * 日期：2017/6/12
      */
-    ProjectMemberEntity getOperatorManager(String projectId,String companyId) throws Exception;
+    ProjectMemberEntity getOperatorManager(String projectId,String companyId) ;
+
+    /**
+     * 方法描述：经营助理
+     * 作者：MaoSF
+     * 日期：2017/6/12
+     */
+    ProjectMemberEntity getOperatorAssistant(String projectId, String companyId) ;
 
     /**
      * 方法描述：设计负责人
      * 作者：MaoSF
      * 日期：2017/6/12
      */
-    ProjectMemberEntity getDesignManager(String projectId,String companyId) throws Exception;
+    ProjectMemberEntity getDesignManager(String projectId,String companyId) ;
 
     /**
-     * 方法描述：获取成员信息(社校审)
-     * 作者：MaoSF
-     * 日期：2017/6/6
+     * 设计负责人+设计助理
      */
-    ProjectMemberEntity getProjectMember(String companyUserId, Integer memberType, String targetId) throws Exception;
+    List<ProjectMemberEntity> listDesignManagerAndAssist(String projectId, String companyId);
 
     /**
-     * 方法描述：立项人
+     * 方法描述：设计助理
      * 作者：MaoSF
      * 日期：2017/6/12
      */
-    ProjectMemberDTO getProjectCreatorDTO(String projectId,String companyId) throws Exception;
-
-    /**
-     * 方法描述：经营负责人
-     * 作者：MaoSF
-     * 日期：2017/6/12
-     */
-    ProjectMemberDTO getOperatorManagerDTO(String projectId,String companyId) throws Exception;
-
-    /**
-     * 方法描述：设计负责人
-     * 作者：MaoSF
-     * 日期：2017/6/12
-     */
-    ProjectMemberDTO getDesignManagerDTO(String projectId,String companyId) throws Exception;
+    ProjectMemberEntity getDesignManagerAssistant(String projectId, String companyId);
 
     /**
      * 方法描述：任务负责人
      * 作者：MaoSF
      * 日期：2017/6/12
      */
-    ProjectMemberDTO getTaskDesignerDTO(String taskId) throws Exception;
+    ProjectMemberEntity getTaskDesigner(String taskId) ;
+
+    /**
+     * 方法描述：获取成员信息(社校审)
+     * 作者：MaoSF
+     * 日期：2017/6/6
+     */
+    ProjectMemberEntity getProjectMember(String companyUserId, Integer memberType, String targetId) ;
+
+    /**
+     * 方法描述：立项人
+     * 作者：MaoSF
+     * 日期：2017/6/12
+     */
+    ProjectMemberDTO getProjectCreatorDTO(String projectId,String companyId) ;
+
+    /**
+     * 方法描述：经营负责人
+     * 作者：MaoSF
+     * 日期：2017/6/12
+     */
+    ProjectMemberDTO getOperatorManagerDTO(String projectId,String companyId) ;
+
+    /**
+     * 方法描述：设计负责人
+     * 作者：MaoSF
+     * 日期：2017/6/12
+     */
+    ProjectMemberDTO getDesignManagerDTO(String projectId,String companyId) ;
+
+    /**
+     * 方法描述：任务负责人
+     * 作者：MaoSF
+     * 日期：2017/6/12
+     */
+    ProjectMemberDTO getTaskDesignerDTO(String taskId) ;
 
     /**
      * 方法描述：经营负责人+设计负责人
      * 作者：MaoSF
      * 日期：2017/6/12
      */
-    List<ProjectMemberDTO> listProjectManager(String projectId,String companyId) throws Exception;
+    List<ProjectMemberDTO> listProjectManager(String projectId,String companyId);
 
     /**
      * 方法描述：成员角色
@@ -210,7 +240,21 @@ public interface ProjectMemberService {
      * 作者：MaoSF
      * 日期：2017/6/24
      */
-    List<ProjectTaskProcessNodeDTO> listDesignUser(String taskId) throws Exception;
+    List<ProjectTaskProcessNodeDTO> listDesignUser(String taskId) ;
+
+    /**
+     * 方法描述：获取设计人员(人员分组)
+     * 作者：MaoSF
+     * 日期：2017/6/24
+     */
+    ProjectDesignUserList listDesignMemberList(String taskId) ;
+
+    /**
+     * 方法描述：获取设计校对审核，任务负责人
+     * 作者：MaoSF
+     * 日期：2017/6/24
+     */
+    List<ProjectTaskProcessNodeDTO> listDesignMember(String taskId) ;
 
     /**
      * 方法描述：获取设计人员
@@ -218,4 +262,23 @@ public interface ProjectMemberService {
      * 日期：2017/6/24
      */
     String getDesignUserByTaskId(String taskId);
+
+    /**
+     *
+     * 获取成员总数
+     */
+    int getMemberCount(String projectId);
+
+    /**
+     * 项目成员
+     * @param map(projectId,fastdfsUrl)
+     */
+    List<CompanyUserGroupDTO> listProjectAllMember(Map<String,Object> map);
+
+
+    /**
+     * 项目成员
+     * @param (projectId,fastdfsUrl)
+     */
+    List<CompanyUserAppDTO> listProjectMember(String projectId);
 }

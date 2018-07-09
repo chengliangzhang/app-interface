@@ -2,9 +2,12 @@ package com.maoding.notice.service;
 
 import com.maoding.core.base.service.BaseService;
 import com.maoding.core.bean.AjaxMessage;
+import com.maoding.core.bean.ResponseBean;
+import com.maoding.message.dto.SendMessageDataDTO;
 import com.maoding.notice.dto.NoticeDTO;
 import com.maoding.notice.dto.NoticeDataDTO;
 import com.maoding.notice.entity.NoticeEntity;
+import com.maoding.project.dto.ProjectDesignContentDTO;
 
 import java.util.List;
 import java.util.Map;
@@ -105,6 +108,12 @@ public interface NoticeService extends BaseService<NoticeEntity> {
     List<NoticeDataDTO> getNoticeGroupTime(Map<String, Object> param) throws Exception;
 
     /** 发送通知 **/
-    void notify(String notifyDestination, Map<String, Object> map);
+    void notify(String notifyDestination, SendMessageDataDTO dto);
+
+    /**
+     * 项目立项生产公告
+     */
+    void saveNoticeForProject(String projectId, String companyId, String createPersonId, String currentCompanyUserId, List<ProjectDesignContentDTO> designContent) throws Exception;
+
 
 }

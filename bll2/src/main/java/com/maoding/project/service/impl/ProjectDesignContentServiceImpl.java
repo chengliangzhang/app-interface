@@ -1,5 +1,6 @@
 package com.maoding.project.service.impl;
 
+import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.core.base.service.GenericService;
 import com.maoding.project.dao.ProjectDao;
 import com.maoding.project.dao.ProjectDesignContentDao;
@@ -8,6 +9,9 @@ import com.maoding.project.entity.ProjectDesignContentEntity;
 import com.maoding.project.service.ProjectDesignContentService;
 import com.maoding.role.dao.PermissionDao;
 import com.maoding.role.dao.RoleDao;
+import com.maoding.task.dao.ProjectProcessTimeDao;
+import com.maoding.task.dao.ProjectTaskDao;
+import com.maoding.task.dto.ProjectTaskDTO;
 import com.maoding.task.entity.ProjectTaskEntity;
 import com.maoding.task.service.ProjectTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +35,7 @@ public class ProjectDesignContentServiceImpl extends GenericService< ProjectDesi
     private ProjectDesignContentDao projectDesignContentDao;
 
     @Autowired
-    private ProjectTaskService projectTaskService;
+    private ProjectProcessTimeDao projectProcessTimeDao;
 
 
 
@@ -44,7 +48,7 @@ public class ProjectDesignContentServiceImpl extends GenericService< ProjectDesi
 
 
     @Autowired
-    private PermissionDao permissionDao;
+    private ProjectTaskDao projectTaskDao;
 
 
     /**
@@ -56,23 +60,10 @@ public class ProjectDesignContentServiceImpl extends GenericService< ProjectDesi
      * @return
      */
     @Override
-    public List<ProjectDesignContentDTO> getProjectDesignContentByProjectId(String projectId,Map<String,Object> param) throws Exception{
-
+    public List<ProjectDesignContentDTO> getProjectDesignContentByProjectId(String projectId,String companyId) throws Exception{
       //  ProjectEntity projectEntity = this.projectDao.selectById(projectId);
-        List<ProjectTaskEntity> rootTaskList = this.projectTaskService.listProjectTaskContent(projectId);
-        List<ProjectDesignContentDTO> projectDesignContentDTOList=new ArrayList<ProjectDesignContentDTO>();
-        for(ProjectTaskEntity dto1:rootTaskList){
-            ProjectDesignContentDTO dto = new ProjectDesignContentDTO();
-            dto.setId(dto1.getId());
-            dto.setCompanyId(dto1.getCompanyId());
-            dto.setProjectId(dto1.getProjectId());
-            dto.setContentName(dto1.getTaskName());
-            dto.setSeq(dto1.getSeq());
-            dto.setStartTime(dto1.getStartTime());
-            dto.setEndTime(dto1.getEndTime());
-            projectDesignContentDTOList.add(dto);
-        }
-        return projectDesignContentDTOList;
+        List<ProjectDesignContentDTO> rootTaskList = projectDesignContentDao.getProjectDesignContent(projectId);
+        return rootTaskList;
     }
 
 

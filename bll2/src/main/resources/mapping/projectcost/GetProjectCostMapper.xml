@@ -34,6 +34,9 @@
     <if test="toCompanyId != null" >
       and to_company_id = #{toCompanyId,jdbcType=VARCHAR}
     </if>
+    <if test="costId != null" >
+      and id = #{costId,jdbcType=VARCHAR}
+    </if>
     <if test="flag != null" >
       and flag = #{flag,jdbcType=VARCHAR}
     </if>
@@ -63,4 +66,43 @@
     </if>
   </select>
 
+  <select id="getProjectAmountFee" resultType="com.maoding.projectcost.dto.ProjectAmountFee" parameterType="java.util.Map">
+    SELECT
+    ifnull(sum(if(to_company_id = #{companyId},c.fee,0)),0) as sumIncome,
+    ifnull(sum(if(from_company_id = #{companyId},c.fee,0)),0) as sumPay,
+    ifnull(sum(if(to_company_id = #{companyId},d.paid_fee,0)),0) as totalIncome,
+    ifnull(sum(if(from_company_id = #{companyId},d.pay_fee,0)),0) as totalPay
+    from maoding_web_project_cost a
+    INNER JOIN maoding_web_project_cost_point b on a.id = b.cost_id and b.`status`= 0
+    INNER JOIN maoding_web_project_cost_point_detail c on b.id = c.point_id and c.`status` = 0
+    LEFT  JOIN (SELECT sum(if(pay_date is not null,fee,0)) as pay_fee, sum(if(paid_date is not null,fee,0))as paid_fee,point_detail_id
+      from maoding_web_project_cost_payment_detail f where `status` = 0 GROUP BY point_detail_id) d on c.id = d.point_detail_id
+    where a.project_id= #{projectId} and a.`status`=0
+  </select>
+
+
+  <select id="getProjectTechAmountFee" resultType="com.maoding.projectcost.dto.ProjectCooperatorCostDTO" parameterType="java.util.Map">
+    SELECT a.id as costId, if(a.to_company_id = #{companyId},1,2) as feeType,
+     sum(ifnull(d.pay_fee,0)) as sumPayFee,sum(ifnull(d.paid_fee,0)) as sumPaidFee,
+    ifnull(a.fee,0) as planFee,
+    sum(ifnull(c.fee,0)) as detailFee,
+    ( select  if(b1.nick_name is null or b1.nick_name='',a1.company_name,b1.nick_name)
+      from maoding_web_company a1 LEFT JOIN maoding_web_business_partner b1 on a1.id = b1.company_id and b1.type=3
+      where a1.id = if(a.to_company_id = #{companyId},a.from_company_id,a.to_company_id) limit 1
+      ) as companyName,e.task_name as taskName
+    from maoding_web_project_cost a
+    LEFT JOIN maoding_web_project_cost_point b on a.id = b.cost_id and b.`status`= 0
+    LEFT JOIN maoding_web_project_cost_point_detail c on b.id = c.point_id and c.`status` = 0
+    LEFT JOIN (SELECT sum(if(pay_date is not null,fee,0)) as pay_fee, sum(if(paid_date is not null,fee,0))as paid_fee,point_detail_id
+      from maoding_web_project_cost_payment_detail f where `status` = 0 GROUP BY point_detail_id) d on c.id = d.point_detail_id
+    LEFT JOIN (select r.from_company_id,r.to_company_id,group_concat(t.task_name separator '、' ) as task_name from maoding_web_project_task_relation r
+                INNER  JOIN  maoding_web_project_task t ON r.task_id = t.id and r.relation_status = 0 and t.task_status !=1
+                where t.project_id =  #{projectId} and (r.from_company_id = #{companyId} or r.to_company_id = #{companyId})
+                GROUP BY r.from_company_id,r.to_company_id
+     ) e on a.from_company_id = e.from_company_id and a.to_company_id = e.to_company_id
+    where a.project_id = #{projectId}
+    and a.type = 3
+    and (a.from_company_id = #{companyId} or a.to_company_id = #{companyId})
+    GROUP BY a.id
+  </select>
 </mapper>

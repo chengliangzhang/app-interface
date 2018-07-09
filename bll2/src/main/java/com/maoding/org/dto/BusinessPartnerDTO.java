@@ -11,6 +11,8 @@ import com.maoding.core.base.dto.BaseDTO;
  */
 public class BusinessPartnerDTO extends BaseDTO{
 
+    private String inviteId;//邀请记录的id
+
     /**
      *父节点
      */
@@ -77,6 +79,20 @@ public class BusinessPartnerDTO extends BaseDTO{
      */
     private String serverType;
 
+    private String userId;
+
+    /**
+     * 事业合伙人类型
+     */
+    private String roleType;
+
+    public String getInviteId() {
+        return inviteId;
+    }
+
+    public void setInviteId(String inviteId) {
+        this.inviteId = inviteId;
+    }
 
     public String getCompanyName() {
         return companyName;
@@ -180,5 +196,21 @@ public class BusinessPartnerDTO extends BaseDTO{
 
     public void setCounty(String county) {
         this.county = county;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getRoleType() {
+        return roleType;
+    }
+
+    public void setRoleType(String roleType) {
+        this.roleType = roleType;
     }
 }

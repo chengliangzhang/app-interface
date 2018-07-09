@@ -48,10 +48,7 @@ public class DataDictionaryServiceImpl extends GenericService<DataDictionaryEnti
 		List<DataDictionaryEntity> list = this.getSubDataByCode(code);
 		return BaseDTO.copyFields(list,DataDictionaryDTO.class);
 	}
-	@Override
-	public List<DataDictionaryEntity> getTypeName(String code) {
-		return dataDictionaryDao.getTypeName(code);
-	}
+
 	@Override
 	public List<DataDictionaryEntity> getDataByParemeter(Map<String, Object> map) {
 		return dataDictionaryDao.getDataByParemeter(map);
@@ -67,16 +64,6 @@ public class DataDictionaryServiceImpl extends GenericService<DataDictionaryEnti
 			}
 		}
 		return map;
-	}
-
-	@Override
-	public List<DataDictionaryEntity> getByParentCodeAndVl(
-			Map<String, Object> map) {
-		return dataDictionaryDao.getByParentCodeAndVl(map);
-	}
-	@Override
-	public List<DataDictionaryEntity> getDataDictionarysubEntityById(String expType) {
-		return dataDictionaryDao.getDataDictionarysubEntityById(expType);
 	}
 
 }

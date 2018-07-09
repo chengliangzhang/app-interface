@@ -21,11 +21,12 @@ public class ProjectTaskRelationEntity extends BaseEntity{
      */
     private String toCompanyId;
 
-
     /**
      * 任务id
      */
     private String taskId;
+
+    private String projectId;
 
     /**
      * 任务状态
@@ -59,6 +60,14 @@ public class ProjectTaskRelationEntity extends BaseEntity{
 
     public void setTaskId(String taskId) {
         this.taskId = taskId == null ? null : taskId.trim();
+    }
+
+    public String getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(String projectId) {
+        this.projectId = projectId;
     }
 
     public int getRelationStatus() {

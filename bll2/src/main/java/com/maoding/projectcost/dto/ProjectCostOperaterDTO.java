@@ -35,9 +35,15 @@ public class ProjectCostOperaterDTO extends BaseEntity {
     private String userName;
 
     /**
+     * 操作所属组织
+     */
+    private String companyName;
+
+    /**
      *操作日期
      */
     private Date operaterDate;
+
     /**
      * 预留字段1
      */
@@ -102,5 +108,13 @@ public class ProjectCostOperaterDTO extends BaseEntity {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
     }
 }

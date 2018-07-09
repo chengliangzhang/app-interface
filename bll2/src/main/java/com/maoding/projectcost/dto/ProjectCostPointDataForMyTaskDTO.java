@@ -2,6 +2,7 @@ package com.maoding.projectcost.dto;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -31,6 +32,7 @@ public class ProjectCostPointDataForMyTaskDTO {
 
     private String status;
 
+    /*********************合同回款信息(技术审查，合作设计)***************/
     /**
      * 回款节点描述
      */
@@ -45,13 +47,14 @@ public class ProjectCostPointDataForMyTaskDTO {
      */
     private BigDecimal fee;
 
+    /*******************end************************/
 
     /**
      * 回款详情总金额
      */
     private BigDecimal backFee;
     /**
-     * 未付
+     * 未付，或许应收未收
      */
     private BigDecimal unpaid;
 
@@ -61,11 +64,12 @@ public class ProjectCostPointDataForMyTaskDTO {
     private String type;
 
 
-    private BigDecimal paidFee;//用于计算未付
+    private BigDecimal paidFee;//累计到账，付款
 
 
+    /************************发起回款信息部分**********************/
     /**
-     * 发起的金额金额
+     * 发起的金额金额（计划收款）
      */
     private BigDecimal pointDetailFee;
 
@@ -73,16 +77,36 @@ public class ProjectCostPointDataForMyTaskDTO {
      * 操作人（发起人）
      */
     private String userName;
+    /*******************end************************/
+    /*************************确认收款金额************************/
+
+    private BigDecimal paymentFee;
+
+    /**
+     * 对应该笔款项的收付日期
+     */
+    private Date paymentDate;
+
+    private String handlerName;//处理人
+    /**
+     * 经营负责人 确认付款 总金额
+     */
+    private BigDecimal totalPaymentFee;
+
+    private BigDecimal totalUnPaymentFee;
+
+    /***************************end*******************************/
+    /**
+     * 付款、到款详情
+     */
+    private List<PaymentDataDTO> paymentList = new ArrayList();
 
     /**
      * 公司名
      */
     private String companyName;
 
-    /**
-     * 付款、到款详情
-     */
-    private List<PaymentDataDTO> paymentList = new ArrayList();
+    private String projectName;//项目名称
 
 
     public String getId() {
@@ -211,5 +235,60 @@ public class ProjectCostPointDataForMyTaskDTO {
 
     public void setPointDetailId(String pointDetailId) {
         this.pointDetailId = pointDetailId;
+    }
+
+    public BigDecimal getPaymentFee() {
+        return paymentFee;
+    }
+
+    public void setPaymentFee(BigDecimal paymentFee) {
+        this.paymentFee = paymentFee;
+    }
+
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
+    }
+
+    public BigDecimal getTotalPaymentFee() {
+        return totalPaymentFee;
+    }
+
+    public void setTotalPaymentFee(BigDecimal totalPaymentFee) {
+        this.totalPaymentFee = totalPaymentFee;
+    }
+
+    public Date getPaymentDate() {
+        return paymentDate;
+    }
+
+    public void setPaymentDate(Date paymentDate) {
+        this.paymentDate = paymentDate;
+    }
+
+    public BigDecimal getTotalUnPaymentFee() {
+        if(pointDetailFee!=null){
+            if(totalPaymentFee==null){
+                totalUnPaymentFee = pointDetailFee;
+            }else {
+                totalUnPaymentFee = pointDetailFee.subtract(totalPaymentFee);
+            }
+        }
+        return totalUnPaymentFee;
+    }
+
+    public void setTotalUnPaymentFee(BigDecimal totalUnPaymentFee) {
+        this.totalUnPaymentFee = totalUnPaymentFee;
+    }
+
+    public String getHandlerName() {
+        return handlerName;
+    }
+
+    public void setHandlerName(String handlerName) {
+        this.handlerName = handlerName;
     }
 }

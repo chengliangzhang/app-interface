@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetScheduleMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.schedule.dto.ScheduleDTO" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="publish_id" property="publishId" jdbcType="VARCHAR" />
+    <result column="publish_user_name" property="publishUserName" jdbcType="VARCHAR" />
+    <result column="project_id" property="projectId" jdbcType="VARCHAR" />
+    <result column="project_name" property="projectName" jdbcType="VARCHAR" />
+    <result column="content" property="content" jdbcType="VARCHAR" />
+    <result column="content_desc" property="contentDesc" jdbcType="VARCHAR" />
+    <result column="remark" property="remark" jdbcType="VARCHAR" />
+    <result column="schedule_type" property="scheduleType" jdbcType="INTEGER" />
+    <result column="reminder_time" property="reminderTime" jdbcType="INTEGER" />
+    <result column="total_member" property="totalMember" jdbcType="INTEGER" />
+    <result column="total_party_member" property="totalPartyMember" jdbcType="INTEGER" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <result column="start_time" property="startTime" jdbcType="TIMESTAMP" />
+    <result column="end_time" property="endTime" jdbcType="TIMESTAMP" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="cancel_reason" property="cancelReason" jdbcType="VARCHAR" />
+    <result column="address" property="address" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <select id="getScheduleById" resultMap="BaseResultMap" parameterType="com.maoding.schedule.dto.QueryScheduleDTO" >
+    select a.id, a.content,a.content_desc, a.remark, a.schedule_type,a.start_time,a.publish_id,
+    a.end_time,a.create_date,cancel_reason,a.project_id,a.address,
+    count(DISTINCT b.id) as total_member,
+    ifnull(sum(if(b.status = 1,1,0)),0) as total_party_member,
+    e.status as status,
+    ifnull(e.reminder_time,0) as reminder_time,
+    c.user_name as publish_user_name,
+    d.project_name
+    from maoding_web_schedule a
+    LEFT JOIN maoding_web_schedule_member b on a.id = b.schedule_id and b.deleted = 0
+    LEFT JOIN maoding_web_schedule_member e on a.id = e.schedule_id and e.deleted = 0 and e.member_id = #{companyUserId}
+    LEFT JOIN maoding_web_company_user c on a.publish_id = c.id
+    LEFT JOIN maoding_web_project d on a.project_id = d.id
+    where a.id = #{id,jdbcType=VARCHAR}
+    group by a.id
+  </select>
+
+
+  <select id="getScheduleByDate" resultMap="BaseResultMap" parameterType="com.maoding.schedule.dto.QueryScheduleDTO" >
+    select a.id, a.content,a.content_desc, a.remark, a.schedule_type, a.reminder_time,a.start_time,a.publish_id,
+    a.end_time,a.create_date,cancel_reason,a.project_id,a.address
+    from maoding_web_schedule a
+    INNER JOIN maoding_web_schedule_member b on a.id = b.schedule_id and b.deleted = 0
+    INNER JOIN maoding_web_company_user c on b.member_id = c.id
+    where c.user_id = #{accountId}
+    and a.deleted = 0
+    and a.status = 0
+    and  (DATE_FORMAT(a.start_time,'%Y-%m-%d') = #{date}
+        or DATE_FORMAT(a.end_time,'%Y-%m-%d') = #{date}
+        or (#{date} BETWEEN DATE_FORMAT(a.start_time,'%Y-%m-%d') AND DATE_FORMAT(a.end_time,'%Y-%m-%d')) )
+    <if test="scheduleType!=null">
+      and   a.schedule_type = #{scheduleType}
+    </if>
+    group by a.id
+    order by a.start_time
+  </select>
+
+  <select id="getScheduleDate" resultMap="BaseResultMap"  parameterType="com.maoding.schedule.dto.QueryScheduleDTO" >
+    select a.start_time,a.end_time
+    from maoding_web_schedule a
+    INNER JOIN maoding_web_schedule_member b on a.id = b.schedule_id and b.deleted = 0
+    INNER JOIN maoding_web_company_user c on b.member_id = c.id
+    where c.user_id = #{accountId}
+    and a.deleted = 0
+    and a.status = 0
+    and  (DATE_FORMAT(a.start_time,'%Y-%m') = #{date} or DATE_FORMAT(a.end_time,'%Y-%m') = #{date})
+  </select>
+
+
+  <!-- 获取今日及以后的日程数据 -->
+  <select id="getTodayAndFutureSchedule" resultMap="BaseResultMap" parameterType="com.maoding.schedule.dto.QueryScheduleDTO" >
+    select a.id, a.content,a.content_desc, a.remark, a.schedule_type, a.reminder_time,a.start_time,a.publish_id,
+    a.end_time,a.create_date,cancel_reason,a.project_id,a.address
+    from maoding_web_schedule a
+    INNER JOIN maoding_web_schedule_member b on a.id = b.schedule_id and b.deleted = 0
+    where b.member_id = #{companyUserId}
+    and a.deleted = 0
+    and a.status = 0
+    and (a.start_time >= #{date}  or  a.end_time >= #{date})
+    <if test="scheduleType!=null">
+      and   a.schedule_type = #{scheduleType}
+    </if>
+    group by a.id
+    order by a.start_time
+  </select>
+
+</mapper>

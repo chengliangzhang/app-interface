@@ -18,20 +18,13 @@ import java.util.Map;
 public interface ProjectConstructDetailDao extends BaseDao<ProjectConstructDetailEntity> {
 
     /**
-     * 根据建设单位Id删除其联系人
-     * @param constructId 建设单位Id
-     * @return
-     */
-    public int delConstructDetByConsId(String constructId);
-
-    /**
      * 方法描述：根据constructId查询详情
      * 作者：MaoSF
      * 日期：2016/7/28
      * @param:
      * @return:
      */
-    public List<ProjectConstructDetailEntity> getDetailByConstructId(String constructId);
+    List<ProjectConstructDetailEntity> getDetailByConstructId(String constructId);
 
     /**
      * 方法描述：根据projectId查询详情（查询当前项目的联系人）
@@ -40,17 +33,9 @@ public interface ProjectConstructDetailDao extends BaseDao<ProjectConstructDetai
      * @param:
      * @return:
      */
-    public List<ProjectConstructDetailEntity> getDetailByProjectId(String constructId, String projectId);
+    List<ProjectConstructDetailEntity> getDetailByProjectId(String constructId, String projectId);
 
 
-    /**
-     * 方法描述：获取当前公司，当前项目的其他联系人（如果当前项目为新增，则projectId为空，则获取所有联系人）
-     * 作者：MaoSF
-     * 日期：2016/7/28
-     * @param: map（companyId必传），projectId可以为空
-     * @return:
-     */
-    public List<ProjectConstructDetailEntity> getOtherConstructDetail(Map<String,Object> map);
 
     /**
      * 方法描述：获取当前公司，当前项目的其他联系人（如果当前项目为新增，则projectId为空，则获取所有联系人）（新版本，根据项目分组）
@@ -59,15 +44,7 @@ public interface ProjectConstructDetailDao extends BaseDao<ProjectConstructDetai
      * @param: map（companyId必传），projectId可以为空
      * @return:
      */
-    public List<ProjectConstructDetailGroupByProjectDTO> getOtherConstructDetailGroupByProject(Map<String,Object> map);
+    List<ProjectConstructDetailGroupByProjectDTO> getOtherConstructDetailGroupByProject(Map<String,Object> map);
 
-    /**
-     * 方法描述：获取当前公司，当前项目的其他联系人（如果当前项目为新增，则projectId为空，则获取所有联系人）
-     * 作者：MaoSF
-     * 日期：2016/7/28
-     * @param: map（companyId必传），projectId可以为空
-     * @return:
-     */
-    public List<ProjectConstructDetailEntity> getOtherConstructDetailInterface(Map<String,Object> map);
 
 }

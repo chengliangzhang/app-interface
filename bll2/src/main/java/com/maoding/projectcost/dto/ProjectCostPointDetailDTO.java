@@ -3,6 +3,8 @@ package com.maoding.projectcost.dto;
 import com.maoding.core.base.dto.BaseDTO;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 深圳市设计同道技术有限公司
@@ -23,6 +25,8 @@ public class ProjectCostPointDetailDTO extends BaseDTO{
     private String field1;
 
     private String field2;
+
+    private List<ProjectCostPaymentDetailDTO> paymentDetailList = new ArrayList<>();
 
     public String getProjectId() {
         return projectId;
@@ -62,5 +66,13 @@ public class ProjectCostPointDetailDTO extends BaseDTO{
 
     public void setField2(String field2) {
         this.field2 = field2 == null ? null : field2.trim();
+    }
+
+    public List<ProjectCostPaymentDetailDTO> getPaymentDetailList() {
+        return paymentDetailList;
+    }
+
+    public void setPaymentDetailList(List<ProjectCostPaymentDetailDTO> paymentDetailList) {
+        this.paymentDetailList = paymentDetailList;
     }
 }

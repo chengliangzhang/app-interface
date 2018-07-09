@@ -30,6 +30,7 @@ public class ProjectDesignBasisDaoImpl extends GenericDao<ProjectDesignBasisEnti
      * @param projectId
      * @return
      */
+    @Override
     public int deleteDBasisByProjectId(String projectId){
         return this.sqlSession.delete("ProjectDesignBasisEntityMapper.deleteDBasisByProjectId", projectId);
     }

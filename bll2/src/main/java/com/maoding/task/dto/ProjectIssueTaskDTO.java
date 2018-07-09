@@ -1,6 +1,9 @@
 package com.maoding.task.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -10,12 +13,17 @@ import java.util.List;
  * 作    者：MaoSF
  * 日    期：2015年8月15日-上午10:13:28
  */
-public class ProjectIssueTaskDTO {
+public class ProjectIssueTaskDTO extends TaskBaseDTO{
 
     /**
      * id
      */
     private String id;
+
+    /** 排序序号 */
+    private Integer seq;
+
+    private String taskPid;
 
     /**
      * 项目id
@@ -27,6 +35,8 @@ public class ProjectIssueTaskDTO {
      */
     private String taskName;
 
+    private String taskRemark;
+
     /**
      * 被修改记录的id，用于修改任务，新增一条未被发布的数据，该字段记录被修改记录的id
      */
@@ -34,14 +44,9 @@ public class ProjectIssueTaskDTO {
 
 
     /**
-     * 状态(1:正常进行，2：超时进行，3：正常完成，4.超时完成,5.未开始，10,无状态)
+     * 发布版本的id
      */
-    private int taskState;
-
-    /**
-     * 状态html
-     */
-    private String stateHtml;
+    private String publishId;
 
     /**
      * 任务状态(0生效，1不生效,2:未发布)
@@ -54,16 +59,9 @@ public class ProjectIssueTaskDTO {
     private int taskType;
 
     /**
-     * 设计内容的开始时间
+     * 签发组织id
      */
-    private String startTime;
-
-    /**
-     * 设计内容的结束时间
-     */
-    private String endTime;
-
-    private String completeDate;
+    private String fromCompanyId;
 
     /**
      * 设计组织id
@@ -86,55 +84,51 @@ public class ProjectIssueTaskDTO {
     private String departName;
 
     /**
-     * 子任务的个数
-     */
-    private int isHasChild;
-
-    /**
-     * 未完成任务的个数
-     */
-    private int notCompleteCount;
-
-    /**
      * 是否是签发的任务
      */
     private int isRootTask;
 
-    /**
-     *经营负责人名
-     */
-    private String managerName;
+    private int taskLevel;
 
     /**
-     *负责人id
+     * 是否是第一个
      */
-    private String managerId;
+    private boolean isFirst;
 
     /**
-     * 合作组织id
+     * 是否是最后一个
      */
-    private String fromCompanyId;
+    private boolean isLast;
 
-    private String fromCompanyName;
-
-    /**
-     * 是否是立项方（0：是，1：否(合作方)）
-     */
-    private int isCooperator;//是否是立项方
-
-    /**
-     *经营负责人
-     */
-    private String operatorManagerName;
-
-    /**
-     * 签发次数
-     */
-    private Integer issueLevel;
     /**
      * 设计任务
      */
     List<ProjectIssueTaskDTO> childTaskList = new ArrayList<>();
+
+    /**
+     * 签发次数
+     */
+    Integer issueLevel;
+
+    /**
+     * 是否能被删除
+     */
+    Boolean canBeDelete;
+
+    private String currentCompanyId;
+
+    /**
+     * 子任务数
+     */
+    private Integer childCount;
+
+
+    private Integer memberCount;
+
+    /**
+     * 任务负责人
+     */
+    private String taskResponsibleName;
 
     public String getId() {
         return id;
@@ -142,6 +136,14 @@ public class ProjectIssueTaskDTO {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public Integer getSeq() {
+        return seq;
+    }
+
+    public void setSeq(Integer seq) {
+        this.seq = seq;
     }
 
     public String getProjectId() {
@@ -184,38 +186,6 @@ public class ProjectIssueTaskDTO {
         this.departName = departName;
     }
 
-    public int getTaskState() {
-        return taskState;
-    }
-
-    public void setTaskState(int taskState) {
-        this.taskState = taskState;
-    }
-
-    public String getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(String startTime) {
-        this.startTime = startTime;
-    }
-
-    public String getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(String endTime) {
-        this.endTime = endTime;
-    }
-
-    public String getCompleteDate() {
-        return completeDate;
-    }
-
-    public void setCompleteDate(String completeDate) {
-        this.completeDate = completeDate;
-    }
-
     public String getTaskStatus() {
         return taskStatus;
     }
@@ -240,22 +210,6 @@ public class ProjectIssueTaskDTO {
         this.companyName = companyName;
     }
 
-    public int getIsHasChild() {
-        return isHasChild;
-    }
-
-    public void setIsHasChild(int isHasChild) {
-        this.isHasChild = isHasChild;
-    }
-
-    public int getNotCompleteCount() {
-        return notCompleteCount;
-    }
-
-    public void setNotCompleteCount(int notCompleteCount) {
-        this.notCompleteCount = notCompleteCount;
-    }
-
     public List<ProjectIssueTaskDTO> getChildTaskList() {
         return childTaskList;
     }
@@ -272,14 +226,6 @@ public class ProjectIssueTaskDTO {
         this.taskType = taskType;
     }
 
-    public String getStateHtml() {
-        return stateHtml;
-    }
-
-    public void setStateHtml(String stateHtml) {
-        this.stateHtml = stateHtml;
-    }
-
     public int getIsRootTask() {
         return isRootTask;
     }
@@ -288,20 +234,28 @@ public class ProjectIssueTaskDTO {
         this.isRootTask = isRootTask;
     }
 
-    public String getManagerName() {
-        return managerName;
+    public Integer getIssueLevel() {
+        return issueLevel;
     }
 
-    public void setManagerName(String managerName) {
-        this.managerName = managerName;
+    public void setIssueLevel(Integer issueLevel) {
+        this.issueLevel = issueLevel;
     }
 
-    public String getManagerId() {
-        return managerId;
+    public Boolean getCanBeDelete() {
+        return canBeDelete;
     }
 
-    public void setManagerId(String managerId) {
-        this.managerId = managerId;
+    public void setCanBeDelete(Boolean canBeDelete) {
+        this.canBeDelete = canBeDelete;
+    }
+
+    public String getTaskPid() {
+        return taskPid;
+    }
+
+    public void setTaskPid(String taskPid) {
+        this.taskPid = taskPid;
     }
 
     public String getFromCompanyId() {
@@ -312,35 +266,75 @@ public class ProjectIssueTaskDTO {
         this.fromCompanyId = fromCompanyId;
     }
 
-    public String getFromCompanyName() {
-        return fromCompanyName;
+    public String getCurrentCompanyId() {
+        return currentCompanyId;
     }
 
-    public void setFromCompanyName(String fromCompanyName) {
-        this.fromCompanyName = fromCompanyName;
+    public void setCurrentCompanyId(String currentCompanyId) {
+        this.currentCompanyId = currentCompanyId;
     }
 
-    public int getIsCooperator() {
-        return isCooperator;
+    public String getPublishId() {
+        return publishId;
     }
 
-    public void setIsCooperator(int isCooperator) {
-        this.isCooperator = isCooperator;
+    public void setPublishId(String publishId) {
+        this.publishId = publishId;
     }
 
-    public String getOperatorManagerName() {
-        return operatorManagerName;
+    public boolean isFirst() {
+        return isFirst;
     }
 
-    public void setOperatorManagerName(String operatorManagerName) {
-        this.operatorManagerName = operatorManagerName;
+    public void setFirst(boolean first) {
+        isFirst = first;
     }
 
-    public Integer getIssueLevel() {
-        return issueLevel;
+    public boolean isLast() {
+        return isLast;
     }
 
-    public void setIssueLevel(Integer issueLevel) {
-        this.issueLevel = issueLevel;
+    public void setLast(boolean last) {
+        isLast = last;
+    }
+
+    public int getTaskLevel() {
+        return taskLevel;
+    }
+
+    public void setTaskLevel(int taskLevel) {
+        this.taskLevel = taskLevel;
+    }
+
+    public Integer getChildCount() {
+        return childCount;
+    }
+
+    public void setChildCount(Integer childCount) {
+        this.childCount = childCount;
+    }
+
+    public Integer getMemberCount() {
+        return memberCount;
+    }
+
+    public void setMemberCount(Integer memberCount) {
+        this.memberCount = memberCount;
+    }
+
+    public String getTaskResponsibleName() {
+        return taskResponsibleName;
+    }
+
+    public void setTaskResponsibleName(String taskResponsibleName) {
+        this.taskResponsibleName = taskResponsibleName;
+    }
+
+    public String getTaskRemark() {
+        return taskRemark;
+    }
+
+    public void setTaskRemark(String taskRemark) {
+        this.taskRemark = taskRemark;
     }
 }

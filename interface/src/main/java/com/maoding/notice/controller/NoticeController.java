@@ -5,7 +5,6 @@ import com.maoding.core.bean.ResponseBean;
 import com.maoding.notice.dto.NoticeDTO;
 import com.maoding.notice.dto.NoticeOrgDTO;
 import com.maoding.notice.service.NoticeService;
-import com.maoding.org.dto.OrgTreeWsDTO;
 import com.maoding.org.service.CompanyService;
 import com.maoding.org.service.CompanyUserService;
 import com.maoding.system.annotation.AuthorityCheckable;
@@ -220,19 +219,4 @@ public class NoticeController extends BaseWSController {
         return responseSuccess().addData(param);
     }
 
-    /**
-     * 方法描述：发送通知公告界面获取组织架构树
-     * 作者：MaoSF
-     * 日期：2016/12/8
-     * @param:
-     * @return:
-     */
-    @RequestMapping("/getOrgTree")
-    @ResponseBody
-    public ResponseBean getOrgTree(@RequestBody Map<String,Object> param) throws Exception{
-        OrgTreeWsDTO tree = this.companyService.getOrgTreeForNotice(param);
-        param.clear();
-        param.put("orgTree",tree);
-        return responseSuccess().addData(param);
-    }
 }

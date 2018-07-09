@@ -1,9 +1,17 @@
 package com.maoding.role.service.impl;
 
 
+import com.beust.jcommander.internal.Lists;
 import com.maoding.core.base.service.GenericService;
+import com.maoding.core.constant.PermissionConst;
+import com.maoding.core.constant.SystemParameters;
+import com.maoding.core.util.StringUtil;
+import com.maoding.org.service.CompanyService;
+import com.maoding.org.service.TeamOperaterService;
 import com.maoding.role.dao.PermissionDao;
+import com.maoding.role.dto.OperatorDTO;
 import com.maoding.role.dto.PermissionDTO;
+import com.maoding.role.dto.PermissionEnum;
 import com.maoding.role.entity.PermissionEntity;
 import com.maoding.role.service.PermissionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,97 +36,177 @@ public class PermissionServiceImpl  extends GenericService<PermissionEntity> imp
     @Autowired
     private PermissionDao permissionDao;
 
-    /**
-     * 方法描述：获取所有权限
-     * 作者：MaoSF
-     * 日期：2016/11/2
-     *
-     * @param:
-     * @return:
-     */
-    @Override
-    public List<PermissionDTO> getAllPermission() {
-        return permissionDao.getAllPermission();
-    }
+    @Autowired
+    private CompanyService companyService;
 
-    /**
-     * 方法描述：获取当前角色下下所有的权限
-     * 作者：MaoSF
-     * 日期：2016/11/2
-     *
-     * @param map
-     * @param:roleId，companyId
-     * @return:
-     */
-    @Override
-    public List<PermissionDTO> getPermissionByRole(Map<String, Object> map) {
-        return permissionDao.getPermissionByRole(map);
-    }
-
-    /**
-     * 方法描述：获取当前员工下下所有的权限
-     * 作者：MaoSF
-     * 日期：2016/11/2
-     *
-     * @param map
-     * @param:userId，companyId
-     * @return:
-     */
-    @Override
-    public List<PermissionDTO> getPermissionByUserId(Map<String, Object> map) {
-        return permissionDao.getPermissionByUserId(map);
-    }
-
-    /**
-     * 方法描述：获取当前用户的权限（只含有自己具有的权限）
-     * 作者：MaoSF
-     * 日期：2016/11/2
-     *
-     * @param map
-     * @param:userId，companyId
-     * @return:
-     */
-    @Override
-    public List<PermissionDTO> getUserPermission(Map<String, Object> map) {
-        List<PermissionDTO> permissionList = permissionDao.getUserPermission(map);
-        List<PermissionDTO> newPermissionList = new ArrayList<PermissionDTO>();
-        if(!CollectionUtils.isEmpty(permissionList)){
-            String roleNotshow = "project_view_point,project_design_fee_view,project_manage_fee_view,report_new_contract,report_contract_pay,report_design_fee,report_manage_fee,report_static_fee,report_finance_static,project_point_edit,project_point_condition,project_design_fee_set,project_design_fee_audit,project_manage_fee_set,project_manage_fee_audit,project_point_invoice,project_point_pay,project_design_fee_pay,project_design_fee_paid,project_manage_fee_pay,project_manage_fee_paid,finance_fixed_edit,project_task_confirm";
-            for(PermissionDTO dto:permissionList){
-                if(roleNotshow.indexOf(dto.getCode())>-1){
-                    continue;
-                }
-                newPermissionList.add(dto);
-            }
-        }
-        return newPermissionList;
-    }
+    @Autowired
+    private TeamOperaterService teamOperaterService;
 
     /**
      * 方法描述：获取当前角色下下所有的权限Code
      * 作者：MaoSF
      * 日期：2016/11/2
-     *
-     * @param map
      * @param:userId，companyId
-     * @return:
      */
     @Override
     public String getPermissionCodeByUserId(Map<String, Object> map) {
+        String companyId = (String)map.get("companyId");
+        String typeId = companyService.getOrgTypeId(companyId);
+        if(!StringUtil.isNullOrEmpty(typeId)){
+            map.put("typeId",typeId);
+        }else {
+            map.remove("typeId");
+        }
         return permissionDao.getPermissionCodeByUserId(map);
     }
 
-    /**
-     * 方法描述：获取当前角色下下所有的权限CodeWs
-     * 作者：MaoSF
-     * 日期：2016/11/2
-     *
-     * @param map
-     * @param:userId，companyId
-     * @return:
-     */
     @Override
-    public String getPermissionCodeByUserIdWs(Map<String, Object> map) {
-        return permissionDao.getPermissionCodeByUserIdWs(map);
+    public String getPermissionCodeByUserId(String companyId, String userId) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("companyId",companyId);
+        map.put("userId",userId);
+        String permissionCode = getPermissionCodeByUserId(map);
+        if(!StringUtil.isNullOrEmpty(permissionCode)){
+            if(permissionCode.indexOf("project_charge_manage")>-1){
+                permissionCode += ","+"1";
+            }
+            if(permissionCode.indexOf("finance_back_fee")>-1){
+                permissionCode += ","+"2";
+            }
+        }
+        return permissionCode;
+    }
+
+    @Override
+    public OperatorDTO getPermissionOperator(Map<String, Object> map) {
+        OperatorDTO operator = new OperatorDTO();
+        String roleCodes = null;
+        if(map.containsKey("roleCodes")){
+            roleCodes = (String) map.get("roleCodes");
+        }else {
+            roleCodes = this.getPermissionCodeByUserId(map);
+        }
+        if(!StringUtil.isNullOrEmpty(roleCodes)){
+            if (StringUtil.isContain(roleCodes, PermissionEnum.ORG_EDIT.getCode())) {
+                operator.setOrgInfoEdit(1);
+                operator.setBannerEdit(1);
+            }
+            String typeId = (String)map.get("typeId");
+            if((StringUtil.isNullOrEmpty(typeId))
+                    && teamOperaterService.getTeamOperaterByParam((String)map.get("companyId"),(String)map.get("userId"))!=null){
+                operator.setOrgDisband(1);
+            }
+            if (StringUtil.isContain(roleCodes, PermissionEnum.SYS_ROLE_PERMISSION.getCode())) {
+               // operator.setRoleManager(1);
+            }
+            if (StringUtil.isContain(roleCodes,  PermissionEnum.HR_ORG_SET.getCode())) {
+                operator.setDepartEdit(1);
+                operator.setCompanyUserEdit(1);
+            }
+            if (StringUtil.isContain(roleCodes, PermissionEnum.ORG_PARTNER.getCode())) {
+                operator.setSubOrgCreate(1);
+                operator.setSubOrgInvite(1);
+                operator.setPartnerInvite(1);
+                operator.setPartnerOrgCreate(1);
+            }
+            if (StringUtil.isContain(roleCodes, PermissionEnum.PROJECT_EDIT.getCode(),PermissionEnum.PROJECT_CHARGE_MANAGER.getCode(),PermissionEnum.PROJECT_CHARGE_PAID.getCode())) {
+                operator.setProjectDocView(1);
+                operator.setProjectDocModule(1);
+                operator.setAllProjectView(1);
+
+            }
+        }
+        return operator;
+    }
+
+    @Override
+    public boolean isOrgManager(String companyId, String userId) {
+        return isContentPermission(companyId,userId, SystemParameters.ORG_MANAGER_PERMISSION_ID);
+    }
+
+    @Override
+    public boolean isFinancial(String companyId, String userId) {
+        if(isContentPermission(companyId,userId, SystemParameters.FINANCIAL_PERMISSION_ID)){
+            return true;
+        }else {
+           return isContentPermission(companyId,userId, SystemParameters.FINANCIAL_PERMISSION_ID);
+        }
+    }
+
+    @Override
+    public boolean isFinancialReceive(String companyId, String userId) {
+        return isContentPermission(companyId,userId, SystemParameters.FINANCIAL_RECEIVE_PERMISSION_ID);
+    }
+
+    @Override
+    public boolean isFinancialManagerPayForTechnical(String companyId,String userId) {
+        return isFinancial(companyId,userId);
+    }
+
+    @Override
+    public boolean isFinancialManagerPayForCooperation(String companyId,String userId) {
+        return isFinancial(companyId,userId);
+    }
+
+    @Override
+    public boolean isFinancialManagerPayForOther(String companyId,String userId) {
+        return isFinancial(companyId,userId);
+    }
+
+    @Override
+    public boolean isFinancialManagerReceiveForContract(String companyId,String userId) {
+        return isFinancialReceive(companyId,userId);
+    }
+
+    @Override
+    public boolean isFinancialManagerReceiveForTechnical(String companyId,String userId) {
+        return isFinancialReceive(companyId,userId);
+    }
+
+    @Override
+    public boolean isFinancialManagerReceiveForCooperation(String companyId,String userId) {
+        return isFinancialReceive(companyId,userId);
+    }
+
+    @Override
+    public boolean isFinancialManagerReceiveForOther(String companyId,String userId) {
+        return isContentPermission(companyId,userId, PermissionConst.OTHER_RECEIVE);
+    }
+
+    @Override
+    public boolean haveProjectDeletePermission(String companyId, String userId) {
+       // return isContentPermission(companyId,userId, PermissionConst.PROJECT_DELETE);
+        return isContentPermission(companyId,userId, "54");
+    }
+
+    @Override
+    public boolean haveProjectEditPermission(String companyId, String userId) {
+       // return isContentPermission(companyId,userId, PermissionConst.PROJECT_EDIT);
+        return isContentPermission(companyId,userId, "20");
+
+    }
+    @Override
+    public boolean isOperatorManager(String companyId, String userId) {
+        return isContentPermission(companyId,userId, SystemParameters.OPERATOR_MANAGER_PERMISSION_ID);
+    }
+
+    @Override
+    public boolean isDesignManager(String companyId, String userId) {
+        return isContentPermission(companyId,userId, SystemParameters.DESIGN_MANAGER_PERMISSION_ID);
+    }
+
+    private boolean isContentPermission(String companyId, String userId,String permissionId){
+        Map<String,Object> map = new HashMap<>();
+        map.put("companyId",companyId);
+        map.put("userId",userId);
+        map.put("permissionIds", Lists.newArrayList(permissionId));
+        String typeId = this.companyService.getOrgTypeId(companyId);
+        if(!StringUtil.isNullOrEmpty(typeId)){
+            map.put("typeId",typeId);
+        }
+        if(permissionDao.getCompanyUserIsHasPermission(map)>0){
+            return true;
+        }
+        return false;
     }
 }

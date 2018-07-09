@@ -16,7 +16,7 @@ public class ExpMainEntity extends BaseEntity {
     /**
      *  用户id
      */
-    private String userId;
+    private String companyUserId;
 
 
     /**
@@ -59,6 +59,32 @@ public class ExpMainEntity extends BaseEntity {
      */
     private Integer expFlag;
 
+    /**
+     * 报销类别：1=报销申请，2=费用申请
+     */
+    private Integer type;
+
+    /**
+     * 拨款日期
+     */
+    private Date allocationDate;
+
+    /**
+     * 拨款人userId
+     */
+    private String allocationUserId;
+
+    /** 收款方公司id */
+    private String enterpriseId;
+
+    public String getEnterpriseId() {
+        return enterpriseId;
+    }
+
+    public void setEnterpriseId(String enterpriseId) {
+        this.enterpriseId = enterpriseId;
+    }
+
     public Integer getExpFlag() {
         return expFlag;
     }
@@ -83,14 +109,13 @@ public class ExpMainEntity extends BaseEntity {
         this.versionNum = versionNum;
     }
 
-    public String getUserId() {
-        return userId;
+    public String getCompanyUserId() {
+        return companyUserId;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId == null ? null : userId.trim();
+    public void setCompanyUserId(String companyUserId) {
+        this.companyUserId = companyUserId;
     }
-
 
     public Date getExpDate() {
         return expDate;
@@ -132,4 +157,27 @@ public class ExpMainEntity extends BaseEntity {
         this.remark = remark == null ? null : remark.trim();
     }
 
+    public Integer getType() {
+        return type;
+    }
+
+    public void setType(Integer type) {
+        this.type = type;
+    }
+
+    public Date getAllocationDate() {
+        return allocationDate;
+    }
+
+    public void setAllocationDate(Date allocationDate) {
+        this.allocationDate = allocationDate;
+    }
+
+    public String getAllocationUserId() {
+        return allocationUserId;
+    }
+
+    public void setAllocationUserId(String allocationUserId) {
+        this.allocationUserId = allocationUserId;
+    }
 }

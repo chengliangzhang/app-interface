@@ -7,6 +7,7 @@
     <result column="type" property="type" jdbcType="VARCHAR" />
     <result column="company_user_id" property="companyUserId" jdbcType="VARCHAR" />
     <result column="user_name" property="userName" jdbcType="VARCHAR" />
+    <result column="company_name" property="companyName" jdbcType="VARCHAR" />
     <result column="operater_date" property="operaterDate" jdbcType="TIMESTAMP" />
     <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
     <result column="create_by" property="createBy" jdbcType="VARCHAR" />
@@ -22,10 +23,14 @@
   </sql>
 
   <select id="getCostOperator" resultMap="BaseResultMap" parameterType="java.util.Map">
-    select a.id,a.type,a.company_user_id,b.user_name
+    select a.id,a.type,a.company_user_id,concat(c.aliasName,'/',b.user_name) as user_name,c.aliasName as company_name
     from maoding_web_project_cost_operater a
     LEFT JOIN maoding_web_company_user b on a.company_user_id = b.id
+    LEFT JOIN (<include refid="CompanyEntityMapper.getAliasNameSql" /> ) c on b.company_id = c.id
     where a.cost_detail_id = #{costDetailId,jdbcType=VARCHAR}
+    <if test="types!=null">
+      and FIND_IN_SET(a.type , #{types})
+    </if>
     order by a.type
   </select>
 

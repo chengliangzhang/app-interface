@@ -35,10 +35,6 @@ public class CompanyRelationDaoImpl extends GenericDao< CompanyRelationEntity> i
 	 * 方法描述：删除组织关系，（解散组织的时候使用）
 	 * 作者：MaoSF
 	 * 日期：2016/8/5
-	 *
-	 * @param orgId
-	 * @param:
-	 * @return:
 	 */
 	@Override
 	public int deleteCompanyRelationByOrgId(String orgId) {
@@ -49,10 +45,6 @@ public class CompanyRelationDaoImpl extends GenericDao< CompanyRelationEntity> i
 	 * 方法描述：根据orgId查询
 	 * 作者：MaoSF
 	 * 日期：2017/4/18
-	 *
-	 * @param orgId
-	 * @param:
-	 * @return:
 	 */
 	@Override
 	public CompanyRelationDTO getCompanyRelationByOrgId(String orgId) {

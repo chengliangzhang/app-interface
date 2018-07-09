@@ -19,6 +19,8 @@ public class RoleDataDTO {
 
     private String name;
 
+    private int isSingle;
+
     List<PermissionDTO> permissionList = new ArrayList<>();
 
     public String getId() {
@@ -53,4 +55,11 @@ public class RoleDataDTO {
         this.permissionList = permissionList;
     }
 
+    public int getIsSingle() {
+        return isSingle;
+    }
+
+    public void setIsSingle(int isSingle) {
+        this.isSingle = isSingle;
+    }
 }

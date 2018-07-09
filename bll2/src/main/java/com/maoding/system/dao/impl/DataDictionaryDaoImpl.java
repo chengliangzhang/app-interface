@@ -4,6 +4,7 @@ package com.maoding.system.dao.impl;
 import java.util.List;
 import java.util.Map;
 
+import com.maoding.system.dto.DataDictionaryDataDTO;
 import org.springframework.stereotype.Service;
 
 import com.maoding.core.base.dao.GenericDao;
@@ -37,16 +38,8 @@ public class DataDictionaryDaoImpl extends GenericDao<DataDictionaryEntity> impl
 	}
 
 	@Override
-	public List<DataDictionaryEntity> getByParentCodeAndVl(
-			Map<String, Object> map) {
-		return this.sqlSession.selectList("DataDictionaryEntityMapper.getByParentCodeAndVl",map);
+	public List<DataDictionaryDataDTO> getExpTypeList(String code) {
+		return this.sqlSession.selectList("DataDictionaryEntityMapper.getExpTypeList",code);
 	}
-	@Override
-	public List<DataDictionaryEntity> getTypeName(String code) {
-		return this.sqlSession.selectList("DataDictionaryEntityMapper.selectTypeNameByCode",code);
-	}
-	@Override
-	public List<DataDictionaryEntity> getDataDictionarysubEntityById(String expType) {
-		return this.sqlSession.selectList("DataDictionaryEntityMapper.selectDataDictionarysubEntityById",expType);
-	}
+
 }

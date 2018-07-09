@@ -1,13 +1,14 @@
 package com.maoding.mytask.dao.impl;
 
 import com.maoding.core.base.dao.GenericDao;
+import com.maoding.core.base.dto.QueryDTO;
 import com.maoding.mytask.dao.MyTaskDao;
-import com.maoding.mytask.dto.MyTaskListDTO;
-import com.maoding.mytask.dto.MyTaskQueryDTO;
+import com.maoding.mytask.dto.*;
 import com.maoding.mytask.entity.MyTaskEntity;
+import com.maoding.project.dto.ProjectProgressDTO;
+import com.maoding.task.dto.ApproveCount;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -67,10 +68,6 @@ public class MyTaskDaoImpl extends GenericDao<MyTaskEntity> implements MyTaskDao
      * 方法描述：更改param4的值（用于删除项目）
      * 作者：MaoSF
      * 日期：2017/3/29
-     *
-     * @param targetId
-     * @param:
-     * @return:
      */
     @Override
     public int deleteProjectTask(String targetId) {
@@ -108,26 +105,80 @@ public class MyTaskDaoImpl extends GenericDao<MyTaskEntity> implements MyTaskDao
         return this.sqlSession.selectList("GetMyTaskByPageMapper.getMyTaskByProjectId",param);
     }
 
+    @Override
+    public List<MyTaskEntity> getMyTaskByProjectId2(Map<String, Object> param) {
+        return this.sqlSession.selectList("GetMyTaskByPageMapper.getMyTaskByProjectId2",param);
+    }
+
     /**
-     * 作用：根据任务ID获取个人任务
-     * 作者：ZCL
-     * 日期：2017-5-20
-     *
-     * @param dto
+     * 方法描述：根据项目id任务列表
+     * 作者：MaoSF
+     * 日期：2017/5/4
      */
     @Override
-    public MyTaskEntity getMyTaskByTaskId(MyTaskQueryDTO dto) throws Exception {
-        Map<String,Object> query = new HashMap<>();
-        query.put("handlerId",dto.getUserId());
-        query.put("companyId",dto.getCompanyId());
-        query.put("targetId",dto.getTaskId());
-        query.put("status",dto.getStatus());
-        query.put("taskType",13);
-        List<MyTaskEntity> list = sqlSession.selectList("GetMyTaskByPage.getMyTaskByParam",query);
-        if (list.size() > 0){
-            return list.get(0);
-        } else {
-            return null;
+    public List<MyTaskEntity> getMyExpTask(Map<String, Object> param) {
+        return this.sqlSession.selectList("GetMyTaskByPageMapper.getMyExpTask",param);
+    }
+
+    @Override
+    public MyTaskCountDTO selectMyTaskCount(Map<String, Object> param) {
+        MyTaskCountDTO result =this.getMyTaskCount(param);
+        MyTaskCountDTO overCount = this.getOvertimeCount(param);
+        if(result==null){
+            result = new MyTaskCountDTO();
         }
+        if(overCount!=null){
+            result.setOvertimeCount(overCount.getOvertimeCount());
+        }
+        return  result;
+    }
+
+    @Override
+    public MyTaskCountDTO getMyTaskCount(Map<String, Object> param) {
+        return this.sqlSession.selectOne("GetMyTaskByPageMapper.getMyTaskCount",param);
+    }
+
+    @Override
+    public MyTaskCountDTO getOvertimeCount(Map<String, Object> param) {
+        return this.sqlSession.selectOne("GetMyTaskByPageMapper.getOvertimeCount",param);
+    }
+
+    public List<MyTaskDTO> getOvertimeTask(Map<String, Object> param) {
+        return this.sqlSession.selectList("GetMyTaskByPageMapper.getOvertimeTask",param);
+    }
+
+
+    public List<MyTaskDTO> getDueTask(Map<String, Object> param) {
+        return this.sqlSession.selectList("GetMyTaskByPageMapper.getDueTask",param);
+    }
+
+    @Override
+    public ProjectProgressDTO getProjectTaskCount(Map<String, Object> param) {
+        return this.sqlSession.selectOne("GetMyTaskByPageMapper.getProjectTaskCount",param);
+    }
+
+    @Override
+    public ApproveCount getTaskCount(Map<String, Object> param) {
+        return this.sqlSession.selectOne("GetMyTaskByPageMapper.getTaskCount",param);
+    }
+
+    @Override
+    public List<TaskDataDTO> getMySubmitTask(QueryDTO dto) {
+        return this.sqlSession.selectList("GetMyTaskByPageMapper.getMySubmitTask",dto);
+    }
+
+    @Override
+    public TaskDetailDTO getMySubmitTaskById(String id) {
+        return this.sqlSession.selectOne("GetMyTaskByPageMapper.getMySubmitTaskById",id);
+    }
+
+    /**
+     * 查询个人任务
+     *
+     * @param query
+     */
+    @Override
+    public List<MyTaskDTO> listMyTask(QueryMyTaskDTO query) {
+        return this.sqlSession.selectList("GetMyTaskByPageMapper.listMyTask",query);
     }
 }

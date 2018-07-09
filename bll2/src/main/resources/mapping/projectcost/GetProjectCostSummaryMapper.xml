@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="GetProjectCostSummaryMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.projectcost.dto.ProjectCostSummaryDTO" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="project_id" property="projectId" jdbcType="VARCHAR" />
+    <result column="from_company_id" property="fromCompanyId" jdbcType="VARCHAR" />
+    <result column="to_company_id" property="toCompanyId" jdbcType="VARCHAR" />
+    <result column="type" property="type" jdbcType="VARCHAR" />
+    <result column="fee" property="fee" jdbcType="DECIMAL" />
+    <collection property="pointList"   ofType="com.maoding.projectcost.dto.ProjectCostPointDTO">
+      <id column="point_id" property="id" jdbcType="VARCHAR" />
+      <result column="point_fee" property="fee" jdbcType="VARCHAR" />
+      <collection property="projectCostDetailList" ofType="com.maoding.projectcost.dto.ProjectCostPointDetailDTO">
+        <id column="point_detail_id" property="id" jdbcType="VARCHAR" />
+        <result column="point_detail_fee" property="fee" jdbcType="VARCHAR" />
+        <collection property="paymentDetailList" ofType="com.maoding.projectcost.dto.ProjectCostPaymentDetailDTO">
+          <id column="payment_detail_id" property="id" jdbcType="VARCHAR" />
+          <result column="payment_detail_fee" property="fee" jdbcType="VARCHAR" />
+          <result column="pay_date" property="payDate" jdbcType="DATE" />
+          <result column="paid_date" property="paidDate" jdbcType="DATE" />
+        </collection>
+      </collection>
+    </collection>
+  </resultMap>
+
+  <select id="getProjectCostSummary" resultMap="BaseResultMap" parameterType="com.maoding.projectcost.dto.ProjectCostQueryDTO">
+    select a.id,a.project_id,a.from_company_id,a.to_company_id,a.type,a.fee,
+    b.id as point_id,
+    b.fee as point_fee,
+    c.id as point_detail_id,
+    c.fee as point_detail_fee,
+    d.id as payment_detail_id,
+    d.fee as payment_detail_fee,
+    d.pay_date,d.paid_date
+    from maoding_web_project_cost a
+    LEFT JOIN maoding_web_project_cost_point b on a.id = b.cost_id and b.`status`= 0
+    LEFT JOIN maoding_web_project_cost_point_detail c on b.id = c.point_id and c.`status` = 0
+    LEFT JOIN maoding_web_project_cost_payment_detail d on c.id = d.point_detail_id and d.status= 0
+    WHERE a.status = 0
+    and a.project_id = #{projectId}
+    and (a.from_company_id = #{companyId} or a.to_company_id = #{companyId})
+  </select>
+</mapper>

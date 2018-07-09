@@ -23,14 +23,4 @@ public interface RolePermissionService extends BaseService<RolePermissionEntity>
      */
     public AjaxMessage saveRolePermission(SaveRolePermissionDTO dto) throws Exception;
 
-
-    /**
-     * 方法描述：保存角色权限关联数据
-     * 作者：MaoSF
-     * 日期：2016/11/2
-     * @param:
-     * @return:
-     */
-    public AjaxMessage initRolePermissionForCompany(String companyId) throws Exception;
-
 }

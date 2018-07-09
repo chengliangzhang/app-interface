@@ -2,6 +2,8 @@ package com.maoding.statistic.dao.impl;
 
 import com.maoding.statistic.dao.StatisticDao;
 import com.maoding.statistic.dto.CompanyStatisticDTO;
+import com.maoding.statistic.dto.StatisticDetailQueryDTO;
+import com.maoding.statistic.dto.StatisticDetailSummaryDTO;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,8 +22,6 @@ public class StatisticDaoImpl implements StatisticDao{
      * 方法描述：公司人数统计
      * 作者：MaoSF
      * 日期：2016/10/17
-     * @param:
-     * @return:
      */
     public List<CompanyStatisticDTO> getCompanyStatisticList(Map<String, Object> param){
         return sqlSession.selectList("GetCompanyStatisticMapper.getCompanyStatisticList",param);
@@ -31,13 +31,20 @@ public class StatisticDaoImpl implements StatisticDao{
      * 方法描述：公司人数统计 总条数
      * 作者：MaoSF
      * 日期：2016/10/17
-     *
-     * @param param
-     * @param:
-     * @return:
      */
     @Override
     public int getCompanyStatisticCount(Map<String, Object> param) {
         return sqlSession.selectOne("GetCompanyStatisticMapper.getCompanyStatisticCount");
+    }
+
+    @Override
+    public StatisticDetailSummaryDTO getCompanyStandingBookSum(StatisticDetailQueryDTO param) {
+        if ("".equals(param.getProjectName())) {
+            param.setProjectName(null);
+        }
+        if ("".equals(param.getAssociatedOrg())) {
+            param.setAssociatedOrg(null);
+        }
+        return this.sqlSession.selectOne("StatisticCompanyBillMapper.getCompanyStandingBookSum", param);
     }
 }

@@ -1,9 +1,9 @@
 package com.maoding.org.service;
 
+import com.maoding.commonModule.dto.QueryCopyRecordDTO;
 import com.maoding.core.base.service.BaseService;
 import com.maoding.core.bean.AjaxMessage;
 import com.maoding.org.dto.*;
-import com.maoding.org.entity.CompanyEntity;
 import com.maoding.org.entity.CompanyUserEntity;
 
 import java.util.List;
@@ -41,39 +41,15 @@ public interface CompanyUserService extends BaseService<CompanyUserEntity>{
 	 * 方法描述：根据id查询数据
 	 * 作        者：MaoSF
 	 * 日        期：2016年7月8日-下午4:24:08
-	 * @param id
-	 * @return
 	 */
-    CompanyUserTableDTO getCompanyUserById(String id) throws Exception;
+	CompanyUserDetailDTO getCompanyUserById(String id) throws Exception;
+
+	CompanyUserDetailDTO selectCompanyUserById(String id) throws Exception;
 
 	/**
-	 * 方法描述：根据id查询数据
-	 * 作        者：MaoSF
-	 * 日        期：2016年7月8日-下午4:24:08
-	 * @param id
-	 * @return
+	 * 方法描述：根据id查询带状态数据
 	 */
-    CompanyUserTableDTO getCompanyUserByIdInterface(String id) throws Exception;
-	
-	/**
-	 * 方法描述：组织人员查询（分页查询）
-	 * 作        者：MaoSF
-	 * 日        期：2016年7月9日-下午2:28:06
-	 * @param param(orgId,keyword,startPage,endPage)【orgId必传，startPage,endPage分页，不传，则查询所有】
-	 * @return
-	 * @throws Exception
-	 */
-    List<CompanyUserTableDTO> getCompanyUserByOrgIdOfAdmin(Map<String, Object> param) throws Exception;
-
-	/**
-	 * 方法描述：组织人员查询（分页查询）
-	 * 作        者：MaoSF
-	 * 日        期：2016年7月9日-下午2:28:06
-	 * @param param(orgId,keyword,startPage,endPage)【orgId必传，startPage,endPage分页，不传，则查询所有】
-	 * @return
-	 * @throws Exception
-	 */
-    List<CompanyUserTableDTO> getCompanyUserByOrgIdOfWork(Map<String, Object> param) throws Exception;
+	CompanyUserDetailDTO getCompanyUserByIdInterface(String id,String needUserStatus) throws Exception;
 
 	/**
 	 * 方法描述：组织人员查询
@@ -84,14 +60,25 @@ public interface CompanyUserService extends BaseService<CompanyUserEntity>{
     List<CompanyUserDataDTO> getUserByOrgId(Map<String, Object> param) throws Exception;
 
 	/**
-	 * 方法描述：组织人员条数（分页查询）
+	 * 方法描述：获取当前组织的人员（如果orgId为null，则查询整个组织的成员，如果orgId不为null，则查询某个部门的成员）
+	 * 作   者：LY
+	 * 日   期：2016/8/3 17:17
+	 * @param  companyId 公司Id  orgId 组织Id
+	 *
+	 */
+	List<CompanyUserDataDTO> getUserList(String companyId, String orgId) throws Exception;
+
+	/**
+	 * 获取整个departPath路径下节点下面的所有成员（companyId == orgId，则获取整个组织的成员)
+	 */
+	List<CompanyUserDataDTO> getDepartAllUser(String companyId, String departPath) throws Exception;
+
+	/**
+	 * 方法描述：获取抄送人的信息
 	 * 作        者：MaoSF
 	 * 日        期：2016年7月9日-下午2:28:06
-	 * @param param (orgId,keyword)【orgId必传】
-	 * @return
-	 * @throws Exception
 	 */
-    int getCompanyUserByOrgIdCountOfWork(Map<String, Object> param) throws Exception;
+	List<CompanyUserDataDTO> getCopyUser(QueryCopyRecordDTO query);
 
 	/**
 	 * 方法描述：保存组织人员（新增，更改）
@@ -130,37 +117,8 @@ public interface CompanyUserService extends BaseService<CompanyUserEntity>{
 	 */
     List<Map<String, Object>> selectPersonalInGroupAndInfo(Map<String, Object> map) throws Exception;
 
-	/**
-	 * 方法描述：
-	 * 作者：MaoSF
-	 * 日期：2016/8/5
-	 * @param:
-	 * @return:
-	 */
-    AjaxMessage orderCompanyUser(CompanyUserTableDTO dto1, CompanyUserTableDTO dto2, String orgId)throws Exception;
-
-
-	/**
-	 * 方法描述：根据id集合查询人员名字（任务分解--负责人，设计人）使用
-	 * 作        者：MaoSF
-	 * 日        期：2016年4月23日-下午6:02:15
-	 * @param param
-	 * @return
-	 */
-    List<CompanyUserEntity> getPersonByIds(Map<String, Object> param);
-
-
 
 	void addUserToGroup(String userId, String groupId, String departId) throws Exception;
-
-	/**
-	 * 方法描述：根据角色id查询公司人员
-	 * 作者：MaoSF
-	 * 日期：2016/11/3
-	 * @param:
-	 * @return:
-	 */
-	List<CompanyUserTableDTO> getCompanyUserByRoleId(Map<String, Object> param);
 
 	/**
 	 * 方法描述：根据权限id查询公司人员
@@ -169,7 +127,7 @@ public interface CompanyUserService extends BaseService<CompanyUserEntity>{
 	 * @param:
 	 * @return:
 	 */
-	List<CompanyUserTableDTO> getCompanyUserByPermissionId(Map<String, Object> param);
+	List<CompanyUserDataDTO> getCompanyUserByPermissionId(Map<String, Object> param);
 
 
 	/**
@@ -180,15 +138,31 @@ public interface CompanyUserService extends BaseService<CompanyUserEntity>{
 	 * @return
 	 */
     List<CompanyUserAppDTO> getCompanyUser(String companyId) throws Exception;
-
 	/**
-	 * 方法描述：查找当前公司所有人员排除自己
-	 * 作        者：MaoSF
-	 * 日        期：2016年7月8日-下午4:24:08
+	 * 方法描述：查找当前公司所有人员(带工作状态)
+	 * 作        者：ZCL
+	 * 日        期：2018年4月17日
 	 * @param companyId
 	 * @return
 	 */
-    List<CompanyUserAppDTO> getCompanyUserExceptMe(String companyId,String accountId) throws Exception;
+    List<CompanyUserAppDTO> getCompanyUser(String companyId,String needUserStatus) throws Exception;
+
+	/**
+	 * 方法描述：查找当前公司所有人员排除自己（也排除指定人员）
+	 * 作        者：zcl
+	 * 日        期：2018/4/23
+	 * @return 查询出的人员列表
+	 */
+    List<CompanyUserAppDTO> getCompanyUserExceptMe(QueryCompanyUserDTO query) throws Exception;
+
+	/**
+	 * 方法描述：查找指定人员
+	 * 作        者：zcl
+	 * 日        期：2018/4/23
+	 * @param query 查询条件
+	 * @return 查询出的人员列表
+	 */
+    List<CompanyUserAppDTO> listCompanyUser(QueryCompanyUserDTO query) throws Exception;
 
 
 	/**
@@ -207,4 +181,85 @@ public interface CompanyUserService extends BaseService<CompanyUserEntity>{
 	 * 日期：2016/11/3
 	 */
 	ImUserInfoDTO getImUserInfo(ImUserInfoQueryDTO query) throws Exception;
+
+	/**
+	 * 方法描述：根据companyUserId查询报销审批申请人列表
+	 * 作        者：MaoSF
+	 * 日        期：2016年7月8日-下午4:24:08
+	 */
+	List<CompanyUserExpMemberDTO> getExpTaskMembers(Map<String, Object> paraMap) throws Exception;
+
+	/**
+	 * 方法描述：抄送给我的记录的审批人列表
+	 * 作        者：MaoSF
+	 * 日        期：2016年7月8日-下午4:24:08
+	 */
+	List<CompanyUserExpMemberDTO> getApplyExpUserForCopy(Map<String, Object> paraMap) throws Exception;
+
+
+	/**
+	 * 组织经营总监
+	 */
+	List<CompanyUserDataDTO> getOperatorManager(String companyId);
+
+	/**
+	 * 组织项目总监
+	 */
+	List<CompanyUserDataDTO> getDesignManager(String companyId);
+
+	/**
+	 * 财务出账(技术审查费）
+	 */
+	List<CompanyUserDataDTO> getFinancialManagerPayForTechnical(String companyId);
+
+	/**
+	 * 财务出账（合作设计费）
+	 */
+	List<CompanyUserDataDTO> getFinancialManagerPayForCooperation(String companyId);
+
+	/**
+	 * 财务出账（其他费用）
+	 */
+	List<CompanyUserDataDTO> getFinancialManagerPayForOther(String companyId);
+
+	/**
+	 * 财务出账（报销拨款）
+	 */
+	List<CompanyUserDataDTO> getFinancialManagerPayForExp(String companyId);
+
+	/**
+	 * 财务出账(费用拨款)
+	 */
+	List<CompanyUserDataDTO> getFinancialManagerPayForCost(String companyId);
+
+
+	List<CompanyUserDataDTO> getFinancialManagerForReceive(String companyId);
+
+	List<CompanyUserDataDTO> getFinancialManagerForPay(String companyId);
+
+	/**
+	 * 财务收款组（合同回款）
+	 */
+	List<CompanyUserDataDTO> getFinancialManagerReceiveForContract(String companyId);
+
+	/**
+	 * 财务收款组
+	 */
+	List<CompanyUserDataDTO> getFinancialManagerReceiveForTechnical(String companyId);
+
+	/**
+	 * 财务收款组
+	 */
+	List<CompanyUserDataDTO> getFinancialManagerReceiveForCooperation(String companyId);
+
+	/**
+	 * 财务收款组
+	 */
+	List<CompanyUserDataDTO> getFinancialManagerReceiveForOther(String companyId);
+
+	/**
+	 * 企业负责人
+	 */
+	CompanyUserDataDTO getOrgManager(String companyId);
+
 }

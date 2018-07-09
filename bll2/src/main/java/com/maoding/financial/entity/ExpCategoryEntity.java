@@ -23,9 +23,17 @@ public class ExpCategoryEntity extends BaseEntity{
 
     private String status;
 
-    private int seq;
+    private Integer seq;
 
     private String expTypeMemo;
+
+    private Integer categoryType;
+
+    private Integer payType;
+
+    private String relationCompanyId;
+
+    private Integer showStatus;
 
     public String getExpTypeMemo() {
         return expTypeMemo;
@@ -83,11 +91,43 @@ public class ExpCategoryEntity extends BaseEntity{
         this.status = status;
     }
 
-    public int getSeq() {
+    public Integer getSeq() {
         return seq;
     }
 
-    public void setSeq(int seq) {
+    public void setSeq(Integer seq) {
         this.seq = seq;
+    }
+
+    public Integer getCategoryType() {
+        return categoryType;
+    }
+
+    public void setCategoryType(Integer categoryType) {
+        this.categoryType = categoryType;
+    }
+
+    public Integer getPayType() {
+        return payType;
+    }
+
+    public void setPayType(Integer payType) {
+        this.payType = payType;
+    }
+
+    public String getRelationCompanyId() {
+        return relationCompanyId;
+    }
+
+    public void setRelationCompanyId(String relationCompanyId) {
+        this.relationCompanyId = relationCompanyId;
+    }
+
+    public Integer getShowStatus() {
+        return showStatus;
+    }
+
+    public void setShowStatus(Integer showStatus) {
+        this.showStatus = showStatus;
     }
 }

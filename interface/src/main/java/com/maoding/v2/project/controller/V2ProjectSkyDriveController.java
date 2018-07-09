@@ -32,15 +32,13 @@ public class V2ProjectSkyDriveController extends BaseWSController {
      * 方法描述：项目文档库
      * 作者：MaoSF
      * 日期：2016/12/26
-     *
      * @param:paraMap（projectId必须，pid为null，则顶级文档列表，pid不为空，查询项目路径为pid的所有子文档列表）
-     * @return:
      */
     @RequestMapping("/getProjectSkyDrive")
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean getProjectSkyDrive(@RequestBody Map<String, Object> paraMap) throws Exception {
-        return projectSkyDriverService.getSkyDrive(paraMap);
+        return projectSkyDriverService.getSkyDriveByParamList(paraMap);
     }
 
 
@@ -48,9 +46,6 @@ public class V2ProjectSkyDriveController extends BaseWSController {
      * 方法描述：创建文件夹（或许修改文件夹名）
      * 作者：MaoSF
      * 日期：2016/12/26
-     *
-     * @param:
-     * @return:
      */
     @RequestMapping("/saveOrUpdateFileMaster")
     @ResponseBody
@@ -63,9 +58,6 @@ public class V2ProjectSkyDriveController extends BaseWSController {
      * 方法描述：删除文件夹/文件
      * 作者：MaoSF
      * 日期：2016/12/26
-     *
-     * @param:
-     * @return:
      */
     @RequestMapping("/deleteProjectSkyDrive")
     @ResponseBody
@@ -78,9 +70,7 @@ public class V2ProjectSkyDriveController extends BaseWSController {
      * 方法描述：文件上传（项目文档库）
      * 作者：MaoSF
      * 日期：2016/12/26
-     *
      * @param:projectId，companyId必传，pid可以为null（如果为null，则上传到根目录下）
-     * @return:
      */
     @RequestMapping("/uploadFile")
     @ResponseBody
@@ -89,6 +79,19 @@ public class V2ProjectSkyDriveController extends BaseWSController {
         return this.projectSkyDriverService.uploadFile(dto.getMultipartFile(), dto.getPid(), dto.getProjectId(), dto.getCompanyId(), dto.getAccountId());
     }
 
+
+    /**
+     * 方法描述：文件上传（项目文档库）
+     * 作者：MaoSF
+     * 日期：2016/12/26
+     * accountId,pid可以为null（如果为null，查询根目录）
+     */
+    @RequestMapping("/getPersonalFile")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getPersonalFile(@RequestBody Map<String,Object> map) throws Exception {
+        return ResponseBean.responseSuccess().addData("attachList",this.projectSkyDriverService.getPersonalFile(map));
+    }
 }
 
 

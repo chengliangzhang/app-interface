@@ -14,8 +14,18 @@ import java.util.List;
  */
 public class SaveUserPermissionListDTO extends BaseDTO {
 
+    /**
+     * 管理员的userId（如果更改了管理员则传递，如果没有，无需传递）
+     */
+    private String adminUserId;
 
-    List<SaveUserPermission2DTO> userPermissionList = new ArrayList<SaveUserPermission2DTO>();
+    /**
+     * 企业负责人的userId（如果更改了企业负责人则传递，如果没有，无需传递）
+     */
+    private String orgManagerUserId;
+
+    //普通权限修改的人员及权限集
+    private List<SaveUserPermission2DTO> userPermissionList = new ArrayList<SaveUserPermission2DTO>();
 
     public List<SaveUserPermission2DTO> getUserPermissionList() {
         return userPermissionList;
@@ -23,5 +33,21 @@ public class SaveUserPermissionListDTO extends BaseDTO {
 
     public void setUserPermissionList(List<SaveUserPermission2DTO> userPermissionList) {
         this.userPermissionList = userPermissionList;
+    }
+
+    public String getAdminUserId() {
+        return adminUserId;
+    }
+
+    public void setAdminUserId(String adminUserId) {
+        this.adminUserId = adminUserId;
+    }
+
+    public String getOrgManagerUserId() {
+        return orgManagerUserId;
+    }
+
+    public void setOrgManagerUserId(String orgManagerUserId) {
+        this.orgManagerUserId = orgManagerUserId;
     }
 }

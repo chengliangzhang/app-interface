@@ -1,6 +1,9 @@
 package com.maoding.v2.project.dto;
 
+import com.maoding.core.constant.SystemParameters;
+import com.maoding.hxIm.dto.ImGroupDataDTO;
 import com.maoding.org.dto.CompanyUserAppDTO;
+import com.maoding.role.dto.ProjectOperatorDTO;
 import com.maoding.task.dto.ProejctTaskListDTO;
 
 import java.util.ArrayList;
@@ -46,9 +49,19 @@ public class V2ProjectTableDTO{
 
     private int deleteFlag;
 
+    private int status;
+
+    private String companyBid;//乙方
+
+    private String statusName;
+
     private CompanyUserAppDTO user;
 
+    private ProjectOperatorDTO projectOperator = new ProjectOperatorDTO();
+
     private List<ProejctTaskListDTO> taskList = new ArrayList<ProejctTaskListDTO>();
+
+    private List<ImGroupDataDTO> groupList = new ArrayList<>();
 
     public int getFlag() {
         return flag;
@@ -110,6 +123,14 @@ public class V2ProjectTableDTO{
         return user;
     }
 
+    public String getCompanyBid() {
+        return companyBid;
+    }
+
+    public void setCompanyBid(String companyBid) {
+        this.companyBid = companyBid;
+    }
+
     public void setUser(CompanyUserAppDTO user) {
         this.user = user;
     }
@@ -136,5 +157,37 @@ public class V2ProjectTableDTO{
 
     public void setDeleteFlag(int deleteFlag) {
         this.deleteFlag = deleteFlag;
+    }
+
+    public List<ImGroupDataDTO> getGroupList() {
+        return groupList;
+    }
+
+    public void setGroupList(List<ImGroupDataDTO> groupList) {
+        this.groupList = groupList;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    public String getStatusName() {
+        return SystemParameters.PROJECT_STATUS.get(status+"");
+    }
+
+    public void setStatusName(String statusName) {
+        this.statusName = statusName;
+    }
+
+    public ProjectOperatorDTO getProjectOperator() {
+        return projectOperator;
+    }
+
+    public void setProjectOperator(ProjectOperatorDTO projectOperator) {
+        this.projectOperator = projectOperator;
     }
 }

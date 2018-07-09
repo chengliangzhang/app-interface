@@ -7,13 +7,13 @@ import com.maoding.core.bean.ResponseBean;
 import com.maoding.core.util.StringUtil;
 import com.maoding.hxIm.service.ImService;
 import com.maoding.org.dao.*;
-import com.maoding.org.dto.CompanyUserDataDTO;
-import com.maoding.org.dto.DepartDTO;
-import com.maoding.org.dto.DepartRoleDTO;
+import com.maoding.org.dto.*;
 import com.maoding.org.entity.*;
+import com.maoding.org.service.CompanyUserService;
 import com.maoding.org.service.DepartService;
 import com.maoding.role.dao.UserPermissionDao;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -47,6 +47,9 @@ public class DepartServiceImpl extends GenericService<DepartEntity> implements D
     @Autowired
     private CompanyUserDao companyUserDao;
 
+    @Autowired
+    private CompanyUserService companyUserService;
+
 
     @Autowired
     private ImService imService;
@@ -54,99 +57,10 @@ public class DepartServiceImpl extends GenericService<DepartEntity> implements D
     @Autowired
     private UserPermissionDao userPermissionDao;
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public List<DepartDTO> getDepartByCompanyId(Map<String, Object> paraMap) throws Exception {
-        List<DepartDTO> departList = departDao.getDepartByCompanyId(paraMap);
-        return departList;
-    }
-
-    /**
-     * 方法描述：根据companyId和userId查询Departs（部门）
-     * 作        者：TangY
-     * 日        期：2016年7月8日-下午3:32:16
-     */
-    public List<DepartDTO> getDepartByCompanyIdAndUserId(Map<String, Object> paraMap) throws Exception {
-        List<DepartEntity> departList = departDao.getDepartByCompanyIdAndUserId(paraMap);
-        List<DepartDTO> departDtoList = new ArrayList<DepartDTO>();
-        departDtoList = BaseDTO.copyFields(departList, DepartDTO.class);
-        return departDtoList;
-    }
-
-    /**
-     * 方法描述：使用递归查询公司部门
-     * 作者：MaoSF
-     * 日期：2016/9/18
-     * @param:
-     * @return:
-     */
-    @Override
-    public List<DepartDTO> getDepartByCompanyId(Map<String, Object> paraMap, List<DepartDTO> departDTOList) throws Exception {
-        if (!paraMap.containsKey("pid")) {
-            paraMap.put("pid", paraMap.get("companyId"));
-        }
-        if (departDTOList == null) {
-            departDTOList = new ArrayList<DepartDTO>();
-        }
-        List<DepartDTO> list = this.getDepartByCompanyId(paraMap);
-        for (int i = 0; i < list.size(); i++) {
-            departDTOList.add(list.get(i));
-            paraMap.put("pid", list.get(i).getId());
-            departDTOList.addAll(getDepartByCompanyId(paraMap, null));
-        }
-        return departDTOList;
-    }
+    @Value("${fastdfs.url}")
+    protected String fastdfsUrl;
 
 
-    /**
-     * 方法描述：根据companyId和userId查询Departs（部门）包含公司
-     * 作        者：TangY
-     * 日        期：2016年7月8日-下午3:32:16
-     * @param paraMap （companyId（公司ID）,userId（用户Id））
-     */
-    @Override
-    public List<DepartDTO> getDepartByUserIdContentCompany(Map<String, Object> paraMap) throws Exception {
-        List<DepartEntity> departList = departDao.getDepartByUserIdContentCompany(paraMap);
-        List<DepartDTO> departDtoList = new ArrayList<DepartDTO>();
-        departDtoList = BaseDTO.copyFields(departList, DepartDTO.class);
-        return departDtoList;
-    }
-
-    /**
-     * 方法描述：根据companyId和userId查询Departs（部门）包含公司
-     * getDepartByUserIdContentCompanyInterface
-     * 作        者：TangY
-     * 日        期：2016年7月8日-下午3:32:16
-     * @param paraMap （companyId（公司ID）,userId（用户Id））
-     */
-    @Override
-    public List<DepartDTO> getDepartByUserIdContentCompanyInterface(Map<String, Object> paraMap) throws Exception {
-        List<DepartEntity> departList = departDao.getDepartByUserIdContentCompanyInterface(paraMap);
-        List<DepartDTO> departDtoList = new ArrayList<DepartDTO>();
-        departDtoList = BaseDTO.copyFields(departList, DepartDTO.class);
-        return departDtoList;
-    }
-
-    public ResponseBean validateSaveOrUpdateDepart(DepartDTO dto) throws Exception {
-
-        if (StringUtil.isNullOrEmpty(dto.getCompanyId())) {
-            return ResponseBean.responseError("请选择组织");
-        }
-        CompanyEntity company = companyDao.selectById(dto.getCompanyId());
-        if (company == null) {
-            return ResponseBean.responseError("请选择组织");
-        }
-        if (StringUtil.isNullOrEmpty(dto.getCompanyId())) {
-            return ResponseBean.responseError("请选择组织");
-        }
-        if (StringUtil.isNullOrEmpty(dto.getDepartName())) {
-            return ResponseBean.responseError("部门名称不能为空");
-        }
-        if (StringUtil.isNullOrEmpty(dto.getPid())) {
-            return ResponseBean.responseError("请选择父部门");
-        }
-        return null;
-    }
 
     @Override
     public ResponseBean saveOrUpdateDepart(DepartDTO dto) throws Exception {
@@ -285,25 +199,6 @@ public class DepartServiceImpl extends GenericService<DepartEntity> implements D
         imService.updateImGroup(entity.getId(), entity.getDepartName(), 1);
     }
 
-    @Override
-    public AjaxMessage deleteDepart(String id) throws Exception {
-        DepartEntity d = departDao.selectById(id);
-        Map<String, Object> paraMap = new HashMap<String, Object>();
-        paraMap.put("orgId", id);
-        paraMap.put("companyId", d.getCompanyId());
-        paraMap.put("auditStatus", "1");
-        int count = companyUserDao.getCompanyUserByOrgIdCount(paraMap);
-        if (count > 0) {
-            return new AjaxMessage().setCode("1").setInfo("该组织下有员工，请先移除员工再删除");
-        }
-        paraMap.put("pid", id);
-        List<DepartDTO> dList = this.getDepartByCompanyId(paraMap);
-        if (dList != null && dList.size() > 0) {
-            return new AjaxMessage().setCode("1").setInfo("该组织下有子部门，请先移除子部门再删除");
-        }
-        this.deleteById(id);
-        return new AjaxMessage().setCode("0").setInfo("操作成功");
-    }
 
     /**
      * 方法描述：删除部门（递归删除）【删除部门及所有的子部门和人员】
@@ -384,101 +279,176 @@ public class DepartServiceImpl extends GenericService<DepartEntity> implements D
         return new AjaxMessage().setCode("0").setInfo(info);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public int getDepartByCompanyIdCount(String companyId) throws Exception {
-        return departDao.getDepartByCompanyIdCount(companyId);
+    public List<DepartDataDTO> getDepartByCompanyId(Map<String, Object> paraMap) throws Exception {
+        List<DepartDataDTO> departList = departDao.getDepartByCompanyId(paraMap);
+        return departList;
     }
 
     /**
-     * 方法描述：获取具有某些角色的部门（当前人在当前组织下的部门）
+     * 方法描述：使用递归查询公司部门
      * 作者：MaoSF
-     * 日期：2016/8/16
-     * @param:
-     * @return:
+     * 日期：2016/9/18
      */
     @Override
-    public List<DepartRoleDTO> getDepartByRole(Map<String, Object> paraMap) {
-        return departDao.getDepartByRole(paraMap);
+    public List<DepartDataDTO> getDepartByCompanyId(Map<String, Object> paraMap, List<DepartDataDTO> departDTOList) throws Exception {
+        if (!paraMap.containsKey("pid")) {
+            paraMap.put("pid", paraMap.get("companyId"));
+        }
+        if (departDTOList == null) {
+            departDTOList = new ArrayList<>();
+        }
+        List<DepartDataDTO> list = this.getDepartByCompanyId(paraMap);
+        for (int i = 0; i < list.size(); i++) {
+            departDTOList.add(list.get(i));
+            paraMap.put("pid", list.get(i).getId());
+            departDTOList.addAll(getDepartByCompanyId(paraMap, null));
+        }
+        return departDTOList;
+    }
+
+
+    /**
+     * 方法描述：根据companyId和userId查询Departs（部门）包含公司
+     * 作        者：TangY
+     * 日        期：2016年7月8日-下午3:32:16
+     * @param paraMap （companyId（公司ID）,userId（用户Id））
+     */
+    @Override
+    public List<DepartDataDTO> getDepartByUserIdContentCompany(Map<String, Object> paraMap) throws Exception {
+        List<DepartEntity> departList = departDao.getDepartByUserIdContentCompany(paraMap);
+        List<DepartDataDTO> departDtoList = new ArrayList<>();
+        departDtoList = BaseDTO.copyFields(departList, DepartDataDTO.class);
+        return departDtoList;
     }
 
     /**
-     * 方法描述：获取所有组织的角色（在当前公司下）
-     * 作者：MaoSF
-     * 日期：2016/8/16
-     * @param:
-     * @return:
+     * 方法描述：根据companyId和userId查询Departs（部门）包含公司
+     * getDepartByUserIdContentCompanyInterface
+     * 作        者：TangY
+     * 日        期：2016年7月8日-下午3:32:16
+     * @param paraMap （companyId（公司ID）,userId（用户Id））
      */
     @Override
-    public List<DepartRoleDTO> getOrgRole(Map<String, Object> paraMap) {
-        return departDao.getOrgRole(paraMap);
+    public List<DepartDataDTO> getDepartByUserIdContentCompanyInterface(Map<String, Object> paraMap) throws Exception {
+        List<DepartEntity> departList = departDao.getDepartByUserIdContentCompanyInterface(paraMap);
+        List<DepartDataDTO> departDtoList = new ArrayList<>();
+        departDtoList = BaseDTO.copyFields(departList, DepartDataDTO.class);
+        return departDtoList;
     }
+
+    public ResponseBean validateSaveOrUpdateDepart(DepartDTO dto) throws Exception {
+
+        if (StringUtil.isNullOrEmpty(dto.getCompanyId())) {
+            return ResponseBean.responseError("请选择组织");
+        }
+        CompanyEntity company = companyDao.selectById(dto.getCompanyId());
+        if (company == null) {
+            return ResponseBean.responseError("请选择组织");
+        }
+        if (StringUtil.isNullOrEmpty(dto.getCompanyId())) {
+            return ResponseBean.responseError("请选择组织");
+        }
+        if (StringUtil.isNullOrEmpty(dto.getDepartName())) {
+            return ResponseBean.responseError("部门名称不能为空");
+        }
+        if (StringUtil.isNullOrEmpty(dto.getPid())) {
+            return ResponseBean.responseError("请选择父部门");
+        }
+        return null;
+    }
+
+
+
 
     @SuppressWarnings("unchecked")
     @Override
-    public List<DepartDTO> getDepartByCompanyIdWS(Map<String, Object> paraMap) throws Exception {
+    public List<DepartDataDTO> getDepartByCompanyIdWS(Map<String, Object> paraMap) throws Exception {
         List<DepartEntity> departList = departDao.getDepartByCompanyIdWS(paraMap);
-        List<DepartDTO> departDtoList = new ArrayList<DepartDTO>();
-        departDtoList = BaseDTO.copyFields(departList, DepartDTO.class);
+        List<DepartDataDTO> departDtoList = new ArrayList<>();
+        departDtoList = BaseDTO.copyFields(departList, DepartDataDTO.class);
         return departDtoList;
     }
 
     @Override
-    public List<DepartEntity> selectNotCreateGroupDepart(Map<String, Object> paraMap) throws Exception {
-        return departDao.selectNotCreateGroupDepart(paraMap);
+    public List<DepartDataDTO> getDepartByCompanyId(String companyId, String pid) throws Exception {
+        Map<String, Object> paraMap = new HashMap<>();
+        paraMap.put("companyId",companyId);
+        if(!StringUtil.isNullOrEmpty(pid)){
+            paraMap.put("pid",pid);
+        }
+        return this.getDepartByCompanyIdWS(paraMap);
     }
 
-    @Override
-    public List<DepartEntity> selectCreateGroupDepart(Map<String, Object> paraMap) throws Exception {
-        return departDao.selectCreateGroupDepart(paraMap);
-    }
 
     /**
      * 方法描述：查询部门下所有的子部门及人员
      * 作者：MaoSF
      * 日期：2017/2/6
-     * @param:
-     * @return:
      */
     @Override
     public ResponseBean getDepartAndGroup(Map<String, Object> mapass) throws Exception {
+
         //路径id集合
         DepartEntity departEntity = this.selectById(mapass.get("departId"));
         if (departEntity == null) {
             return ResponseBean.responseError("查询失败");
         }
-        List<String> idList = new ArrayList<>();
-        idList.add(departEntity.getCompanyId());
-        idList.addAll(CollectionUtils.arrayToList(departEntity.getDepartPath().split("-")));
-        Map<String, Object> map = new HashMap<>();
-        map.put("companyId", mapass.get("companyId").toString());
-        map.put("pid", mapass.get("departId").toString());
-        List<DepartDTO> listDepart = this.getDepartByCompanyIdWS(map);
-        map.clear();
-        map.put("orgId", mapass.get("departId").toString());
+        QueryCompanyUserDTO dto = new QueryCompanyUserDTO();
+        dto.setOrgId(mapass.get("departId").toString());
+        dto.setCompanyId(mapass.get("companyId").toString());
+        OrgDataDTO result = this.getOrgData(dto,false);
+        //返回值
+        return ResponseBean.responseSuccess("查询成功").addDataFromObject(result);
+    }
 
-        Map<String, Object> paramCompanyUser = new HashMap<String, Object>();
-        if (null != mapass.get("departId").toString()) {
-            paramCompanyUser.put("orgId", mapass.get("departId"));
+    @Override
+    public OrgDataDTO getOrgData(QueryCompanyUserDTO dto,boolean isSelectDepartAllUser) throws Exception {
+
+        CompanyEntity companyEntity = this.companyDao.selectById(dto.getCompanyId());
+        if(companyEntity==null){
+            throw new Exception("参数错误");
         }
-        paramCompanyUser.put("auditStatus", "1");
-        paramCompanyUser.put("fastdfsUrl", mapass.get("fastdfsUrl"));
-        //公司人员
-        List<CompanyUserDataDTO> companyUserList = companyUserDao.getUserByOrgId(paramCompanyUser);
-        //部门全路径
-        String departFullName = this.departDao.getDepartFullName((String) mapass.get("departId"));
+
+        String companyName = companyEntity.getCompanyName();
+        String departPath = null;//当前路径
+        String pid = StringUtil.isNullOrEmpty(dto.getOrgId())?dto.getCompanyId():dto.getOrgId();
+        String orgId = StringUtil.isNullOrEmpty(dto.getOrgId())?dto.getCompanyId():dto.getOrgId();
+        DepartEntity departEntity = this.selectById(orgId);
+        String departName;
+        List<String> idList = new ArrayList<>();
         //获取所有父级部门名称
-        List<DepartEntity> departs = this.departDao.getParentDepartsByDepartPath(departEntity.getDepartPath());
-        String aliasName = "";
-        CompanyEntity companyEntity = this.companyDao.selectById(departEntity.getCompanyId());
-        if (companyEntity != null) {
-            aliasName = companyEntity.getAliasName();
+        List<DepartEntity> departs  = new ArrayList<>();
+        idList.add(dto.getCompanyId());
+        if (departEntity != null) {//如果不是部门，则是组织
+            idList.addAll(CollectionUtils.arrayToList(departEntity.getDepartPath().split("-")));
+            departName = departEntity.getDepartName();
+            //查询所有的父部门
+            departs  = this.departDao.getParentDepartsByDepartPath(departEntity.getDepartPath());
+            departPath = departEntity.getDepartPath();
+        }else {
+            departName = companyName;
         }
-        departFullName = companyEntity.getAliasName() + "-" + departFullName;
+
+        /********查询部门成员******/
+        List<CompanyUserDataDTO> companyUserList = new ArrayList<>();
+        if (null != orgId) {
+            companyUserList = companyUserService.getUserList(dto.getCompanyId(),orgId);
+        }
+
+        String departFullName = companyEntity.getAliasName();
+        String departFullName2 = this.departDao.getDepartFullName(orgId);
+        //部门全路径
+        if(!StringUtil.isNullOrEmpty(departFullName2)){
+            departFullName = departFullName+ "-" + departFullName2;
+        }
+
         //获取整条路径下父级的部门
         List<Map<String, String>> parentDepartList = new ArrayList<>();
         Map<String, String> map1 = new HashMap<>();
-        map1.put("id", departEntity.getCompanyId());
-        map1.put("departName", aliasName);
+        map1.put("id", dto.getCompanyId());
+        map1.put("departName", companyName);
         parentDepartList.add(map1);
         for (DepartEntity d : departs) {
             map1 = new HashMap<>();
@@ -489,31 +459,43 @@ public class DepartServiceImpl extends GenericService<DepartEntity> implements D
 
         //获取父部门
         String parentDepartName = "";
-        if (departEntity.getDepartPath().contains("-")) {
+        if (departEntity != null && departEntity.getDepartPath().contains("-")) {
             DepartEntity parentDepartEntity = this.selectById(departEntity.getPid());
             if (parentDepartEntity != null) {
                 parentDepartName = parentDepartEntity.getDepartName();
             }
         } else {
-            CompanyEntity company = this.companyDao.selectById(departEntity.getPid());
-            if (company != null) {
-                parentDepartName = companyEntity.getCompanyShortName();
+            parentDepartName = companyName;
+        }
+
+        //查询所有子部门
+        List<DepartAndUserDTO> departList = this.getDepartAndUser(dto.getCompanyId(),pid,isSelectDepartAllUser);
+
+        OrgDataDTO result = new OrgDataDTO();
+        result.setDepartFullName(departFullName);
+        result.setDepartName(departName);
+        result.setParentDepartName(parentDepartName);
+        result.setDepartUserList(companyUserList);
+        result.setDepartList(departList);
+        result.setIdList(idList);
+        result.setParentDepartList(parentDepartList);
+        if(isSelectDepartAllUser){
+            result.setUserForCurrentNode(companyUserService.getDepartAllUser(dto.getCompanyId(),departPath));
+        }
+        return result;
+    }
+
+    private List<DepartAndUserDTO> getDepartAndUser(String companyId,String pid,boolean isSelectDepartAllUser) throws Exception{
+        List<DepartAndUserDTO> list = null;
+        List<DepartDataDTO> departList = this.getDepartByCompanyId(companyId,pid);
+        list = BaseDTO.copyFields(departList,DepartAndUserDTO.class);
+        if(isSelectDepartAllUser){
+            for(DepartAndUserDTO d:list){
+                //查询该节点下面的所有成员
+                d.setCompanyUserList(companyUserService.getDepartAllUser(companyId,d.getDepartPath()));
             }
         }
-        //返回值
-        return ResponseBean.responseSuccess("查询成功")
-                .addData("departList", listDepart)
-                .addData("parentDepartList", parentDepartList)
-                .addData("departUserList", companyUserList)
-                .addData("idList", idList)
-                .addData("departFullName", departFullName)
-                .addData("parentDepartName", parentDepartName)
-                .addData("departName", departEntity.getDepartName());
+        return list;
     }
 
-
-    @Override
-    public List<DepartEntity> selectChildDepartEntity(String departPath) throws Exception {
-        return departDao.getDepartsByDepartPath(departPath);
-    }
 }

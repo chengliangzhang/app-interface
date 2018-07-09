@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="MaodingCircleReadEntityMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.circle.entity.MaodingCircleReadEntity" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="user_id" property="userId" jdbcType="VARCHAR" />
+    <result column="is_especially_remind" property="isEspeciallyRemind" jdbcType="INTEGER" />
+    <result column="circle_id" property="circleId" jdbcType="VARCHAR" />
+    <result column="comment_id" property="commentId" jdbcType="VARCHAR" />
+    <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="is_read" property="isRead" jdbcType="INTEGER" />
+    <result column="deleted" property="deleted" jdbcType="INTEGER" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <resultMap id="BaseResultMap2" type="com.maoding.circle.dto.MaodingCircleReadDTO" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="user_id" property="userId" jdbcType="VARCHAR" />
+    <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="is_especially_remind" property="isEspeciallyRemind" jdbcType="INTEGER" />
+    <result column="circle_id" property="circleId" jdbcType="VARCHAR" />
+    <result column="comment_id" property="commentId" jdbcType="VARCHAR" />
+    <result column="is_read" property="isRead" jdbcType="INTEGER" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="project_id" property="projectId" jdbcType="VARCHAR" />
+    <result column="project_name" property="projectName" jdbcType="VARCHAR" />
+    <result column="deleted" property="deleted" jdbcType="INTEGER" />
+  </resultMap>
+
+  <sql id="Base_Column_List" >
+    id, user_id,company_id, is_especially_remind, circle_id,comment_id, is_read,deleted, create_date, create_by, update_date,
+    update_by
+  </sql>
+
+  <select id="selectById" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from maoding_circle_read
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+
+  <select id="getNotReadCircle" resultMap="BaseResultMap2" parameterType="com.maoding.circle.dto.QueryCircleDTO">
+    select a.*,b.project_id,c.project_name
+    from maoding_circle_read a
+    INNER JOIN maoding_circle b on a.circle_id = b.id
+    INNER JOIN maoding_web_project c on b.project_id = c.id
+    where a.user_id = #{accountId}
+    and b.deleted = 0
+    <if test="isRead!=null">
+     and a.is_read = #{isRead}
+    </if>
+    <if test="projectId!=null">
+      and b.project_id = #{projectId}
+    </if>
+    order by a.create_date desc,a.deleted desc
+  </select>
+
+  <delete id="deleteById" parameterType="java.lang.String" >
+    delete from maoding_circle_read
+    where id = #{id,jdbcType=VARCHAR}
+  </delete>
+
+  <insert id="insert" parameterType="com.maoding.circle.entity.MaodingCircleReadEntity" >
+    insert into maoding_circle_read (id, user_id,company_id, is_especially_remind,
+      circle_id, comment_id,is_read,deleted, create_date,
+      create_by, update_date, update_by
+      )
+    values (#{id,jdbcType=VARCHAR}, #{userId,jdbcType=VARCHAR}, #{companyId,jdbcType=VARCHAR}, #{isEspeciallyRemind,jdbcType=INTEGER},
+      #{circleId,jdbcType=VARCHAR},  #{commentId,jdbcType=VARCHAR}, #{isRead,jdbcType=INTEGER}, #{deleted,jdbcType=INTEGER},
+       #{createDate,jdbcType=TIMESTAMP},
+      #{createBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}
+      )
+  </insert>
+
+  <update id="updateCircleReadStatus" parameterType="com.maoding.circle.dto.QueryCircleDTO" >
+    update maoding_circle_read a
+    INNER JOIN maoding_circle b on a.circle_id = b.id
+    set a.is_read = 1
+    where a.user_id = #{accountId}
+    <if test="projectId!=null">
+      AND b.project_id = #{projectId}
+    </if>
+    <if test="id!=null">
+      AND b.id = #{id}
+    </if>
+  </update>
+
+  <update id="updateById" parameterType="com.maoding.circle.entity.MaodingCircleReadEntity" >
+    update maoding_circle_read
+    <set >
+      <if test="userId != null" >
+        user_id = #{userId,jdbcType=VARCHAR},
+      </if>
+      <if test="companyId != null" >
+        company_id = #{companyId,jdbcType=VARCHAR},
+      </if>
+      <if test="isEspeciallyRemind != null" >
+        is_especially_remind = #{isEspeciallyRemind,jdbcType=INTEGER},
+      </if>
+      <if test="circleId != null" >
+        circle_id = #{circleId,jdbcType=VARCHAR},
+      </if>
+      <if test="commentId != null" >
+        comment_id = #{commentId,jdbcType=VARCHAR},
+      </if>
+      <if test="deleted != null" >
+        deleted = #{deleted,jdbcType=INTEGER},
+      </if>
+      <if test="isRead != null" >
+        is_read = #{isRead,jdbcType=INTEGER},
+      </if>
+      <if test="createDate != null" >
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createBy != null" >
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateDate != null" >
+        update_date = #{updateDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+
+  <update id="update" parameterType="com.maoding.circle.entity.MaodingCircleReadEntity" >
+    update maoding_circle_read
+    set user_id = #{userId,jdbcType=VARCHAR},
+      company_id = #{companyId,jdbcType=VARCHAR},
+      is_especially_remind = #{isEspeciallyRemind,jdbcType=INTEGER},
+      circle_id = #{circleId,jdbcType=VARCHAR},
+      comment_id = #{commentId,jdbcType=VARCHAR},
+      is_read = #{isRead,jdbcType=INTEGER},
+      deleted = #{deleted,jdbcType=INTEGER},
+      create_date = #{createDate,jdbcType=TIMESTAMP},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      update_date = #{updateDate,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+
+</mapper>

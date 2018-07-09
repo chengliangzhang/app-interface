@@ -28,7 +28,6 @@
             <result column="task_remark" property="taskRemark" jdbcType="VARCHAR" />
             <result column="task_status" property="taskStatus" jdbcType="VARCHAR" />
             <result column="task_type" property="taskType" jdbcType="INTEGER" />
-            <result column="is_has_child" property="isHasChild" jdbcType="INTEGER" />
             <result column="not_complete_count" property="notCompleteCount" jdbcType="INTEGER" />
             <result column="is_root_task" property="isRootTask" jdbcType="INTEGER" />
             <result column="issue_level" property="issueLevel" jdbcType="INTEGER" />

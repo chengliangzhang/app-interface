@@ -57,4 +57,14 @@ public interface NoticeDao extends BaseDao<NoticeEntity> {
       * 日期：2017/6/8
       */
      List<NoticeDataDTO> getNoticeGroupTime(Map<String, Object> param) throws Exception;
+
+     /**
+      * 获取未读公告
+      */
+     List<NoticeDTO> getNotReadNotice(Map<String, Object> param);
+
+     /**
+      * 获取未读公告数
+      */
+     int getNotReadNoticeCount(Map<String, Object> param);
 }

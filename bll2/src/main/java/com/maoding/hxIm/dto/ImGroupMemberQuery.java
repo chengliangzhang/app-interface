@@ -19,6 +19,8 @@ public class ImGroupMemberQuery {
 
     private String companyId;
 
+    private String userId;
+
     public String getGroupId() {
         return groupId;
     }
@@ -72,5 +74,13 @@ public class ImGroupMemberQuery {
 
     public void setCompanyId(String companyId) {
         this.companyId = companyId;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 }

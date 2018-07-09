@@ -236,12 +236,12 @@
 
   <select id="getUserInfo" resultType="com.maoding.user.dto.UserInfoDTO" parameterType="java.lang.String" >
     select b.id,ifnull(b.user_name,a.user_name) as userName,b.birthday,b.sex,a.cellphone,a.email,
-     IFNULL(CONCAT(#{fastdfsUrl,jdbcType=VARCHAR},d.file_group,'/',d.attach_path),'') AS headImg,
-      c.name as majorName,b.major
+     d.oss_file_path AS fileFullPath, c.name as majorName,b.major
     from maoding_web_account a
     LEFT JOIN maoding_web_user b on a.id = b.id
     LEFT JOIN maoding_data_dictionary c on b.major = c.id
-    LEFT JOIN maoding_web_user_attach d on b.id = d.user_id and d.attach_type='5'
+    LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> )d on b.id = d.user_id and d.attach_type='5'
     where a.id = #{id,jdbcType=VARCHAR}
   </select>
+
 </mapper>

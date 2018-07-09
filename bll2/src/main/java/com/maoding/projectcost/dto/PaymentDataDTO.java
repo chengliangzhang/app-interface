@@ -28,6 +28,8 @@ public class PaymentDataDTO {
      */
     private int highLightFlag;
 
+    private String handlerName;
+
     public String getId() {
         return id;
     }
@@ -58,5 +60,13 @@ public class PaymentDataDTO {
 
     public void setHighLightFlag(int highLightFlag) {
         this.highLightFlag = highLightFlag;
+    }
+
+    public String getHandlerName() {
+        return handlerName;
+    }
+
+    public void setHandlerName(String handlerName) {
+        this.handlerName = handlerName;
     }
 }

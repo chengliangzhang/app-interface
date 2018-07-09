@@ -26,7 +26,14 @@
     from maoding_web_project_cost_operater
     where id = #{id,jdbcType=VARCHAR}
   </select>
-  
+
+  <select id="selectByType" resultMap="BaseResultMap" parameterType="com.maoding.projectcost.entity.ProjectCostOperaterEntity" >
+    select
+    <include refid="Base_Column_List" />
+    from maoding_web_project_cost_operater
+    where cost_detail_id = #{costDetailId} and type = #{type}
+  </select>
+
   <delete id="deleteById" parameterType="java.lang.String" >
     delete from maoding_web_project_cost_operater
     where id = #{id,jdbcType=VARCHAR}

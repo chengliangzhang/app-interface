@@ -46,6 +46,13 @@
     group_id, company_comment,county,create_date, create_by, update_date, update_by
   </sql>
 
+  <sql id = "getAliasNameSql">
+     select
+     if(b.nick_name is null or b.nick_name='',a.company_name,b.nick_name) as aliasName,a.id
+    from maoding_web_company a
+    LEFT JOIN maoding_web_business_partner b on a.id = b.company_id and b.type=3
+  </sql>
+
   <select id="getAliasName" resultType="java.lang.String" parameterType="java.lang.String" >
     select
      if(b.nick_name is null or b.nick_name='',a.company_name,b.nick_name) as aliasName

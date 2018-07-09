@@ -11,23 +11,41 @@
     <result column="member_type" property="memberType" jdbcType="INTEGER" />
     <result column="target_id" property="targetId" jdbcType="VARCHAR" />
     <result column="seq" property="seq" jdbcType="INTEGER" />
-    <result column="head_img" property="imgUrl" jdbcType="VARCHAR" />
+    <result column="file_full_path" property="fileFullPath" jdbcType="VARCHAR" />
     <result column="cellphone" property="cellphone" jdbcType="VARCHAR" />
     <result column="email" property="email" jdbcType="VARCHAR" />
+    <result column="complete_time" property="completeTime" jdbcType="VARCHAR" />
   </resultMap>
 
   <select id="listProjectMemberByParam" parameterType="com.maoding.projectmember.entity.ProjectMemberEntity" resultMap="BaseResultMap">
     SELECT
     a.id,a.company_id,a.project_id,a.member_type,a.company_user_id,a.account_id,a.target_id,
     b.user_name, b.email,c.cellphone,
-    CONCAT(d.file_group,'/',d.attach_path) as head_img
+    d.oss_file_path as file_full_path
     FROM maoding_web_project_member a
     LEFT JOIN maoding_web_company_user b on a.company_user_id = b.id
     LEFT JOIN maoding_web_account c on a.account_id = c.id
-    LEFT JOIN maoding_web_user_attach d on a.account_id = d.user_id and d.attach_type = '5'
+    LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) d on a.account_id = d.user_id and d.attach_type = '5'
     <where >
       deleted = 0
     <include refid="whereExample" />
+    </where>
+    order by a.member_type,a.seq
+  </select>
+
+  <select id="listProcessProjectMember" parameterType="com.maoding.projectmember.entity.ProjectMemberEntity" resultMap="BaseResultMap">
+    SELECT
+    a.id,a.company_id,a.project_id,a.member_type,a.company_user_id,a.account_id,a.target_id,
+    b.user_name, b.email,c.cellphone,
+    d.oss_file_path as file_full_path,e.complete_time
+    FROM maoding_web_project_member a
+    LEFT JOIN maoding_web_company_user b on a.company_user_id = b.id
+    LEFT JOIN maoding_web_account c on a.account_id = c.id
+    LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) d on a.account_id = d.user_id and d.attach_type = '5'
+    LEFT JOIN maoding_web_project_process_node e on a.target_id = e.id
+    <where >
+      deleted = 0
+      <include refid="whereExample" />
     </where>
     order by a.member_type,a.seq
   </select>
@@ -83,7 +101,7 @@
       <result column="user_name" jdbcType="VARCHAR" property="userName" />
       <result column="cellphone" jdbcType="VARCHAR" property="cellphone" />
       <result column="email" jdbcType="VARCHAR" property="email" />
-      <result column="head_img" jdbcType="VARCHAR" property="imgUrl" />
+      <result column="file_full_path" jdbcType="VARCHAR" property="fileFullPath" />
       <result column="target_id" jdbcType="VARCHAR" property="targetId" />
       <result column="complete_time" jdbcType="VARCHAR" property="completeTime" />
     </collection>
@@ -93,11 +111,11 @@
     SELECT
     a.member_type,a.company_user_id,a.target_id,
     b.user_name, b.email,c.cellphone,
-    CONCAT(d.file_group,'/',d.attach_path) as head_img
+    d.oss_file_path as file_full_path
     FROM maoding_web_project_member a
     LEFT JOIN maoding_web_company_user b on a.company_user_id = b.id
     LEFT JOIN maoding_web_account c on a.account_id = c.id
-    LEFT JOIN maoding_web_user_attach d on a.account_id = d.user_id and d.attach_type = '5'
+    LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) d on a.account_id = d.user_id and d.attach_type = '5'
     <where >
       deleted = 0 and a.status=0
       <include refid="whereExample" />
@@ -132,11 +150,11 @@
     SELECT
     a.member_type,a.company_user_id,a.target_id,
     b.user_name,b.user_id, b.email,c.cellphone,e.complete_time,
-    CONCAT(#{fastdfsUrl,jdbcType=VARCHAR},d.file_group,'/',d.attach_path) as head_img
+    d.oss_file_path as file_full_path
     FROM maoding_web_project_member a
     LEFT JOIN maoding_web_company_user b on a.company_user_id = b.id
     LEFT JOIN maoding_web_account c on a.account_id = c.id
-    LEFT JOIN maoding_web_user_attach d on a.account_id = d.user_id and d.attach_type = '5'
+    LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) d on a.account_id = d.user_id and d.attach_type = '5'
     LEFT JOIN maoding_web_project_process_node e on a.target_id = e.id
     <where >
       deleted = 0
@@ -174,4 +192,117 @@
     GROUP by a.member_type
   </select>
 
+  <!-- 获取项目成员，按公司分组 -->
+  <resultMap id="BaseResultMap3" type="com.maoding.org.dto.CompanyUserGroupDTO" >
+    <id column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="aliasName"   property="companyName" jdbcType="VARCHAR" />
+    <collection  property="userList" ofType="com.maoding.org.dto.CompanyUserAppDTO" >
+      <result column="company_user_id" property="id" jdbcType="VARCHAR" />
+      <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+      <result column="user_id" property="userId" jdbcType="VARCHAR" />
+      <result column="user_name" property="userName" jdbcType="VARCHAR" />
+      <result column="account_name" property="accountName" jdbcType="VARCHAR" />
+      <result column="cellphone" property="cellphone" jdbcType="VARCHAR" />
+      <result column="file_full_path" property="fileFullPath" jdbcType="VARCHAR" />
+      <result column="email" property="email" jdbcType="VARCHAR" />
+      <result column="title" property="title" jdbcType="VARCHAR" />
+      <result column="aliasName"   property="companyName" jdbcType="VARCHAR" />
+    </collection>
+  </resultMap>
+
+  <select id="listProjectAllMember" parameterType="java.util.Map" resultMap="BaseResultMap3">
+     SELECT
+    a.company_id,a.company_user_id,
+    b.user_name,b.user_id, b.email,
+    c.cellphone,c.user_name as account_name,
+    d.oss_file_path as file_full_path,
+    e.aliasName,
+    group_CONCAT( DISTINCT	CASE ( member_type)
+	WHEN 0 THEN '立项人'
+    WHEN 1 THEN	'经营负责人'
+    WHEN 2 THEN	'设计负责人'
+	WHEN 3 THEN	'任务负责人'
+    WHEN 4 THEN '设计人'
+    WHEN 5 THEN	'校对人'
+    WHEN 6 THEN	'审核人'
+    WHEN 7 THEN '经营助理'
+    WHEN 8 THEN '设计助理'
+    ELSE	''
+    END order by member_type  separator '/' ) AS title
+    FROM maoding_web_project_member a
+    LEFT JOIN maoding_web_company_user b on a.company_user_id = b.id
+    LEFT JOIN maoding_web_account c on a.account_id = c.id
+    LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) d on a.account_id = d.user_id and d.attach_type = '5'
+    LEFT JOIN (<include refid="CompanyEntityMapper.getAliasNameSql" /> ) e on b.company_id = e.id
+    where   deleted = 0
+    and a.project_id = #{projectId}
+    group by a.company_user_id
+    ORDER BY case when a.company_id = #{projectCompanyId}  then 1
+    else 2 end asc
+  </select>
+
+  <!-- 获取项目成员-->
+    <resultMap  id="BaseResultMap4" type="com.maoding.org.dto.CompanyUserAppDTO">
+      <result column="company_user_id" property="id" jdbcType="VARCHAR" />
+      <result column="user_id" property="userId" jdbcType="VARCHAR" />
+      <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+      <result column="user_name" property="userName" jdbcType="VARCHAR" />
+      <result column="account_name" property="accountName" jdbcType="VARCHAR" />
+      <result column="cellphone" property="cellphone" jdbcType="VARCHAR" />
+      <result column="file_full_path" property="fileFullPath" jdbcType="VARCHAR" />
+      <result column="email" property="email" jdbcType="VARCHAR" />
+      <result column="title" property="title" jdbcType="VARCHAR" />
+      <result column="aliasName"   property="companyName" jdbcType="VARCHAR" />
+    </resultMap>
+
+  <select id="listProjectMember" parameterType="java.util.Map" resultMap="BaseResultMap4">
+    SELECT
+    a.company_user_id,b.company_id, a.account_id as user_id, b.user_name, c.user_name as account_name, b.email,c.cellphone,
+    d.oss_file_path as file_full_path
+    FROM maoding_web_project_member a
+    LEFT JOIN maoding_web_company_user b on a.company_user_id = b.id
+    LEFT JOIN maoding_web_account c on a.account_id = c.id
+    LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) d on a.account_id = d.user_id and d.attach_type = '5'
+    <where >
+      deleted = 0 and a.status=0
+      <include refid="whereExample" />
+    </where>
+    GROUP BY a.account_id
+    order by a.member_type,a.seq
+  </select>
+
+  <select id="getMemberById" parameterType="java.util.Map" resultMap="BaseResultMap4">
+    SELECT
+    b.company_id,a.company_user_id,
+    b.user_name,b.user_id, b.email,
+    c.cellphone,c.user_name as account_name,
+    d.oss_file_path as file_full_path,
+    e.aliasName,
+    group_CONCAT( DISTINCT	CASE ( member_type)
+    WHEN 0 THEN '立项人'
+    WHEN 1 THEN	'经营负责人'
+    WHEN 2 THEN	'设计负责人'
+    WHEN 3 THEN	'任务负责人'
+    WHEN 4 THEN '设计人'
+    WHEN 5 THEN	'校对人'
+    WHEN 6 THEN	'审核人'
+    WHEN 7 THEN '经营助理'
+    WHEN 8 THEN '设计助理'
+    ELSE	''
+    END order by member_type  separator '/' ) AS title
+    FROM maoding_web_company_user b
+    LEFT JOIN maoding_web_project_member a on a.company_user_id = b.id and a.project_id = #{projectId} and a.deleted = 0
+    LEFT JOIN maoding_web_account c on b.user_id = c.id
+    LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) d on  b.user_id = d.user_id and d.attach_type = '5'
+    LEFT JOIN (<include refid="CompanyEntityMapper.getAliasNameSql" /> ) e on b.company_id = e.id
+    where   1=1
+    and b.id = #{companyUserId}
+    <!--<if test="userId!=null">-->
+      <!--and b.user_id = #{userId}-->
+    <!--</if>-->
+    <!--<if test="companyId!=null">-->
+      <!--and b.company_id = #{companyId}-->
+    <!--</if>-->
+    group by b.id
+  </select>
 </mapper>

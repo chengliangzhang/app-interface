@@ -1,5 +1,9 @@
 package com.maoding.org.dto;
 
+import com.maoding.attach.dto.FilePathDTO;
+
+import java.util.Date;
+
 /**
  * 深圳市设计同道技术有限公司
  * 类    名：CompanyUserAppDTO
@@ -7,24 +11,7 @@ package com.maoding.org.dto;
  * 作    者：MaoSF
  * 日    期：2016年7月6日-下午5:38:15
  */
-public class CompanyUserAppDTO{
-
-    private String id;
-
-    /**
-     * userId
-     */
-    private String userId;
-
-    /**
-     * 姓名
-     */
-    private String userName;
-    
-    /**
-     * 手机号码
-     */
-    private String cellphone;
+public class CompanyUserAppDTO extends CompanyUserDataDTO {
 
     /**
      *邮箱
@@ -39,9 +26,6 @@ public class CompanyUserAppDTO{
     private String title;//所处任务的标题
 
     private String completeTime;//完成时间,设计任务完成时间
-
-    private String accountName;
-
     /**
      * 是否可以设置经营负责人/设计负责人（1：可以，0：不可以）
      */
@@ -49,40 +33,94 @@ public class CompanyUserAppDTO{
 
     private String targetId;
 
-    private String companyId;
+    private Integer taskState;
 
+    /** 工作状态 */
+    private Integer workStatus;
 
+    /** 外出开始时间 */
+    private Date startTime;
 
-    public String getUserId() {
-        return userId;
+    /** 外出结束时间 */
+    private Date endTime;
+
+    /** 任务总数 */
+    private Integer taskCount;
+
+    /** 状态描述字符串 */
+    private String statusText;
+
+    /** 工作状态合并字符串 */
+    private String workStatusString;
+
+    /** 外出开始时间合并字符串 */
+    private String startTimeString;
+
+    /** 外出结束时间合并字符串 */
+    private String endTimeString;
+
+    public String getWorkStatusString() {
+        return workStatusString;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setWorkStatusString(String workStatusString) {
+        this.workStatusString = workStatusString;
     }
 
-    public String getId() {
-        return id;
+    public String getStartTimeString() {
+        return startTimeString;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setStartTimeString(String startTimeString) {
+        this.startTimeString = startTimeString;
     }
 
-    public String getUserName() {
-        return userName;
+    public String getEndTimeString() {
+        return endTimeString;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
+    public void setEndTimeString(String endTimeString) {
+        this.endTimeString = endTimeString;
     }
 
-    public String getCellphone() {
-        return cellphone;
+    public String getStatusText() {
+        return statusText;
     }
 
-    public void setCellphone(String cellphone) {
-        this.cellphone = cellphone;
+    public void setStatusText(String statusText) {
+        this.statusText = statusText;
+    }
+
+    public Integer getWorkStatus() {
+        return workStatus;
+    }
+
+    public void setWorkStatus(Integer workStatus) {
+        this.workStatus = workStatus;
+    }
+
+    public Date getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
+    }
+
+    public Date getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(Date endTime) {
+        this.endTime = endTime;
+    }
+
+    public Integer getTaskCount() {
+        return taskCount;
+    }
+
+    public void setTaskCount(Integer taskCount) {
+        this.taskCount = taskCount;
     }
 
     public String getImgUrl() {
@@ -117,14 +155,6 @@ public class CompanyUserAppDTO{
         this.completeTime = completeTime;
     }
 
-    public String getAccountName() {
-        return accountName;
-    }
-
-    public void setAccountName(String accountName) {
-        this.accountName = accountName;
-    }
-
     public int getIsUpdateOperator() {
         return isUpdateOperator;
     }
@@ -141,11 +171,12 @@ public class CompanyUserAppDTO{
         this.targetId = targetId;
     }
 
-    public String getCompanyId() {
-        return companyId;
+    public Integer getTaskState() {
+        return taskState;
     }
 
-    public void setCompanyId(String companyId) {
-        this.companyId = companyId;
+    public void setTaskState(Integer taskState) {
+        this.taskState = taskState;
     }
+
 }

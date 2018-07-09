@@ -17,10 +17,11 @@
     <result column="param1" property="param1" jdbcType="VARCHAR" />
     <result column="param2" property="param2" jdbcType="VARCHAR" />
     <result column="status" property="status" jdbcType="VARCHAR" />
+    <result column="send_company_id" property="sendCompanyId" jdbcType="VARCHAR" />
   </resultMap>
   <sql id="Base_Column_List" >
     id, message_title, message_content, message_type, company_id, user_id, project_id,
-    target_id, create_date, create_by, update_date, update_by, param1, param2,status
+    target_id, create_date, create_by, update_date, update_by, param1, param2,status,send_company_id
   </sql>
 
   <select id="selectById" resultMap="BaseResultMap" parameterType="java.lang.String" >
@@ -40,105 +41,12 @@
     message_type, company_id, user_id,
     project_id, target_id, create_date,
     create_by, update_date, update_by,
-    param1, param2,status)
+    param1, param2,status,send_company_id)
     values (#{id,jdbcType=VARCHAR}, #{messageTitle,jdbcType=VARCHAR}, #{messageContent,jdbcType=VARCHAR},
     #{messageType,jdbcType=INTEGER}, #{companyId,jdbcType=VARCHAR}, #{userId,jdbcType=VARCHAR},
     #{projectId,jdbcType=VARCHAR}, #{targetId,jdbcType=VARCHAR}, now(),
     #{createBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR},
-    #{param1,jdbcType=VARCHAR}, '0','0')
-  </insert>
-
-  <insert id="insertSelective" parameterType="com.maoding.message.entity.MessageEntity" >
-    insert into maoding_web_message
-    <trim prefix="(" suffix=")" suffixOverrides="," >
-      <if test="id != null" >
-        id,
-      </if>
-      <if test="messageTitle != null" >
-        message_title,
-      </if>
-      <if test="messageContent != null" >
-        message_content,
-      </if>
-      <if test="messageType != null" >
-        message_type,
-      </if>
-      <if test="companyId != null" >
-        company_id,
-      </if>
-      <if test="userId != null" >
-        user_id,
-      </if>
-      <if test="projectId != null" >
-        project_id,
-      </if>
-      <if test="targetId != null" >
-        target_id,
-      </if>
-      <if test="createDate != null" >
-        create_date,
-      </if>
-      <if test="createBy != null" >
-        create_by,
-      </if>
-      <if test="updateDate != null" >
-        update_date,
-      </if>
-      <if test="updateBy != null" >
-        update_by,
-      </if>
-      <if test="param1 != null" >
-        param1,
-      </if>
-      <if test="param2 != null" >
-        param2,
-      </if>
-    </trim>
-
-    <trim prefix="values (" suffix=")" suffixOverrides="," >
-      <if test="id != null" >
-        #{id,jdbcType=VARCHAR},
-      </if>
-      <if test="messageTitle != null" >
-        #{messageTitle,jdbcType=VARCHAR},
-      </if>
-      <if test="messageContent != null" >
-        #{messageContent,jdbcType=VARCHAR},
-      </if>
-      <if test="messageType != null" >
-        #{messageType,jdbcType=INTEGER},
-      </if>
-      <if test="companyId != null" >
-        #{companyId,jdbcType=VARCHAR},
-      </if>
-      <if test="userId != null" >
-        #{userId,jdbcType=VARCHAR},
-      </if>
-      <if test="projectId != null" >
-        #{projectId,jdbcType=VARCHAR},
-      </if>
-      <if test="targetId != null" >
-        #{targetId,jdbcType=VARCHAR},
-      </if>
-      <if test="createDate != null" >
-        #{createDate,jdbcType=TIMESTAMP},
-      </if>
-      <if test="createBy != null" >
-        #{createBy,jdbcType=VARCHAR},
-      </if>
-      <if test="updateDate != null" >
-        #{updateDate,jdbcType=TIMESTAMP},
-      </if>
-      <if test="updateBy != null" >
-        #{updateBy,jdbcType=VARCHAR},
-      </if>
-      <if test="param1 != null" >
-        #{param1,jdbcType=VARCHAR},
-      </if>
-      <if test="param2 != null" >
-        #{param2,jdbcType=VARCHAR},
-      </if>
-    </trim>
+    #{param1,jdbcType=VARCHAR}, '0','0', #{sendCompanyId,jdbcType=VARCHAR})
   </insert>
 
   <update id="updateById" parameterType="com.maoding.message.entity.MessageEntity" >
@@ -171,9 +79,7 @@
       <if test="createBy != null" >
         create_by = #{createBy,jdbcType=VARCHAR},
       </if>
-      <if test="updateDate != null" >
-        update_date = #{updateDate,jdbcType=TIMESTAMP},
-      </if>
+        update_date = now(),
       <if test="updateBy != null" >
         update_by = #{updateBy,jdbcType=VARCHAR},
       </if>
@@ -185,6 +91,9 @@
       </if>
       <if test="status != null" >
         status = #{status,jdbcType=VARCHAR},
+      </if>
+      <if test="sendCompanyId != null" >
+        send_company_id = #{sendCompanyId,jdbcType=VARCHAR},
       </if>
     </set>
     where id = #{id,jdbcType=VARCHAR}
@@ -205,17 +114,22 @@
     update_by = #{updateBy,jdbcType=VARCHAR},
     status = #{status,jdbcType=VARCHAR},
     param1 = #{param1,jdbcType=VARCHAR},
-    param2 = #{param2,jdbcType=VARCHAR}
+    param2 = #{param2,jdbcType=VARCHAR},
+    send_company_id = #{sendCompanyId,jdbcType=VARCHAR}
     where id = #{id,jdbcType=VARCHAR}
   </update>
 
-
-  <update id="updateRead" parameterType="com.maoding.message.entity.MessageEntity" >
+  <update id="updateRead" parameterType="java.lang.String" >
     update maoding_web_message
     set param2 = '1'
-    where  user_id = #{userId,jdbcType=VARCHAR} and param2 = '0'
+    where  user_id = #{userId} and param2 = '0'
   </update>
 
+  <update id="updateMessageStatus" parameterType="java.lang.String" >
+    update maoding_web_message
+    set status = '2'
+    where  user_id = #{userId} and status = '0'
+  </update>
 
   <update id="deleteMessage" parameterType="java.lang.String" >
     update maoding_web_message
@@ -225,4 +139,24 @@
     or    param1 = #{field,jdbcType=VARCHAR}
     or    target_id like '%' #{field,jdbcType=VARCHAR} '%'
   </update>
+
+  <select id="selectByParam" resultMap="BaseResultMap" parameterType="com.maoding.message.dto.QueryMessageDTO" >
+    select
+    <include refid="Base_Column_List" />
+    from maoding_web_message
+    where 1=1
+    <if test="userId!=null">
+      AND user_id = #{userId}
+    </if>
+    <if test="companyId!=null">
+      AND  company_id = #{companyId}
+    </if>
+    <if test="messageType!=null">
+      AND  message_type = #{messageType}
+    </if>
+    <if test="id!=null">
+      AND  id = #{id}
+    </if>
+  </select>
+
 </mapper>

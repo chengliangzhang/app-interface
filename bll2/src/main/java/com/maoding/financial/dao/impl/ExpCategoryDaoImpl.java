@@ -2,6 +2,9 @@ package com.maoding.financial.dao.impl;
 
 import com.maoding.core.base.dao.GenericDao;
 import com.maoding.financial.dao.ExpCategoryDao;
+import com.maoding.financial.dto.ExpCategoryDataDTO;
+import com.maoding.financial.dto.ExpCountDTO;
+import com.maoding.financial.dto.QueryExpCategoryDTO;
 import com.maoding.financial.entity.ExpCategoryEntity;
 import org.springframework.stereotype.Service;
 
@@ -43,6 +46,11 @@ public class ExpCategoryDaoImpl extends GenericDao<ExpCategoryEntity> implements
     @Override
     public List<ExpCategoryEntity> getDataByParemeter(Map<String, Object> map) {
         return this.sqlSession.selectList("ExpCategoryEntityMapper.selectByParemeter",map);
+    }
+
+    @Override
+    public List<ExpCategoryEntity> getParentExpCategory(Map<String, Object> map) {
+        return this.sqlSession.selectList("ExpCategoryEntityMapper.getParentExpCategory",map);
     }
 
     /**
@@ -95,7 +103,16 @@ public class ExpCategoryDaoImpl extends GenericDao<ExpCategoryEntity> implements
      *
      */
     public void initInsertCategory(String companyId){
-
          this.sqlSession.insert("ExpCategoryEntityMapper.initInsertCategory", companyId);
+    }
+
+    @Override
+    public List<ExpCategoryDataDTO> getExpCategoryListByType(QueryExpCategoryDTO query) {
+        return this.sqlSession.selectList("ExpCategoryEntityMapper.getExpCategoryListByType",query);
+    }
+
+    @Override
+    public ExpCountDTO getExpCategoryByCompanyId(String companyId) {
+        return this.sqlSession.selectOne("ExpCategoryEntityMapper.getExpCategoryByCompanyId",companyId);
     }
 }

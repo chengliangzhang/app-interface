@@ -21,8 +21,6 @@ public interface ProjectCostOperaterDao extends BaseDao<ProjectCostOperaterEntit
      * 方法描述：查询费用详情处理人
      * 作者：MaoSF
      * 日期：2017/3/6
-     * @param:
-     * @return:
      */
     List<ProjectCostOperaterDTO> getCostOperator(Map<String,Object> map);
 
@@ -30,8 +28,8 @@ public interface ProjectCostOperaterDao extends BaseDao<ProjectCostOperaterEntit
      * 方法描述：根据详情删除操作
      * 作者：MaoSF
      * 日期：2017/3/10
-     * @param:
-     * @return:
      */
     int deleteByCostDetailId(String costDetailId);
+
+    List<ProjectCostOperaterEntity> selectByType(ProjectCostOperaterEntity param);
 }

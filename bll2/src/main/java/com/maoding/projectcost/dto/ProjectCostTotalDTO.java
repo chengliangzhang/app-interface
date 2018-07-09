@@ -15,6 +15,7 @@ public class ProjectCostTotalDTO {
 
 
     public ProjectCostTotalDTO(){
+        this.totalFee=new BigDecimal(0).setScale(6, RoundingMode.HALF_UP);
         this.fee=new BigDecimal(0).setScale(6, RoundingMode.HALF_UP);
         this.unpaid = new BigDecimal(0).setScale(6, RoundingMode.HALF_UP);
         this.backMoney=new BigDecimal(0).setScale(6, RoundingMode.HALF_UP);
@@ -26,6 +27,11 @@ public class ProjectCostTotalDTO {
         this.feeProportion=0;
 
     }
+
+    /**
+     * 总金额
+     */
+    private BigDecimal totalFee;
 
     /**
      *
@@ -159,5 +165,13 @@ public class ProjectCostTotalDTO {
 
     public void setPaymentFee(BigDecimal paymentFee) {
         this.paymentFee = paymentFee;
+    }
+
+    public BigDecimal getTotalFee() {
+        return totalFee;
+    }
+
+    public void setTotalFee(BigDecimal totalFee) {
+        this.totalFee = totalFee;
     }
 }

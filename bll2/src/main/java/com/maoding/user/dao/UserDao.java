@@ -17,8 +17,6 @@ public interface UserDao extends BaseDao<UserEntity>{
      * 方法描述：获取个人信息
      * 作者：MaoSF
      * 日期：2017/5/23
-     * @param:
-     * @return:
      */
     UserInfoDTO getUserInfo(String id,String fastdfsUrl);
 

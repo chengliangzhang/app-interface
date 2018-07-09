@@ -41,6 +41,16 @@ public class ProjectMemberType {
     public static final Integer PROJECT_AUDITOR = 6;
 
     /**
+     * 经营负责人(助理）
+     */
+    public static final Integer PROJECT_OPERATOR_MANAGER_ASSISTANT = 7;
+
+    /**
+     * 设计负责人(助理）
+     */
+    public static final Integer PROJECT_DESIGNER_MANAGER_ASSISTANT = 8;
+
+    /**
      * 正式记录的状态
      */
     public static final Integer FORMAL_STATUS=0;

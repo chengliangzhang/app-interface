@@ -30,6 +30,8 @@ public class ImGroupDataDTO {
 
     private String url;
 
+    private String nodeId;
+
     /**************群组成员信息**************/
 
     /**群成员总数**/
@@ -131,5 +133,13 @@ public class ImGroupDataDTO {
 
     public void setIsCompany(Integer isCompany) {
         this.isCompany = isCompany;
+    }
+
+    public String getNodeId() {
+        return nodeId;
+    }
+
+    public void setNodeId(String nodeId) {
+        this.nodeId = nodeId;
     }
 }

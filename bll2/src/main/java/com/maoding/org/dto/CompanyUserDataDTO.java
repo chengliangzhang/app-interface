@@ -1,5 +1,7 @@
 package com.maoding.org.dto;
 
+import com.maoding.attach.dto.FilePathDTO;
+
 /**
  * 深圳市设计同道技术有限公司
  * 类    名：CompanyUserTableEntity
@@ -7,9 +9,11 @@ package com.maoding.org.dto;
  * 作    者：MaoSF
  * 日    期：2016年7月6日-下午5:38:15
  */
-public class CompanyUserDataDTO{
+public class CompanyUserDataDTO extends FilePathDTO {
 
     private String id;
+
+    private String companyUserId;//组织成员id ，companyUserId = id，为了前端方便区分
 
     /**
      *组织id
@@ -25,37 +29,18 @@ public class CompanyUserDataDTO{
      * 姓名
      */
     private String userName;
-    
+
+    /**
+     * 用户名（account 表中的user_name)
+     */
+    private String accountName;
+
     /**
      * 手机号码
      */
     private String cellphone;
 
-
-    /**
-     * app要求头像地址
-     */
-    private String imgUrl;
-
-    private String filePath;
-
-    private String fileGroup;
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
-
-    public String getFileGroup() {
-        return fileGroup;
-    }
-
-    public void setFileGroup(String fileGroup) {
-        this.fileGroup = fileGroup;
-    }
+    private String companyName;
 
     public String getId() {
         return id;
@@ -63,6 +48,15 @@ public class CompanyUserDataDTO{
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getCompanyUserId() {
+        companyUserId = id;
+        return companyUserId;
+    }
+
+    public void setCompanyUserId(String companyUserId) {
+        this.companyUserId = companyUserId;
     }
 
     public String getCompanyId() {
@@ -97,11 +91,20 @@ public class CompanyUserDataDTO{
         this.cellphone = cellphone;
     }
 
-    public String getImgUrl() {
-        return imgUrl;
+    public String getAccountName() {
+        return accountName;
     }
 
-    public void setImgUrl(String imgUrl) {
-        this.imgUrl = imgUrl;
+    public void setAccountName(String accountName) {
+        this.accountName = accountName;
+    }
+
+
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
     }
 }

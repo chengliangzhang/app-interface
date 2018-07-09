@@ -2,12 +2,11 @@ package com.maoding.projectcost.service;
 
 import com.maoding.core.base.service.BaseService;
 import com.maoding.core.bean.ResponseBean;
-import com.maoding.projectcost.dto.ProjectCostDTO;
-import com.maoding.projectcost.dto.ProjectCostPaymentDetailDTO;
-import com.maoding.projectcost.dto.ProjectCostPointDTO;
-import com.maoding.projectcost.dto.ProjectCostPointDetailDTO;
+import com.maoding.mytask.entity.MyTaskEntity;
+import com.maoding.projectcost.dto.*;
 import com.maoding.projectcost.entity.ProjectCostEntity;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -111,7 +110,7 @@ public interface ProjectCostService extends BaseService<ProjectCostEntity>{
    * @param:
    * @return:
    */
-  ResponseBean deleteProjectCostPaymentDetail(String id, String accountId) throws Exception;
+  ResponseBean deleteProjectCostPaymentDetail(String id, String accountId,String currentCompanyId) throws Exception;
 
     /**
      * 方法描述：根据taskId删除费用节点
@@ -157,6 +156,13 @@ public interface ProjectCostService extends BaseService<ProjectCostEntity>{
      */
     ResponseBean getCooperativeDesignFeeInfo(Map<String,Object> map)throws Exception;
 
+  /**
+   * 方法描述：合作设计费（projectId，companyId:当前公司id，costId）
+   * 作者：chenzhujie
+   * 日期：2017/3/1
+   */
+  ResponseBean getCooperativeDesignFeeInfoByCostId(Map<String,Object> map)throws Exception;
+
     /**
      * 方法描述：查询合同回款(map:projectId)map.put("type"="4"：付款，5：收款);
      * 作者：chenzhujie
@@ -190,12 +196,32 @@ public interface ProjectCostService extends BaseService<ProjectCostEntity>{
    * @return:
    */
 
-  ResponseBean getProjectCostPointDetailForMyTask(String paymentDetailId, String pointDetailId, int taskType,String companyId) throws Exception;
+  ResponseBean getProjectCostPointDetailForMyTask(String paymentDetailId, String pointDetailId, MyTaskEntity task) throws Exception;
 
+  /**
+   * 方法描述：合作设计费（技术审查费）付款，详情(合同回款，其他费用)，到款，付款
+   * 作者：MaoSF
+   * 日期：2017/3/9
+   *
+   * @param:map(pointDetailId,taskType)
+   * @return:
+   */
+
+  ProjectCostPointDataForMyTaskDTO getProjectCostPointForMyTask(String paymentDetailId, String pointDetailId, MyTaskEntity task) throws Exception;
   /**
    * 方法描述：修改付款或到款明细
    * 作者：wrb
    * 日期：2017/4/26
    */
   ResponseBean updateCostPaymentDetail(ProjectCostPaymentDetailDTO dto)throws Exception;
+
+  /**
+   * 查询项目费用汇总数据
+   */
+  ProjectFeeSummaryDTO getProjectFeeSummary(ProjectCostQueryDTO query) throws Exception;
+
+  /**
+   * 技术审查费汇总界面
+   */
+  List<ProjectCooperatorCostDTO> getProjectCooperatorFee(ProjectCostQueryDTO queryDTO) throws Exception;
 }
