@@ -266,16 +266,65 @@ public class ProjectDTO extends BaseDTO {
     private List<CustomProjectPropertyDTO> projectPropertyList = new ArrayList<>();
 
     /**
+     * 显示的项目属性（包括功能分类、设计范围、专业信息）
+     */
+    private List<ProjectPropertyDTO> functionList;
+    private List<ProjectPropertyDTO> measureList;
+    private List<ProjectPropertyDTO> rangeList;
+
+    /**
      * 更改的项目属性（包括功能分类、设计范围、专业信息）
      */
-    private List<ProjectPropertyDTO> changedBuiltTypeList;
+    private List<ProjectPropertyDTO> changedFunctionList;
+    private List<ProjectPropertyDTO> changedMeasureList;
+    private List<ProjectPropertyDTO> changedRangeList;
 
-    public List<ProjectPropertyDTO> getChangedBuiltTypeList() {
-        return changedBuiltTypeList;
+    public List<ProjectPropertyDTO> getFunctionList() {
+        return functionList;
     }
 
-    public void setChangedBuiltTypeList(List<ProjectPropertyDTO> changedBuiltTypeList) {
-        this.changedBuiltTypeList = changedBuiltTypeList;
+    public void setFunctionList(List<ProjectPropertyDTO> functionList) {
+        this.functionList = functionList;
+    }
+
+    public List<ProjectPropertyDTO> getMeasureList() {
+        return measureList;
+    }
+
+    public void setMeasureList(List<ProjectPropertyDTO> measureList) {
+        this.measureList = measureList;
+    }
+
+    public List<ProjectPropertyDTO> getRangeList() {
+        return rangeList;
+    }
+
+    public void setRangeList(List<ProjectPropertyDTO> rangeList) {
+        this.rangeList = rangeList;
+    }
+
+    public List<ProjectPropertyDTO> getChangedFunctionList() {
+        return changedFunctionList;
+    }
+
+    public void setChangedFunctionList(List<ProjectPropertyDTO> changedFunctionList) {
+        this.changedFunctionList = changedFunctionList;
+    }
+
+    public List<ProjectPropertyDTO> getChangedMeasureList() {
+        return changedMeasureList;
+    }
+
+    public void setChangedMeasureList(List<ProjectPropertyDTO> changedMeasureList) {
+        this.changedMeasureList = changedMeasureList;
+    }
+
+    public List<ProjectPropertyDTO> getChangedRangeList() {
+        return changedRangeList;
+    }
+
+    public void setChangedRangeList(List<ProjectPropertyDTO> changedRangeList) {
+        this.changedRangeList = changedRangeList;
     }
 
     public String getCompanyId() {

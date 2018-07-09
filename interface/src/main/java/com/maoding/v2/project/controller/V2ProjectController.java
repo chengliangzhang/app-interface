@@ -224,7 +224,7 @@ public class V2ProjectController extends BaseWSController {
      */
     @RequestMapping("/saveNewProject")
     @ResponseBody
-    @AuthorityCheckable
+//    @AuthorityCheckable
     public ResponseBean saveNewProject(@RequestBody ProjectDTO dto) throws Exception {
         dto.setCompanyId(dto.getAppOrgId());
         return this.projectService.saveOrUpdateProjectNew(dto);

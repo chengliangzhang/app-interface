@@ -15,6 +15,7 @@ import java.util.List;
  */
 public interface ConstService {
     short CONST_TYPE_BUILT_TYPE = 33;
+    short CONST_TYPE_BUILT_RANGE = 35;
 
     /**
      * @description 添加常量

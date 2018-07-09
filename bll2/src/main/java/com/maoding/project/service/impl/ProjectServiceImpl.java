@@ -798,6 +798,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 			projectEntity.setPstatus("0");
 			projectEntity.setStatus("0");
 			projectEntity.setCreateBy(accountId);
+			saveProjectFunction(dto,projectEntity);
 			projectDao.insert(projectEntity);
 
 			//建立默认的自定义字段
@@ -823,6 +824,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 			ProjectEntity projectEntity1 = this.projectDao.selectById(dto.getId());
 			companyBid = projectEntity1.getCompanyBid();
 			projectEntity.setUpdateBy(accountId);
+			saveProjectFunction(dto,projectEntity);
 			projectDao.updateById(projectEntity);//更新全部字段
 			/*************处理设计阶段*************/
 			//查询经营负责人
@@ -924,14 +926,14 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 	/**
 	 * @author  张成亮
 	 * @date    2018/7/9
-	 * @description     保存功能分类
+	 * @description     保存功能分类, 目前使用字符串形式，以后再改为项目属性列表形式
 	 **/
 	private ProjectEntity saveProjectFunction(ProjectDTO dto,ProjectEntity projectEntity){
 		//组合功能分类保存字符串
-		if ((dto.getChangedBuiltTypeList() != null) && (dto.getChangedBuiltTypeList().size() > 0)) {
-			List<ProjectPropertyDTO> changedBuiltTypeList = dto.getChangedBuiltTypeList();
+		if ((dto.getChangedFunctionList() != null) && (dto.getChangedFunctionList().size() > 0)) {
+			List<ProjectPropertyDTO> changedFunctionList = dto.getChangedFunctionList();
 			StringBuilder builtTypeIdStr = new StringBuilder();
-			changedBuiltTypeList.stream()
+			changedFunctionList.stream()
 					.forEach(bt->{
 						if (StringUtils.isEmpty(bt.getId())) {
 							UpdateConstDTO request = new UpdateConstDTO();
@@ -957,6 +959,58 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		return projectEntity;
 	}
 
+	/**
+	 * @author  张成亮
+	 * @date    2018/7/9
+	 * @description     保存设计范围, 目前保存到设计范围列表，以后会改为保存到项目属性列表
+	 **/
+	private ProjectEntity saveProjectRange(ProjectDTO dto,ProjectEntity projectEntity){
+		if ((dto.getChangedRangeList() != null) && (dto.getChangedRangeList().size() > 0)) {
+			List<ProjectPropertyDTO> changedRangeList = dto.getChangedRangeList();
+			StringBuilder builtTypeIdStr = new StringBuilder();
+			int maxSeq = 1;
+			changedRangeList.stream()
+					.forEach(bt->saveRange(bt,projectEntity,dto.getAccountId(),maxSeq));
+		}
+		return projectEntity;
+	}
+
+	private void saveRange(ProjectPropertyDTO property,ProjectEntity projectEntity,String accountId,int maxSeq){
+		//添加自定义项
+		if (StringUtils.isEmpty(property.getId())) {
+			UpdateConstDTO request = new UpdateConstDTO();
+			request.setProjectId(projectEntity.getId());
+			request.setTitle(property.getName());
+			request.setClassicId(ConstService.CONST_TYPE_BUILT_RANGE);
+			String id = constService.insertConst(request);
+			ProjectDesignRangeEntity projectDesignRangeEntity = new ProjectDesignRangeEntity();
+			projectDesignRangeEntity.setId(id);
+			try {
+				BaseDTO.copyFields(property, projectDesignRangeEntity);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			projectDesignRangeEntity.setProjectId(projectEntity.getId());
+			projectDesignRangeEntity.setCreateBy(accountId);
+			projectDesignRangeEntity.setUpdateBy(accountId);
+			projectDesignRangeEntity.setSeq(maxSeq++);
+			projectDesignRangeDao.insert(projectDesignRangeEntity);
+		} else if ((property.getSelected() != null) && (property.getSelected())) {
+			if ((property.getTemplate() == null) || (!property.getTemplate())) {
+				UpdateConstDTO request = new UpdateConstDTO();
+				request.setId(property.getId());
+				request.setTitle(property.getName());
+				constService.updateConst(request);
+			}
+			ProjectDesignRangeEntity projectDesignRangeEntity = projectDesignRangeDao.selectById(property.getId());
+			projectDesignRangeEntity.setStatus("0");
+			projectDesignRangeEntity.setDesignRange(property.getName());
+			projectDesignRangeDao.updateById(projectDesignRangeEntity);
+		} else if ((property.getTemplate() == null) || (!property.getTemplate())){
+			constService.deleteConst(property.getId());
+			projectDesignRangeDao.deleteById(property.getId());
+		}
+	}
 
 	/**
 	 * 方述：建立新增项目的默认自定义属性
