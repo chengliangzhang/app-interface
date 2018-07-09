@@ -511,6 +511,8 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 			//todo 改为从数据库读取，目前为常量定义
 			projectDTO.setStatusName(SystemParameters.PROJECT_STATUS.get(projectDTO.getStatus()));
 		}
+		//填充功能分类
+		listFunction(projectDTO);
 
 		Map<String, Object> returnMap = new HashMap<String,Object>();
 		returnMap.put("projectDetail",projectDTO);
@@ -519,6 +521,42 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		returnMap.put("companyList",companyList);
 		returnMap.put("operatorManager",this.projectMemberService.getOperatorManagerDTO(id,companyId));
 		return returnMap;
+	}
+
+	private ProjectDTO listFunction(ProjectDTO project){
+		QueryProjectDTO queryProject = new QueryProjectDTO();
+		queryProject.setId(project.getId());
+		List<ProjectBuiltTypeDTO> constBuiltTypeList = projectDao.listBuiltTypeConst(queryProject);
+		List<ProjectBuiltTypeDTO> customBuiltTypeList = projectDao.listBuiltTypeCustom(queryProject);
+		if (constBuiltTypeList != null){
+			if (project.getFunctionList() == null) {
+				project.setFunctionList(new ArrayList<>());
+			}
+			constBuiltTypeList.stream()
+					.forEach(bt->{
+						//保存选中的默认功能分类列表
+						if (StringUtils.contains(project.getBuiltType(),bt.getId())) {
+							ProjectPropertyDTO functionType = new ProjectPropertyDTO();
+							functionType.setId(bt.getId());
+							functionType.setName(bt.getName());
+							project.getFunctionList().add(functionType);
+						}
+					});
+		}
+		if (customBuiltTypeList != null){
+			if (project.getFunctionList() == null) {
+				project.setFunctionList(new ArrayList<>());
+			}
+			customBuiltTypeList.stream()
+					.forEach(bt->{
+						//保存自定义功能分类列表
+						ProjectPropertyDTO functionType = new ProjectPropertyDTO();
+						functionType.setId(bt.getId());
+						functionType.setName(bt.getName());
+						project.getFunctionList().add(functionType);
+					});
+		}
+		return project;
 	}
 
 	/**
@@ -870,21 +908,21 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		//先删除设计范围
 		projectDesignRangeDao.deleteDRangeByProjectId(projectId);
 		//保存设计范围
-		saveProjectRange(dto,projectEntity);
-//		ProjectDesignRangeEntity projectDesignRangeEntity = null;
-//		if (dto.getProjectDesignRangeList().size() > 0) {
-//			int seq = 1;
-//			for (ProjectDesignRangeDTO designRangeDTO : dto.getProjectDesignRangeList()) {
-//				projectDesignRangeEntity = new ProjectDesignRangeEntity();
-//				designRangeDTO.setId(StringUtil.buildUUID());
-//				BaseDTO.copyFields(designRangeDTO, projectDesignRangeEntity);
-//				projectDesignRangeEntity.setProjectId(projectId);
-//				projectDesignRangeEntity.setCreateBy(accountId);
-//				projectDesignRangeEntity.setUpdateBy(accountId);
-//				projectDesignRangeEntity.setSeq(seq++);
-//				projectDesignRangeDao.insert(projectDesignRangeEntity);
-//			}
-//		}
+//		saveProjectRange(dto,projectEntity);
+		ProjectDesignRangeEntity projectDesignRangeEntity = null;
+		if (dto.getProjectDesignRangeList().size() > 0) {
+			int seq = 1;
+			for (ProjectDesignRangeDTO designRangeDTO : dto.getProjectDesignRangeList()) {
+				projectDesignRangeEntity = new ProjectDesignRangeEntity();
+				designRangeDTO.setId(StringUtil.buildUUID());
+				BaseDTO.copyFields(designRangeDTO, projectDesignRangeEntity);
+				projectDesignRangeEntity.setProjectId(projectId);
+				projectDesignRangeEntity.setCreateBy(accountId);
+				projectDesignRangeEntity.setUpdateBy(accountId);
+				projectDesignRangeEntity.setSeq(seq++);
+				projectDesignRangeDao.insert(projectDesignRangeEntity);
+			}
+		}
 
 		//合同签订数据插入审核表中
 		//1.删除审核表中的备案数据
