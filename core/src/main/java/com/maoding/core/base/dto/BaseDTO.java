@@ -53,6 +53,14 @@ public abstract class BaseDTO implements Serializable {
 
 
 
+    /** 字符串和布尔值互转 */
+    public static Boolean toBoolean(String s){
+        return (s != null) && "1".equals(s);
+    }
+
+    public static String toString(Boolean b){
+        return ((b != null) && b) ? "1" : "0";
+    }
 
     /**
      * entity对象和dto对象互相复制属性，包括基类的属性

@@ -19,10 +19,34 @@ public class ProjectBuiltTypeDTO extends BaseDTO {
      */
     private Boolean isSelected;
 
+    /** 选中状态的字符串形式，0-未选中，1-选中 */
+    private String isSelectedStatus;
+
     /**
      * 是否默认功能分类
      */
-    private Boolean isDefaulted;
+    private Boolean isTemplate;
+
+    /** 默认功能分类字符串形式，0-不是默认，1-是默认 */
+    private String isTemplateStatus;
+
+    public String getIsSelectedStatus() {
+        return (isSelectedStatus == null) ? toString(getSelected()) : isSelectedStatus;
+    }
+
+    public void setIsSelectedStatus(String isSelectedStatus) {
+        this.isSelectedStatus = isSelectedStatus;
+        setSelected(toBoolean(isSelectedStatus));
+    }
+
+    public String getIsTemplateStatus() {
+        return (isTemplateStatus == null) ? toString(getTemplate()) : isTemplateStatus;
+    }
+
+    public void setIsTemplateStatus(String isTemplateStatus) {
+        this.isTemplateStatus = isTemplateStatus;
+        setTemplate(toBoolean(isTemplateStatus));
+    }
 
     public String getName() {
         return name;
@@ -40,11 +64,11 @@ public class ProjectBuiltTypeDTO extends BaseDTO {
         isSelected = selected;
     }
 
-    public Boolean getDefaulted() {
-        return isDefaulted;
+    public Boolean getTemplate() {
+        return isTemplate;
     }
 
-    public void setDefaulted(Boolean defaulted) {
-        isDefaulted = defaulted;
+    public void setTemplate(Boolean template) {
+        isTemplate = template;
     }
 }
