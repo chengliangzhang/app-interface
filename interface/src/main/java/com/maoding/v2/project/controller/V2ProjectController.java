@@ -188,13 +188,29 @@ public class V2ProjectController extends BaseWSController {
      */
     @RequestMapping("/getProject")
     @ResponseBody
-//    @AuthorityCheckable
+    @AuthorityCheckable
     public ResponseBean getProject(@RequestBody Map<String, Object> map) throws Exception {
+        return realGetProject(map);
+
+    }
+
+    /**
+     * @author  张成亮
+     * @date    2018/7/9
+     * @description     用于测试获取项目详情接口，正式版应当删除
+     **/
+    @RequestMapping("/devGetProject")
+    @ResponseBody
+    public ResponseBean devGetProject(@RequestBody Map<String, Object> map) throws Exception {
+        return realGetProject(map);
+    }
+
+    private ResponseBean realGetProject(Map<String, Object> map) throws Exception {
         String id = (String) map.get("id");
         Map<String, Object> returnMap = projectService.getProjectDetail(id, map.get("appOrgId").toString(), map.get("accountId").toString());
         return ResponseBean.responseSuccess("查询成功").setData(returnMap);
-
     }
+
 
     /**
      * 方法描述：获取添加项目的基础数据
@@ -224,8 +240,23 @@ public class V2ProjectController extends BaseWSController {
      */
     @RequestMapping("/saveNewProject")
     @ResponseBody
-//    @AuthorityCheckable
+    @AuthorityCheckable
     public ResponseBean saveNewProject(@RequestBody ProjectDTO dto) throws Exception {
+        return realSaveNewProject(dto);
+    }
+
+    /**
+     * @author  张成亮
+     * @date    2018/7/9
+     * @description     用于测试项目立项接口，正式版应该删除
+     **/
+    @RequestMapping("/devSaveNewProject")
+    @ResponseBody
+    public ResponseBean devSaveNewProject(@RequestBody ProjectDTO dto) throws Exception {
+        return realSaveNewProject(dto);
+    }
+
+    private ResponseBean realSaveNewProject(ProjectDTO dto) throws Exception {
         dto.setCompanyId(dto.getAppOrgId());
         return this.projectService.saveOrUpdateProjectNew(dto);
     }

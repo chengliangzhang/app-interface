@@ -25,6 +25,31 @@ public class ProjectPropertyDTO extends ContentDTO {
     /** 是否属于模板内容 */
     private Boolean isTemplate;
 
+    /** 选中状态的字符串形式，0-未选中，1-选中 */
+    private String isSelectedStatus;
+
+    /** 默认功能分类字符串形式，0-不是默认，1-是默认 */
+    private String isTemplateStatus;
+
+    public String getIsSelectedStatus() {
+        return (isSelectedStatus == null) ? toString(getSelected()) : isSelectedStatus;
+    }
+
+    public void setIsSelectedStatus(String isSelectedStatus) {
+        this.isSelectedStatus = isSelectedStatus;
+        setSelected(toBoolean(isSelectedStatus));
+    }
+
+    public String getIsTemplateStatus() {
+        return (isTemplateStatus == null) ? toString(getTemplate()) : isTemplateStatus;
+    }
+
+    public void setIsTemplateStatus(String isTemplateStatus) {
+        this.isTemplateStatus = isTemplateStatus;
+        setTemplate(toBoolean(isTemplateStatus));
+    }
+
+
     public ProjectPropertyDTO(){}
     public ProjectPropertyDTO(Object obj){
         BeanUtilsEx.copyProperties(obj,this);
