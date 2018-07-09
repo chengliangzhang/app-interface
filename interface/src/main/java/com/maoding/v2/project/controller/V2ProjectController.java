@@ -188,7 +188,7 @@ public class V2ProjectController extends BaseWSController {
      */
     @RequestMapping("/getProject")
     @ResponseBody
-    @AuthorityCheckable
+//    @AuthorityCheckable
     public ResponseBean getProject(@RequestBody Map<String, Object> map) throws Exception {
         String id = (String) map.get("id");
         Map<String, Object> returnMap = projectService.getProjectDetail(id, map.get("appOrgId").toString(), map.get("accountId").toString());

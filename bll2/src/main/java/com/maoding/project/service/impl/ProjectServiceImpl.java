@@ -1,6 +1,8 @@
 package com.maoding.project.service.impl;
 
 import com.beust.jcommander.internal.Lists;
+import com.maoding.commonModule.dto.UpdateConstDTO;
+import com.maoding.commonModule.service.ConstService;
 import com.maoding.conllaboration.service.CollaborationService;
 import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.core.base.service.GenericService;
@@ -9,10 +11,7 @@ import com.maoding.core.bean.ApiResult;
 import com.maoding.core.bean.ResponseBean;
 import com.maoding.core.constant.ProjectMemberType;
 import com.maoding.core.constant.SystemParameters;
-import com.maoding.core.util.DateUtils;
-import com.maoding.core.util.JsonUtils;
-import com.maoding.core.util.OkHttpUtils;
-import com.maoding.core.util.StringUtil;
+import com.maoding.core.util.*;
 import com.maoding.dynamic.dao.OrgDynamicDao;
 import com.maoding.dynamic.dao.ZInfoDAO;
 import com.maoding.dynamic.dto.ZProjectDTO;
@@ -194,6 +193,9 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 
 	@Autowired
 	private PermissionDao permissionDao;
+
+	@Autowired
+	private ConstService constService;
 
 
 	@Value("${fastdfs.url}")
@@ -504,6 +506,12 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		}
 
 		int editFlag = this.getProjectEditRole(id,companyId,userId);
+
+		if (projectDTO.getStatus() != null && StringUtil.isEmpty(projectDTO.getStatusName())) {
+			//todo 改为从数据库读取，目前为常量定义
+			projectDTO.setStatusName(SystemParameters.PROJECT_STATUS.get(projectDTO.getStatus()));
+		}
+
 		Map<String, Object> returnMap = new HashMap<String,Object>();
 		returnMap.put("projectDetail",projectDTO);
 		returnMap.put("editFlag",editFlag);
@@ -543,7 +551,6 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		projectBaseDataDTO.setCompanyUserList( companyUserDao.getCompanyUserByPermissionId(map));
 		return projectBaseDataDTO;
 	}
-
 
 	@Override
 	public ProjectInfoDTO getProjectInfo(String projectId, String companyId,String accountId) throws Exception {
@@ -913,6 +920,43 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 
 		return ResponseBean.responseSuccess("保存成功").addData("id",projectId);
 	}
+
+	/**
+	 * @author  张成亮
+	 * @date    2018/7/9
+	 * @description     保存功能分类
+	 **/
+	private ProjectEntity saveProjectFunction(ProjectDTO dto,ProjectEntity projectEntity){
+		//组合功能分类保存字符串
+		if ((dto.getChangedBuiltTypeList() != null) && (dto.getChangedBuiltTypeList().size() > 0)) {
+			List<ProjectPropertyDTO> changedBuiltTypeList = dto.getChangedBuiltTypeList();
+			StringBuilder builtTypeIdStr = new StringBuilder();
+			changedBuiltTypeList.stream()
+					.forEach(bt->{
+						if (StringUtils.isEmpty(bt.getId())) {
+							UpdateConstDTO request = new UpdateConstDTO();
+							request.setProjectId(dto.getId());
+							request.setTitle(bt.getName());
+							request.setClassicId(ConstService.CONST_TYPE_BUILT_TYPE);
+							String id = constService.insertConst(request);
+							builtTypeIdStr.append(id).append(",");
+						} else if ((bt.getSelected() != null) && (bt.getSelected())) {
+							builtTypeIdStr.append(bt.getId()).append(",");
+							if ((bt.getTemplate() == null) || (!bt.getTemplate())) {
+								UpdateConstDTO request = new UpdateConstDTO();
+								request.setId(bt.getId());
+								request.setTitle(bt.getName());
+								constService.updateConst(request);
+							}
+						} else if ((bt.getTemplate() == null) || (!bt.getTemplate())){
+							constService.deleteConst(bt.getId());
+						}
+					});
+			projectEntity.setBuiltType(builtTypeIdStr.toString());
+		}
+		return projectEntity;
+	}
+
 
 	/**
 	 * 方述：建立新增项目的默认自定义属性

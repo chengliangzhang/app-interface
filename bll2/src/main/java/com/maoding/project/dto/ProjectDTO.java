@@ -265,6 +265,19 @@ public class ProjectDTO extends BaseDTO {
      */
     private List<CustomProjectPropertyDTO> projectPropertyList = new ArrayList<>();
 
+    /**
+     * 更改的项目属性（包括功能分类、设计范围、专业信息）
+     */
+    private List<ProjectPropertyDTO> changedBuiltTypeList;
+
+    public List<ProjectPropertyDTO> getChangedBuiltTypeList() {
+        return changedBuiltTypeList;
+    }
+
+    public void setChangedBuiltTypeList(List<ProjectPropertyDTO> changedBuiltTypeList) {
+        this.changedBuiltTypeList = changedBuiltTypeList;
+    }
+
     public String getCompanyId() {
         return companyId;
     }
