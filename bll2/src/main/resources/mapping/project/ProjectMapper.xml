@@ -4,7 +4,7 @@
 
     <select id="listBuiltTypeConst" resultType="com.maoding.project.dto.ProjectBuiltTypeDTO" parameterType="com.maoding.project.dto.QueryProjectDTO">
         select
-            if(built_type.id is null,null,1) as is_defaulted,
+            if(built_type.id is null,null,1) as is_template,
             if(find_in_set(built_type.id,project.built_type),1,0) as is_selected,
             built_type.type_name as name,
             built_type.*
@@ -26,7 +26,7 @@
 
     <select id="listBuiltTypeCustom" resultType="com.maoding.project.dto.ProjectBuiltTypeDTO" parameterType="com.maoding.project.dto.QueryProjectDTO">
         select
-            if(built_type.id is null,null,0) as is_defaulted,
+            if(built_type.id is null,null,0) as is_template,
             if(find_in_set(built_type.id,project.built_type),1,0) as is_selected,
             built_type.type_name as name,
             built_type.*

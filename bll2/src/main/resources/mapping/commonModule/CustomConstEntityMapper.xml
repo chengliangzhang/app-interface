@@ -78,7 +78,7 @@
   <select id="listTemplateContent" parameterType="com.maoding.commonModule.dto.TemplateQueryDTO" resultType="com.maoding.commonModule.dto.ContentDTO">
     select
       template_content.detail_name as name,
-      if(template_content.id is null,null,1) as is_default,
+      if(template_content.id is null,null,1) as is_template,
       template_content.*
     from md_template_content_const template_content
     <where>
