@@ -1,7 +1,6 @@
 package com.maoding.project.dao;
 
 import com.maoding.core.base.dao.BaseDao;
-import com.maoding.org.dto.CompanyDTO;
 import com.maoding.org.dto.ProjectUserDTO;
 import com.maoding.project.dto.*;
 import com.maoding.project.entity.ProjectEntity;
@@ -113,6 +112,8 @@ public interface ProjectDao extends BaseDao<ProjectEntity> {
      * @return  默认的功能分类列表
      **/
     List<ProjectBuiltTypeDTO> listBuiltTypeConst(QueryProjectDTO query);
+    List<ProjectBuiltTypeDTO> listBuiltTypeConstEx(QueryProjectDTO query);
+
 
     /**
      * @description 获取自定义的功能分类列表

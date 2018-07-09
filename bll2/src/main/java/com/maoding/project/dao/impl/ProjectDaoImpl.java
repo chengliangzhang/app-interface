@@ -1,7 +1,6 @@
 package com.maoding.project.dao.impl;
 
 import com.maoding.core.base.dao.GenericDao;
-import com.maoding.org.dto.CompanyDTO;
 import com.maoding.org.dto.ProjectUserDTO;
 import com.maoding.project.dao.ProjectDao;
 import com.maoding.project.dto.*;
@@ -140,6 +139,10 @@ public class ProjectDaoImpl extends GenericDao<ProjectEntity> implements Project
     @Override
     public List<ProjectBuiltTypeDTO> listBuiltTypeConst(QueryProjectDTO query) {
         return this.sqlSession.selectList("ProjectMapper.listBuiltTypeConst", query);
+    }
+    @Override
+    public List<ProjectBuiltTypeDTO> listBuiltTypeConstEx(QueryProjectDTO query) {
+        return this.sqlSession.selectList("ProjectMapper.listBuiltTypeConstEx", query);
     }
 
     /**

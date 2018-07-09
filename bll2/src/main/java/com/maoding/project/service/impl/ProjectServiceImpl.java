@@ -526,7 +526,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 	private ProjectDTO listFunction(ProjectDTO project){
 		QueryProjectDTO queryProject = new QueryProjectDTO();
 		queryProject.setId(project.getId());
-		List<ProjectBuiltTypeDTO> constBuiltTypeList = projectDao.listBuiltTypeConst(queryProject);
+		List<ProjectBuiltTypeDTO> constBuiltTypeList = projectDao.listBuiltTypeConstEx(queryProject);
 		List<ProjectBuiltTypeDTO> customBuiltTypeList = projectDao.listBuiltTypeCustom(queryProject);
 		if (constBuiltTypeList != null){
 			if (project.getFunctionList() == null) {
