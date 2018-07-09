@@ -870,20 +870,21 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		//先删除设计范围
 		projectDesignRangeDao.deleteDRangeByProjectId(projectId);
 		//保存设计范围
-		ProjectDesignRangeEntity projectDesignRangeEntity = null;
-		if (dto.getProjectDesignRangeList().size() > 0) {
-			int seq = 1;
-			for (ProjectDesignRangeDTO designRangeDTO : dto.getProjectDesignRangeList()) {
-				projectDesignRangeEntity = new ProjectDesignRangeEntity();
-				designRangeDTO.setId(StringUtil.buildUUID());
-				BaseDTO.copyFields(designRangeDTO, projectDesignRangeEntity);
-				projectDesignRangeEntity.setProjectId(projectId);
-				projectDesignRangeEntity.setCreateBy(accountId);
-				projectDesignRangeEntity.setUpdateBy(accountId);
-				projectDesignRangeEntity.setSeq(seq++);
-				projectDesignRangeDao.insert(projectDesignRangeEntity);
-			}
-		}
+		saveProjectRange(dto,projectEntity);
+//		ProjectDesignRangeEntity projectDesignRangeEntity = null;
+//		if (dto.getProjectDesignRangeList().size() > 0) {
+//			int seq = 1;
+//			for (ProjectDesignRangeDTO designRangeDTO : dto.getProjectDesignRangeList()) {
+//				projectDesignRangeEntity = new ProjectDesignRangeEntity();
+//				designRangeDTO.setId(StringUtil.buildUUID());
+//				BaseDTO.copyFields(designRangeDTO, projectDesignRangeEntity);
+//				projectDesignRangeEntity.setProjectId(projectId);
+//				projectDesignRangeEntity.setCreateBy(accountId);
+//				projectDesignRangeEntity.setUpdateBy(accountId);
+//				projectDesignRangeEntity.setSeq(seq++);
+//				projectDesignRangeDao.insert(projectDesignRangeEntity);
+//			}
+//		}
 
 		//合同签订数据插入审核表中
 		//1.删除审核表中的备案数据
