@@ -75,10 +75,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 深圳市设计同道技术有限公司
@@ -360,10 +357,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		if ((project != null) && (!StringUtils.isEmpty(project.getBuiltType()))) {
 			return listFunction(projectId, project.getBuiltType(),true);
 		} else {
-			QueryProjectDTO queryProject = new QueryProjectDTO();
-			queryProject.setId(projectId);
-			List<ProjectPropertyDTO> constBuiltTypeList = projectDao.listBuiltTypeConst(queryProject);
-			return constBuiltTypeList;
+			return null;
 		}
 	}
 
@@ -523,7 +517,6 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 						//保存选中的默认功能分类列表
 						if (StringUtils.contains(builtType, bt.getId())) {
 							ProjectPropertyDTO functionType = createProjectPropertyDTOFrom(bt);
-							;
 							list.add(functionType);
 						}
 					});
@@ -838,6 +831,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 			ProjectEntity projectEntity1 = this.projectDao.selectById(dto.getId());
 			companyBid = projectEntity1.getCompanyBid();
 			projectEntity.setUpdateBy(accountId);
+			projectEntity.setBuiltType(projectEntity1.getBuiltType());
 			saveProjectFunction(dto,projectEntity);
 			projectDao.updateById(projectEntity);//更新全部字段
 			/*************处理设计阶段*************/
@@ -969,6 +963,18 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 							constService.deleteConst(bt.getId());
 						}
 					});
+			//加入没有变动的功能分类
+			if (!StringUtils.isEmpty(projectEntity.getBuiltType())){
+				String[] origFunctionArray = projectEntity.getBuiltType().split(",");
+				for (int i=0; i<origFunctionArray.length; i++) {
+					String origFunctionId = origFunctionArray[i];
+					if (!StringUtils.isEmpty(origFunctionId)){
+						if (!builtTypeIdStr.toString().contains(origFunctionId)){
+							builtTypeIdStr.append(origFunctionId);
+						}
+					}
+				}
+			}
 			projectEntity.setBuiltType(builtTypeIdStr.toString());
 		}
 		return projectEntity;
