@@ -511,6 +511,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		List<ProjectPropertyDTO> constBuiltTypeList = projectDao.listBuiltTypeConst(queryProject);
 		List<ProjectPropertyDTO> customBuiltTypeList = projectDao.listBuiltTypeCustom(queryProject);
 		List<ProjectPropertyDTO> list = new ArrayList<>();
+		list.addAll(customBuiltTypeList);
 		if (includeAllTemplate){
 			list.addAll(constBuiltTypeList);
 		} else {
@@ -524,7 +525,6 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 						}
 					});
 		}
-		list.addAll(customBuiltTypeList);
 		return list;
 	}
 
