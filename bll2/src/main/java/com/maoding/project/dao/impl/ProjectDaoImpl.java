@@ -140,10 +140,6 @@ public class ProjectDaoImpl extends GenericDao<ProjectEntity> implements Project
     public List<ProjectPropertyDTO> listBuiltTypeConst(QueryProjectDTO query) {
         return this.sqlSession.selectList("ProjectMapper.listBuiltTypeConst", query);
     }
-    @Override
-    public List<ProjectPropertyDTO> listBuiltTypeConstEx(QueryProjectDTO query) {
-        return this.sqlSession.selectList("ProjectMapper.listBuiltTypeConstEx", query);
-    }
 
     /**
      * @param query 项目查询条件

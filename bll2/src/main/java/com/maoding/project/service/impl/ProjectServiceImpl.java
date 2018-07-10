@@ -356,25 +356,17 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 
 	@Override
 	public List<ProjectPropertyDTO> getProjectBuildType(String projectId){
-		List<ProjectPropertyDTO> list = new ArrayList<>();
-		QueryProjectDTO queryProject = new QueryProjectDTO();
-		queryProject.setId(projectId);
-		List<ProjectPropertyDTO> constBuiltTypeList = projectDao.listBuiltTypeConst(queryProject);
-		List<ProjectPropertyDTO> customBuiltTypeList = projectDao.listBuiltTypeCustom(queryProject);
-		customBuiltTypeList.stream().forEach(c->{
-			if(isSelected(c)){
-				constBuiltTypeList.add(c);
-			}
-		});
-		list.addAll(constBuiltTypeList);
-		list.addAll(customBuiltTypeList);
-		return list;
+		ProjectEntity project = projectDao.selectById(projectId);
+		if ((project != null) && (!StringUtils.isEmpty(project.getBuiltType()))) {
+			return listFunction(projectId, project.getBuiltType());
+		} else {
+			return null;
+		}
 	}
 
-	private String getProjectBuildName(String projectId) {
+	private String getProjectBuildName(List<ProjectPropertyDTO> functionList){
 		List<String> buildNameList = new ArrayList<>();
-		List<ProjectPropertyDTO> buildList = this.getProjectBuildType(projectId);
-		buildList.stream().forEach(b->{
+		functionList.stream().forEach(b->{
 			if(isSelected(b)){
 				buildNameList.add(b.getName());
 			}
@@ -397,21 +389,12 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 
 		//项目功能
 		if(!StringUtil.isNullOrEmpty(projectEntity.getBuiltType())){
-			projectDTO.setBuiltTypeName(getProjectBuildName(id));
-//			String[] idList = projectEntity.getBuiltType().split(",");
-//			Map<String,Object> map = new HashMap<String,Object>();
-//			map.put("idList",idList);
-//			List<DataDictionaryEntity> dataDictionaryList = this.dataDictionaryService.getDataByParemeter(map);
-//			if(!CollectionUtils.isEmpty(dataDictionaryList)){
-//				String buildType="";
-//				for (DataDictionaryEntity dataDictionary:dataDictionaryList){
-//					buildType+=dataDictionary.getName()+" · ";
-//				}
-//				if(!StringUtil.isNullOrEmpty(buildType)){
-//					buildType = buildType.substring(0,buildType.lastIndexOf("·"));
-//				}
-//			}
+			//填充功能分类
+			List<ProjectPropertyDTO> functionList = listFunction(id,projectEntity.getBuiltType());
+			projectDTO.setBuiltTypeName(getProjectBuildName(functionList));
+			projectDTO.setFunctionList(functionList);
 		}
+
 		//获取甲方名称
 		if(!StringUtil.isNullOrEmpty(projectEntity.getConstructCompany())){
 			projectDTO.setConstructCompanyName(projectDao.getEnterpriseName(projectEntity.getConstructCompany()));
@@ -512,8 +495,6 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 			//todo 改为从数据库读取，目前为常量定义
 			projectDTO.setStatusName(SystemParameters.PROJECT_STATUS.get(projectDTO.getStatus()));
 		}
-		//填充功能分类
-		listFunction(projectDTO);
 
 		Map<String, Object> returnMap = new HashMap<String,Object>();
 		returnMap.put("projectDetail",projectDTO);
@@ -524,42 +505,26 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		return returnMap;
 	}
 
-	private ProjectDTO listFunction(ProjectDTO project){
+	private List<ProjectPropertyDTO> listFunction(String projectId,String builtType){
 		QueryProjectDTO queryProject = new QueryProjectDTO();
-		queryProject.setId(project.getId());
+		queryProject.setId(projectId);
 		List<ProjectPropertyDTO> constBuiltTypeList = projectDao.listBuiltTypeConst(queryProject);
-		List<ProjectPropertyDTO> constBuiltTypeList2 = projectDao.listBuiltTypeConstEx(queryProject);
-
 		List<ProjectPropertyDTO> customBuiltTypeList = projectDao.listBuiltTypeCustom(queryProject);
-		if (constBuiltTypeList != null){
-			if (project.getFunctionList() == null) {
-				project.setFunctionList(new ArrayList<>());
-			}
-			constBuiltTypeList.stream()
-					.forEach(bt->{
-						//保存选中的默认功能分类列表
-						if (StringUtils.contains(project.getBuiltType(),bt.getId())) {
-							ProjectPropertyDTO functionType = new ProjectPropertyDTO();
-							functionType.setId(bt.getId());
-							functionType.setName(bt.getName());
-							project.getFunctionList().add(functionType);
-						}
-					});
-		}
-		if (customBuiltTypeList != null){
-			if (project.getFunctionList() == null) {
-				project.setFunctionList(new ArrayList<>());
-			}
-			customBuiltTypeList.stream()
-					.forEach(bt->{
-						//保存自定义功能分类列表
-						ProjectPropertyDTO functionType = new ProjectPropertyDTO();
-						functionType.setId(bt.getId());
-						functionType.setName(bt.getName());
-						project.getFunctionList().add(functionType);
-					});
-		}
-		return project;
+		List<ProjectPropertyDTO> list = new ArrayList<>();
+		constBuiltTypeList.stream()
+				.forEach(bt->{
+					//保存选中的默认功能分类列表
+					if (StringUtils.contains(builtType,bt.getId())) {
+						ProjectPropertyDTO functionType = createProjectPropertyDTOFrom(bt);;
+						list.add(functionType);
+					}
+				});
+		list.addAll(customBuiltTypeList);
+		return list;
+	}
+
+	private ProjectPropertyDTO createProjectPropertyDTOFrom(ProjectPropertyDTO dto){
+		return dto;
 	}
 
 	/**

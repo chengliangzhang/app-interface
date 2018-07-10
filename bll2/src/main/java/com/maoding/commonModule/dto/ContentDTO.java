@@ -24,11 +24,11 @@ public class ContentDTO extends BaseDTO {
     /** 纵轴位置 */
     private Integer yPos;
     /** 是否属于功能分类 */
-    private Boolean isFunction;
+    private String isFunction;
     /** 是否属于专业信息 */
-    private Boolean isMeasure;
+    private String isMeasure;
     /** 是否属于设计范围 */
-    private Boolean isRange;
+    private String isRange;
     /** 在大类中的编号 */
     private Integer detailId;
     /** 组件类型编号 */
@@ -73,28 +73,28 @@ public class ContentDTO extends BaseDTO {
         this.yPos = yPos;
     }
 
-    public Boolean getFunction() {
+    public String getIsFunction() {
         return isFunction;
     }
 
-    public void setFunction(Boolean function) {
-        isFunction = function;
+    public void setIsFunction(String isFunction) {
+        this.isFunction = isFunction;
     }
 
-    public Boolean getMeasure() {
+    public String getIsMeasure() {
         return isMeasure;
     }
 
-    public void setMeasure(Boolean measure) {
-        isMeasure = measure;
+    public void setIsMeasure(String isMeasure) {
+        this.isMeasure = isMeasure;
     }
 
-    public Boolean getRange() {
+    public String getIsRange() {
         return isRange;
     }
 
-    public void setRange(Boolean range) {
-        isRange = range;
+    public void setIsRange(String isRange) {
+        this.isRange = isRange;
     }
 
     public Integer getDetailId() {

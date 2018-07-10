@@ -1,32 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="ProjectMapper">
-    <select id="listBuiltTypeConstEx" resultType="com.maoding.project.dto.ProjectPropertyDTO" parameterType="com.maoding.project.dto.QueryProjectDTO">
-        select
-            if(built_type.id is null,null,1) as is_template,
-            if(find_in_set(built_type.id,project.built_type),1,0) as is_selected,
-            built_type.type_name as name,
-            built_type.*
-        from maoding_web_project project
-            inner join md_type_built_const built_type
-        <where>
-            project.pstatus = '0'
-            <if test="id != null">
-                and find_in_set(project.id,#{id})
-            </if>
-            <if test="memberProjects != null and memberProjects.size()>0">
-                and project.id in
-                <foreach collection="memberProjects" item="projectId" index="i" open="(" separator="," close=")">
-                    #{projectId}
-                </foreach>
-            </if>
-        </where>
-    </select>
-
-
     <select id="listBuiltTypeConst" resultType="com.maoding.project.dto.ProjectPropertyDTO" parameterType="com.maoding.project.dto.QueryProjectDTO">
         select
             if(built_type.id is null,null,1) as is_template,
+            if(built_type.id is null,null,1) as is_function,
+            if(built_type.id is null,null,0) as is_measure,
+            if(built_type.id is null,null,0) as is_range,
             if(find_in_set(built_type.id,project.built_type),1,0) as is_selected,
             built_type.type_name as name,
             built_type.*
@@ -49,6 +29,9 @@
     <select id="listBuiltTypeCustom" resultType="com.maoding.project.dto.ProjectPropertyDTO" parameterType="com.maoding.project.dto.QueryProjectDTO">
         select
             if(built_type.id is null,null,0) as is_template,
+            if(built_type.id is null,null,1) as is_function,
+            if(built_type.id is null,null,0) as is_measure,
+            if(built_type.id is null,null,0) as is_range,
             if(find_in_set(built_type.id,project.built_type),1,0) as is_selected,
             built_type.type_name as name,
             built_type.*
