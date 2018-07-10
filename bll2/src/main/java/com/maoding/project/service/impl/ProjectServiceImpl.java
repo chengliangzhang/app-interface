@@ -514,24 +514,19 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		List<ProjectPropertyDTO> constBuiltTypeList = projectDao.listBuiltTypeConst(queryProject);
 		List<ProjectPropertyDTO> customBuiltTypeList = projectDao.listBuiltTypeCustom(queryProject);
 		List<ProjectPropertyDTO> list = new ArrayList<>();
-		list.addAll(customBuiltTypeList);
+		//保存自定义功能分类列表
+		customBuiltTypeList.forEach(bt -> list.add(bt));
+		//保存选中的默认功能分类列表，如果includeAllTemplate，没选中的也要返回
 		if (includeAllTemplate){
-			list.addAll(constBuiltTypeList);
+			constBuiltTypeList.forEach(bt -> list.add(bt));
 		} else {
-			constBuiltTypeList.stream()
-					.forEach(bt -> {
-						//保存选中的默认功能分类列表
-						if (StringUtils.contains(builtType, bt.getId())) {
-							ProjectPropertyDTO functionType = createProjectPropertyDTOFrom(bt);
-							list.add(functionType);
-						}
-					});
+			constBuiltTypeList.forEach(bt -> {
+				if (StringUtils.contains(builtType, bt.getId())) {
+					list.add(bt);
+				}
+			});
 		}
 		return list;
-	}
-
-	private ProjectPropertyDTO createProjectPropertyDTOFrom(ProjectPropertyDTO dto){
-		return dto;
 	}
 
 	/**
