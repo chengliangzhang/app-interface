@@ -20,6 +20,10 @@ public class CustomProjectPropertyDTO {
     /** 记录更新状态,-1：删除，0：未更改，1：新增，2：更改 */
     private Short changeStatus;
 
+    private String isSelected;
+
+    private String isDefaulted;
+
     public CustomProjectPropertyDTO(){}
     public CustomProjectPropertyDTO(Object obj){
         BeanUtilsEx.copyProperties(obj,this);
@@ -71,5 +75,21 @@ public class CustomProjectPropertyDTO {
 
     public void setChangeStatus(Short changeStatus) {
         this.changeStatus = changeStatus;
+    }
+
+    public String getIsSelected() {
+        return isSelected;
+    }
+
+    public void setIsSelected(String isSelected) {
+        this.isSelected = isSelected;
+    }
+
+    public String getIsDefaulted() {
+        return isDefaulted;
+    }
+
+    public void setIsDefaulted(String isDefaulted) {
+        this.isDefaulted = isDefaulted;
     }
 }

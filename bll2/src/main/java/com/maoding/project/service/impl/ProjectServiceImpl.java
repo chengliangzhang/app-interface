@@ -1697,9 +1697,48 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		//项目使用到的自定义属性列表
 		List<CustomProjectPropertyDTO> selectedList = projectPropertyDao.listProperty(query.getProjectId());
 		if (!CollectionUtils.isEmpty(selectedList)) {
+			for(CustomProjectPropertyDTO param:defaultList){
+				for(CustomProjectPropertyDTO value:selectedList){
+					boolean isSelected = this.isSelectedProjectCustomFields(value,param);
+					if(isSelected){
+						param.setIsSelected("1");
+						break;
+					}
+				}
+			}
+			for(CustomProjectPropertyDTO param:customList){
+				for(CustomProjectPropertyDTO value:selectedList){
+					boolean isSelected = this.isSelectedProjectCustomFields(value,param);
+					if(isSelected){
+						param.setIsSelected("1");
+						break;
+					}
+				}
+			}
 			result.setSelectedPropertyList(selectedList);
 		}
 		return result;
+	}
+
+	private boolean isSelectedProjectCustomFields(CustomProjectPropertyDTO value,CustomProjectPropertyDTO param){
+		//m&sup2;平方米  m&sup3;立方米
+
+		String unitName = "m²".equals(value.getUnitName())?"m&sup2;":value.getUnitName();
+		String unitName2 = "m²".equals(param.getUnitName())?"m&sup2;":param.getUnitName();
+		unitName = "m³".equals(unitName)?"m&sup3;":unitName;
+		unitName2 = "m³".equals(unitName2)?"m&sup3;":unitName2;
+
+		if(param.getFieldName().equals(value.getFieldName())){
+			if(StringUtil.isNullOrEmpty(unitName) && StringUtil.isNullOrEmpty(unitName2)){
+				return true;
+			}
+			if(!(StringUtil.isNullOrEmpty(unitName) && StringUtil.isNullOrEmpty(unitName2))
+					&& unitName.equals(unitName2)){
+				return true;
+			}
+
+		}
+		return false;
 	}
 
 	/**
@@ -1710,65 +1749,88 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 	 * @param properties 自定义界面上的数据
 	 */
 	@Override
-	public void saveProjectCustomFields(CustomProjectPropertyEditDTO properties) throws Exception {
-		final Short CHANGE_STATUS_DEL = -1;
-		final Short CHANGE_STATUS_ADD = 1;
-		final Short CHANGE_STATUS_CHANGE = 2;
+	public void saveProjectCustomFields(ProjectPropertyEditDTO properties) throws Exception {
+		String companyId = properties.getAppOrgId();
+		//todo 先查询项目原有的数据
+		List<CustomProjectPropertyDTO> customList = companyPropertyDao.listCustomProperty(companyId);
+		List<CustomProjectPropertyDTO> selectedList = projectPropertyDao.listProperty(properties.getProjectId());
+
 		//保存公司自定义字段
-		if (properties.getCustomPropertyList() != null) {
+		if (!CollectionUtils.isEmpty(properties.getProjectPropertyList())) {
 			Integer n = 0;
-			for (CustomProjectPropertyDTO property : properties.getCustomPropertyList()) {
-				if (CHANGE_STATUS_DEL.equals(property.getChangeStatus())) {
-					companyPropertyDao.fakeDeleteById(property.getId());
-				} else if ((CHANGE_STATUS_ADD.equals(property.getChangeStatus())) || (CHANGE_STATUS_CHANGE.equals(property.getChangeStatus()))) {
-					CompanyPropertyEntity entity = new CompanyPropertyEntity(property);
-					entity.setCompanyId(properties.getCompanyId());
-					entity.setBeDefault(false);
-					entity.setBeSelected(false);
-					if (properties.getSelectedPropertyList() != null) {
-						for (CustomProjectPropertyDTO projectProperty : properties.getSelectedPropertyList()) {
-							if (!CHANGE_STATUS_DEL.equals(projectProperty.getChangeStatus())
-									&& StringUtil.isSame(property.getFieldName(), projectProperty.getFieldName())) {
-								entity.setBeSelected(true);
+			for (CustomProjectPropertyDTO property : properties.getProjectPropertyList()) {
+				if (StringUtil.isNullOrEmpty(property.getId())) {
+					n++;
+					saveCompanyProperty(property, n, companyId);
+					if ("1".equals(property.getIsSelected())) {
+						saveProjectProperty(property, n, properties.getProjectId(), properties.getAccountId());
+					}
+				} else {
+					boolean isSave = true;
+					for (CustomProjectPropertyDTO selected : selectedList) {
+						if (isSelectedProjectCustomFields(selected, property)) {
+							isSave = false;
+							if (!"1".equals(property.getIsSelected())) {//如果原来存在，现在不选中，则从项目中删除
+								projectPropertyDao.fakeDeleteById(selected.getId());
 								break;
 							}
 						}
 					}
-					entity.setSequencing(n++);
-					if ((CHANGE_STATUS_ADD.equals(property.getChangeStatus()))) {
-						entity.resetId();
-						entity.resetCreateDate();
-						companyPropertyDao.insert(entity);
-					} else {
-						entity.resetUpdateDate();
-						companyPropertyDao.updateById(entity);
+					if (isSave && "1".equals(property.getIsSelected())) {
+						saveProjectProperty(property, n, properties.getProjectId(), properties.getAccountId());
 					}
 				}
 			}
-		}
-		//保存项目自定义字段
-		if (properties.getSelectedPropertyList() != null) {
-			Integer n = 0;
-			for (CustomProjectPropertyDTO property : properties.getSelectedPropertyList()) {
-				if (CHANGE_STATUS_DEL.equals(property.getChangeStatus())) {
-					projectPropertyDao.fakeDeleteById(property.getId());
-				} else if ((CHANGE_STATUS_ADD.equals(property.getChangeStatus())) || (CHANGE_STATUS_CHANGE.equals(property.getChangeStatus()))) {
-					ProjectPropertyEntity entity = new ProjectPropertyEntity(property);
-					entity.setProjectId(properties.getProjectId());
-					if (CHANGE_STATUS_ADD.equals(property.getChangeStatus())) {
-						entity.resetId();
-						entity.resetCreateDate();
-						entity.setCreateBy(properties.getOperatorId());
-						entity.setSequencing(n++);
-						projectPropertyDao.insert(entity);
-					} else {
-						entity.resetUpdateDate();
-						entity.setUpdateBy(properties.getOperatorId());
-						entity.setSequencing(n++);
-						projectPropertyDao.updateById(entity);
+			//删除当前界面被删除的数据
+			for(CustomProjectPropertyDTO selected:customList){
+				boolean isDeleted = true;
+				for (CustomProjectPropertyDTO property : properties.getProjectPropertyList()) {
+					if (isSelectedProjectCustomFields(selected, property)) {
+						isDeleted = false;
+						break;
 					}
+				}
+				if(isDeleted){
+					//从custom中删除
+					companyPropertyDao.fakeDeleteById(selected.getId());
 				}
 			}
 		}
+	}
+
+	@Override
+	public void saveProjectProfessionFields(ProjectPropertyEditDTO properties) throws Exception {
+		if (!CollectionUtils.isEmpty(properties.getProjectPropertyList())) {
+			for (CustomProjectPropertyDTO property : properties.getProjectPropertyList()) {
+				ProjectPropertyEntity entity = new ProjectPropertyEntity();
+				entity.setId(property.getId());
+				entity.setFieldValue(StringUtil.isNullOrEmpty(property.getFieldValue())?"":property.getFieldValue());
+				projectPropertyDao.updateById(entity);
+			}
+		}
+	}
+
+	private String saveCompanyProperty(CustomProjectPropertyDTO property,Integer seq,String companyId){
+		CompanyPropertyEntity entity = new CompanyPropertyEntity(property);
+		entity.setCompanyId(companyId);
+		entity.setBeDefault(false);
+		entity.setBeSelected(false);
+		entity.setSequencing(seq);
+		entity.resetId();
+		entity.resetCreateDate();
+		companyPropertyDao.insert(entity);
+		return entity.getId();
+	}
+
+	private String saveProjectProperty(CustomProjectPropertyDTO property,Integer seq,String projectId,String operator){
+		ProjectPropertyEntity entity = new ProjectPropertyEntity(property);
+		entity.setProjectId(projectId);
+		entity.setDeleted(new Short("0"));
+		entity.setSequencing(seq);
+		entity.setCreateBy(operator);
+		entity.resetId();
+		entity.resetCreateDate();
+		projectPropertyDao.insert(entity);
+		return entity.getId();
 	}
 }

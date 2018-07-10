@@ -137,5 +137,7 @@ public interface ProjectService extends BaseService<ProjectEntity>{
 
     CustomProjectPropertyEditDTO loadProjectCustomFields(ProjectCustomFieldQueryDTO query) throws Exception;
 
-    void saveProjectCustomFields(CustomProjectPropertyEditDTO properties) throws Exception;
+    void saveProjectCustomFields(ProjectPropertyEditDTO properties) throws Exception;
+
+    void saveProjectProfessionFields(ProjectPropertyEditDTO query) throws Exception;
 }

@@ -6,7 +6,7 @@
       <![CDATA[
         select distinct a.content,if(a.content='m&sup2;','m²',if(a.content='m&sup3;','m³',a.content)) as unit_name
         from maoding_web_const a
-        where a.type=8
+        where a.type=8 and a.content <> ''
       ]]>
   </select>
 
@@ -49,7 +49,7 @@
 
   <select id="listDefaultProperty" resultType="com.maoding.project.dto.CustomProjectPropertyDTO" parameterType="java.lang.String">
     <![CDATA[
-      select a.id,a.field_name,
+      select a.id,a.field_name,true as is_defaulted,
       if(a.unit_name='m&sup2;','m²',if(a.unit_name='m&sup3;','m³',a.unit_name)) as unit_name,
       a.sequencing,0 as change_status
       from maoding_web_company_property a

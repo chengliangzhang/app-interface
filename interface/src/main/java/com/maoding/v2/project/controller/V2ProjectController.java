@@ -403,6 +403,23 @@ public class V2ProjectController extends BaseWSController {
         result.setOperatorId(query.getAccountId());
         return ResponseBean.responseSuccess("查询成功").addDataFromObject(result);
     }
+
+    @RequestMapping(value = "/saveProjectCustomFields", method = RequestMethod.POST)
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean saveProjectCustomFields(@RequestBody ProjectPropertyEditDTO query) throws Exception {
+        projectService.saveProjectCustomFields(query);
+        return ResponseBean.responseSuccess("操作成功");
+    }
+
+    @RequestMapping(value = "/saveProjectProfessionFields", method = RequestMethod.POST)
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean saveProjectProfessionFields(@RequestBody ProjectPropertyEditDTO query) throws Exception {
+        projectService.saveProjectProfessionFields(query);
+        return ResponseBean.responseSuccess("操作成功");
+    }
+
 }
 
 
