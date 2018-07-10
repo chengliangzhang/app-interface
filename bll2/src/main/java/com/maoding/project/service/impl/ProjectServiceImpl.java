@@ -971,13 +971,13 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 							builtTypeIdStr.append(id).append(",");
 						} else if (isSelected(bt)) {
 							builtTypeIdStr.append(bt.getId()).append(",");
-							if (isSelected(bt)) {
+							if (!isTemplate(bt)) {
 								UpdateConstDTO request = new UpdateConstDTO();
 								request.setId(bt.getId());
 								request.setTitle(bt.getName());
 								constService.updateConst(request);
 							}
-						} else if (isTemplate(bt)){
+						} else if (!isTemplate(bt)){
 							constService.deleteConst(bt.getId());
 						}
 					});
@@ -986,8 +986,15 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 				String[] origFunctionArray = projectEntity.getBuiltType().split(",");
 				for (int i=0; i<origFunctionArray.length; i++) {
 					String origFunctionId = origFunctionArray[i];
+					boolean found = false;
 					if (!StringUtils.isEmpty(origFunctionId)){
-						if (!builtTypeIdStr.toString().contains(origFunctionId)){
+						for (ProjectPropertyDTO f : changedFunctionList) {
+							if (origFunctionId.equals(f.getId())){
+								found = true;
+								break;
+							}
+						}
+						if (!found){
 							builtTypeIdStr.append(origFunctionId).append(",");
 						}
 					}
