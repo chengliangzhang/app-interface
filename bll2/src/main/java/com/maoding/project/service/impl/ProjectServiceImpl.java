@@ -360,7 +360,10 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		if ((project != null) && (!StringUtils.isEmpty(project.getBuiltType()))) {
 			return listFunction(projectId, project.getBuiltType(),true);
 		} else {
-			return null;
+			QueryProjectDTO queryProject = new QueryProjectDTO();
+			queryProject.setId(projectId);
+			List<ProjectPropertyDTO> constBuiltTypeList = projectDao.listBuiltTypeConst(queryProject);
+			return constBuiltTypeList;
 		}
 	}
 
