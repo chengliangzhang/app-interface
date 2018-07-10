@@ -1,30 +1,23 @@
 package com.maoding.task.service.impl;
 
-import com.maoding.core.base.service.GenericService;
 import com.maoding.core.bean.ResponseBean;
 import com.maoding.core.constant.ProjectMemberType;
 import com.maoding.core.constant.SystemParameters;
 import com.maoding.core.util.BeanUtilsEx;
 import com.maoding.core.util.StringUtil;
+import com.maoding.core.util.StringUtils;
 import com.maoding.dynamic.service.DynamicService;
 import com.maoding.message.entity.MessageEntity;
 import com.maoding.message.service.MessageService;
 import com.maoding.org.dao.CompanyUserDao;
 import com.maoding.org.entity.CompanyUserEntity;
-import com.maoding.project.dao.ProjectDao;
-import com.maoding.project.entity.ProjectEntity;
 import com.maoding.projectmember.entity.ProjectMemberEntity;
 import com.maoding.projectmember.service.ProjectMemberService;
-import com.maoding.task.dao.ProjectTaskDao;
-import com.maoding.task.dto.ProjectTaskDTO;
 import com.maoding.task.dto.TransferTaskDesignerDTO;
-import com.maoding.task.entity.ProjectManagerEntity;
 import com.maoding.task.service.ProjectManagerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -161,6 +154,9 @@ public class ProjectManagerServiceImpl implements ProjectManagerService {
     }
 
     private void sendMessage(ProjectMemberEntity member,String accountId) throws Exception{
+        if ((member == null) || StringUtils.isEmpty(member.getAccountId())){
+            return;
+        }
         if(!member.getAccountId().equals(accountId)){
             Integer messageType = 0;
             switch (member.getMemberType()){
