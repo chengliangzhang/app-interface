@@ -97,8 +97,12 @@ public interface ProjectService extends BaseService<ProjectEntity>{
      * 作        者：TangY
      * 日        期：2016年7月20日-下午4:47:25
      */
-    ResponseBean saveOrUpdateProjectNew(ProjectDTO dto) throws Exception;
+    ResponseBean saveOrUpdateProjectNew(ProjectEditDTO dto) throws Exception;
 
+    /**
+     * 保存项目设计阶段
+     */
+    ResponseBean saveProjectDesign(ProjectEditDTO dto) throws Exception;
     /**
      * 项目参与组织
      */

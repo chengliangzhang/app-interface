@@ -259,7 +259,7 @@ public class V2ProjectController extends BaseWSController {
     @RequestMapping("/saveNewProject")
     @ResponseBody
     @AuthorityCheckable
-    public ResponseBean saveNewProject(@RequestBody ProjectDTO dto) throws Exception {
+    public ResponseBean saveNewProject(@RequestBody ProjectEditDTO dto) throws Exception {
         return realSaveNewProject(dto);
     }
 
@@ -270,11 +270,11 @@ public class V2ProjectController extends BaseWSController {
      **/
     @RequestMapping("/devSaveNewProject")
     @ResponseBody
-    public ResponseBean devSaveNewProject(@RequestBody ProjectDTO dto) throws Exception {
+    public ResponseBean devSaveNewProject(@RequestBody ProjectEditDTO dto) throws Exception {
         return realSaveNewProject(dto);
     }
 
-    private ResponseBean realSaveNewProject(ProjectDTO dto) throws Exception {
+    private ResponseBean realSaveNewProject(ProjectEditDTO dto) throws Exception {
         dto.setCompanyId(dto.getAppOrgId());
         return this.projectService.saveOrUpdateProjectNew(dto);
     }
@@ -437,6 +437,15 @@ public class V2ProjectController extends BaseWSController {
         projectService.saveProjectProfessionFields(query);
         return ResponseBean.responseSuccess("操作成功");
     }
+
+    @RequestMapping(value = "/saveProjectContract ", method = RequestMethod.POST)
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean saveProjectContract(@RequestBody ProjectEditDTO dto) throws Exception {
+        dto.setCompanyId(dto.getAppOrgId());
+        return projectService.saveProjectDesign(dto);
+    }
+
 
 }
 

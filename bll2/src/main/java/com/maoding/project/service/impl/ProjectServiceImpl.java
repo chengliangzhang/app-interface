@@ -32,6 +32,7 @@ import com.maoding.org.entity.CompanyEntity;
 import com.maoding.org.entity.CompanyUserEntity;
 import com.maoding.org.service.CompanyService;
 import com.maoding.project.constDefine.EnterpriseServer;
+import com.maoding.project.constDefine.FileUploadServer;
 import com.maoding.project.dao.*;
 import com.maoding.project.dto.*;
 import com.maoding.project.entity.*;
@@ -46,7 +47,6 @@ import com.maoding.projectmember.entity.ProjectMemberEntity;
 import com.maoding.projectmember.service.ProjectMemberService;
 import com.maoding.property.dao.CompanyPropertyDao;
 import com.maoding.property.entity.CompanyPropertyEntity;
-import com.maoding.role.dao.PermissionDao;
 import com.maoding.role.dto.ProjectOperatorDTO;
 import com.maoding.role.service.PermissionService;
 import com.maoding.system.service.DataDictionaryService;
@@ -75,7 +75,10 @@ import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 深圳市设计同道技术有限公司
@@ -189,7 +192,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 	private EnterpriseServer enterpriseServer;
 
 	@Autowired
-	private PermissionDao permissionDao;
+	private FileUploadServer fileUploadServer;
 
 	@Autowired
 	private ConstService constService;
@@ -764,7 +767,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 	 * 日期：2016/12/6
 	 */
 	@Override
-	public ResponseBean saveOrUpdateProjectNew(ProjectDTO dto) throws Exception {
+	public ResponseBean saveOrUpdateProjectNew(ProjectEditDTO dto) throws Exception {
 		String currentCompanyId = dto.getAppOrgId();
 		AjaxMessage ajaxMessage = this.validateSaveOrUpdateProject(dto);
 		if (!"0".equals(ajaxMessage.getCode())) {
@@ -841,8 +844,9 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 			if(manager!=null){
 				managerId = manager.getCompanyUserId();
 			}
-			this.handleProjectDesignContent(dto.getProjectDesignContentList(), dto.getId(), dto.getCompanyId(), dto.getAccountId(),managerId,isAdd);
-
+			if(!CollectionUtils.isEmpty(dto.getProjectDesignContentList())){
+				this.handleProjectDesignContent(dto.getProjectDesignContentList(), dto.getId(), dto.getCompanyId(), dto.getAccountId(),managerId,isAdd);
+			}
 		}
 
 		//处理乙方变更
@@ -932,12 +936,28 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		return ResponseBean.responseSuccess("保存成功").addData("id",projectId);
 	}
 
+	@Override
+	public ResponseBean saveProjectDesign(ProjectEditDTO dto) throws Exception {
+		if(!CollectionUtils.isEmpty(dto.getDeleteFileList()) || !CollectionUtils.isEmpty(dto.getUploadFileList())){
+			Response res = null;
+			try {
+				res = OkHttpUtils.postJson(fileUploadServer.getHandleProjectContractUrl(), dto);
+			} catch (IOException e) {
+				return ResponseBean.responseError("操作失败");
+			} catch (Exception e) {
+				return ResponseBean.responseError("操作失败");
+			}
+		}
+		this.handleProjectDesignContent(dto.getProjectDesignContentList(), dto.getId(), dto.getCompanyId(), dto.getAccountId(),dto.getProjectManagerId(),false);
+		return ResponseBean.responseSuccess("保存成功");
+	}
+
 	/**
 	 * @author  张成亮
 	 * @date    2018/7/9
 	 * @description     保存功能分类, 目前使用字符串形式，以后再改为项目属性列表形式
 	 **/
-	private ProjectEntity saveProjectFunction(ProjectDTO dto,ProjectEntity projectEntity){
+	private ProjectEntity saveProjectFunction(ProjectEditDTO dto,ProjectEntity projectEntity){
 		//组合功能分类保存字符串
 		if ((dto.getChangedFunctionList() != null) && (dto.getChangedFunctionList().size() > 0)) {
 			List<ProjectPropertyDTO> changedFunctionList = dto.getChangedFunctionList();
@@ -993,10 +1013,9 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 	 * @date    2018/7/9
 	 * @description     保存设计范围, 目前保存到设计范围列表，以后会改为保存到项目属性列表
 	 **/
-	private ProjectEntity saveProjectRange(ProjectDTO dto,ProjectEntity projectEntity){
+	private ProjectEntity saveProjectRange(ProjectEditDTO dto,ProjectEntity projectEntity){
 		if ((dto.getChangedRangeList() != null) && (dto.getChangedRangeList().size() > 0)) {
 			List<ProjectPropertyDTO> changedRangeList = dto.getChangedRangeList();
-			StringBuilder builtTypeIdStr = new StringBuilder();
 			int maxSeq = 1;
 			changedRangeList.stream()
 					.forEach(bt->saveRange(bt,projectEntity,dto.getAccountId(),maxSeq));
@@ -1159,7 +1178,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 	 * @param:
 	 * @return:
 	 */
-	private AjaxMessage validateSaveOrUpdateProject(ProjectDTO dto){
+	private AjaxMessage validateSaveOrUpdateProject(ProjectEditDTO dto){
 
 		if(StringUtil.isNullOrEmpty(dto.getProjectName())){
 			return new AjaxMessage().setCode("1").setInfo("项目名称不能为空");
@@ -1204,7 +1223,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 	 * @param:
 	 * @return:
 	 */
-	private int projectPartB(ProjectDTO dto){
+	private int projectPartB(ProjectEditDTO dto){
 		if(StringUtil.isNullOrEmpty(dto.getId()) && !StringUtil.isNullOrEmpty(dto.getCompanyBid())){
 			return 1;//新增并且选择了乙方
 		}
@@ -1744,7 +1763,6 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		//todo 先查询项目原有的数据
 		List<CustomProjectPropertyDTO> customList = companyPropertyDao.listCustomProperty(companyId);
 		List<CustomProjectPropertyDTO> selectedList = projectPropertyDao.listProperty(properties.getProjectId());
-
 		//保存公司自定义字段
 		if (!CollectionUtils.isEmpty(properties.getProjectPropertyList())) {
 			Integer n = 0;
@@ -1763,6 +1781,8 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 							if (!"1".equals(property.getIsSelected())) {//如果原来存在，现在不选中，则从项目中删除
 								projectPropertyDao.fakeDeleteById(selected.getId());
 								break;
+							}else {
+								selected.setChangeStatus(new Short("1"));//不删除
 							}
 						}
 					}
@@ -1784,6 +1804,12 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 					//从custom中删除
 					companyPropertyDao.fakeDeleteById(selected.getId());
 				}
+			}
+		}
+
+		for (CustomProjectPropertyDTO selected : selectedList) {
+			if(selected.getChangeStatus()==null || !"1".equals(selected.getChangeStatus().toString())){
+				projectPropertyDao.fakeDeleteById(selected.getId());
 			}
 		}
 	}

@@ -14,6 +14,7 @@ import com.maoding.org.dto.CompanyUserAppDTO;
 import com.maoding.project.constDefine.EnterpriseServer;
 import com.maoding.project.dto.ProjectDTO;
 import com.maoding.project.dto.ProjectDesignContentDTO;
+import com.maoding.project.dto.ProjectEditDTO;
 import com.maoding.project.dto.ProjectSimpleDataDTO;
 import com.maoding.project.service.ProjectService;
 import com.maoding.schedule.dto.*;
@@ -107,7 +108,7 @@ public class ProjectServiceImplTest {
     }
     @org.junit.Test
     public void testSaveOrUpdateProjectNew() throws Exception {
-        ProjectDTO dto = new ProjectDTO();
+        ProjectEditDTO dto = new ProjectEditDTO();
         dto.setAppOrgId("210b23a226984f8d8b00e176a24f2dd5");
         dto.setCompanyId("210b23a226984f8d8b00e176a24f2dd5");
         dto.setProjectName("testxiangmu");
