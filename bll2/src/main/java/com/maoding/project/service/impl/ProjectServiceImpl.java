@@ -876,7 +876,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		//先删除设计范围
 		projectDesignRangeDao.deleteDRangeByProjectId(projectId);
 		//保存设计范围
-		saveProjectRange(dto,projectEntity);
+//		saveProjectRange(dto,projectEntity);
 		ProjectDesignRangeEntity projectDesignRangeEntity = null;
 		if (dto.getProjectDesignRangeList().size() > 0) {
 			int seq = 1;
