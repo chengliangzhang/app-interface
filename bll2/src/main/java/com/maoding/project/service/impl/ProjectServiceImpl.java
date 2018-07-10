@@ -358,7 +358,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 	public List<ProjectPropertyDTO> getProjectBuildType(String projectId){
 		ProjectEntity project = projectDao.selectById(projectId);
 		if ((project != null) && (!StringUtils.isEmpty(project.getBuiltType()))) {
-			return listFunction(projectId, project.getBuiltType());
+			return listFunction(projectId, project.getBuiltType(),true);
 		} else {
 			return null;
 		}
@@ -390,7 +390,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		//项目功能
 		if(!StringUtil.isNullOrEmpty(projectEntity.getBuiltType())){
 			//填充功能分类
-			List<ProjectPropertyDTO> functionList = listFunction(id,projectEntity.getBuiltType());
+			List<ProjectPropertyDTO> functionList = listFunction(id,projectEntity.getBuiltType(),false);
 			projectDTO.setBuiltTypeName(getProjectBuildName(functionList));
 			projectDTO.setFunctionList(functionList);
 		}
@@ -505,20 +505,25 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		return returnMap;
 	}
 
-	private List<ProjectPropertyDTO> listFunction(String projectId,String builtType){
+	private List<ProjectPropertyDTO> listFunction(String projectId,String builtType,boolean includeAllTemplate){
 		QueryProjectDTO queryProject = new QueryProjectDTO();
 		queryProject.setId(projectId);
 		List<ProjectPropertyDTO> constBuiltTypeList = projectDao.listBuiltTypeConst(queryProject);
 		List<ProjectPropertyDTO> customBuiltTypeList = projectDao.listBuiltTypeCustom(queryProject);
 		List<ProjectPropertyDTO> list = new ArrayList<>();
-		constBuiltTypeList.stream()
-				.forEach(bt->{
-					//保存选中的默认功能分类列表
-					if (StringUtils.contains(builtType,bt.getId())) {
-						ProjectPropertyDTO functionType = createProjectPropertyDTOFrom(bt);;
-						list.add(functionType);
-					}
-				});
+		if (includeAllTemplate){
+			list.addAll(constBuiltTypeList);
+		} else {
+			constBuiltTypeList.stream()
+					.forEach(bt -> {
+						//保存选中的默认功能分类列表
+						if (StringUtils.contains(builtType, bt.getId())) {
+							ProjectPropertyDTO functionType = createProjectPropertyDTOFrom(bt);
+							;
+							list.add(functionType);
+						}
+					});
+		}
 		list.addAll(customBuiltTypeList);
 		return list;
 	}

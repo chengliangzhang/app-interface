@@ -144,6 +144,21 @@ public class V2ProjectController extends BaseWSController {
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean getProjectFunctionList(@RequestBody Map<String, Object> map) {
+        return realGetProjectFunctionList(map);
+    }
+
+    /**
+     * @author  张成亮
+     * @date    2018/7/10
+     * @description     获取功能分类
+     **/
+    @RequestMapping("/devGetProjectFunctionList")
+    @ResponseBody
+    public ResponseBean devGetProjectFunctionList(@RequestBody Map<String, Object> map) {
+        return realGetProjectFunctionList(map);
+    }
+
+    private ResponseBean realGetProjectFunctionList(Map<String, Object> map) {
         List<ProjectPropertyDTO> list = projectService.getProjectBuildType((String)map.get("projectId"));
         return ResponseBean.responseSuccess("查询成功").addData("projectFunctionList", list);
     }
