@@ -17,36 +17,12 @@ public class ProjectBuiltTypeDTO extends BaseDTO {
     /**
      * 选中状态：如果是取消选择的话，id不可为空
      */
-    private Boolean isSelected;
-
-    /** 选中状态的字符串形式，0-未选中，1-选中 */
-    private String isSelectedStatus;
+    private String isSelected;
 
     /**
      * 是否默认功能分类
      */
-    private Boolean isTemplate;
-
-    /** 默认功能分类字符串形式，0-不是默认，1-是默认 */
-    private String isTemplateStatus;
-
-    public String getIsSelectedStatus() {
-        return (isSelectedStatus == null) ? toString(getSelected()) : isSelectedStatus;
-    }
-
-    public void setIsSelectedStatus(String isSelectedStatus) {
-        this.isSelectedStatus = isSelectedStatus;
-        setSelected(toBoolean(isSelectedStatus));
-    }
-
-    public String getIsTemplateStatus() {
-        return (isTemplateStatus == null) ? toString(getTemplate()) : isTemplateStatus;
-    }
-
-    public void setIsTemplateStatus(String isTemplateStatus) {
-        this.isTemplateStatus = isTemplateStatus;
-        setTemplate(toBoolean(isTemplateStatus));
-    }
+    private String isTemplate;
 
     public String getName() {
         return name;
@@ -56,19 +32,19 @@ public class ProjectBuiltTypeDTO extends BaseDTO {
         this.name = name;
     }
 
-    public Boolean getSelected() {
+    public String getIsSelected() {
         return isSelected;
     }
 
-    public void setSelected(Boolean selected) {
-        isSelected = selected;
+    public void setIsSelected(String isSelected) {
+        this.isSelected = isSelected;
     }
 
-    public Boolean getTemplate() {
+    public String getIsTemplate() {
         return isTemplate;
     }
 
-    public void setTemplate(Boolean template) {
-        isTemplate = template;
+    public void setIsTemplate(String isTemplate) {
+        this.isTemplate = isTemplate;
     }
 }

@@ -354,14 +354,15 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		return new AjaxMessage().setCode("0").setInfo("删除成功");
 	}
 
-	public List<ProjectBuiltTypeDTO> getProjectBuildType(String projectId){
-		List<ProjectBuiltTypeDTO> list = new ArrayList<>();
+	@Override
+	public List<ProjectPropertyDTO> getProjectBuildType(String projectId){
+		List<ProjectPropertyDTO> list = new ArrayList<>();
 		QueryProjectDTO queryProject = new QueryProjectDTO();
 		queryProject.setId(projectId);
-		List<ProjectBuiltTypeDTO> constBuiltTypeList = projectDao.listBuiltTypeConst(queryProject);
-		List<ProjectBuiltTypeDTO> customBuiltTypeList = projectDao.listBuiltTypeCustom(queryProject);
+		List<ProjectPropertyDTO> constBuiltTypeList = projectDao.listBuiltTypeConst(queryProject);
+		List<ProjectPropertyDTO> customBuiltTypeList = projectDao.listBuiltTypeCustom(queryProject);
 		customBuiltTypeList.stream().forEach(c->{
-			if(c.getSelected()){
+			if(isSelected(c)){
 				constBuiltTypeList.add(c);
 			}
 		});
@@ -372,9 +373,9 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 
 	private String getProjectBuildName(String projectId) {
 		List<String> buildNameList = new ArrayList<>();
-		List<ProjectBuiltTypeDTO> buildList = this.getProjectBuildType(projectId);
+		List<ProjectPropertyDTO> buildList = this.getProjectBuildType(projectId);
 		buildList.stream().forEach(b->{
-			if(b.getSelected()){
+			if(isSelected(b)){
 				buildNameList.add(b.getName());
 			}
 		});
@@ -526,8 +527,10 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 	private ProjectDTO listFunction(ProjectDTO project){
 		QueryProjectDTO queryProject = new QueryProjectDTO();
 		queryProject.setId(project.getId());
-		List<ProjectBuiltTypeDTO> constBuiltTypeList = projectDao.listBuiltTypeConstEx(queryProject);
-		List<ProjectBuiltTypeDTO> customBuiltTypeList = projectDao.listBuiltTypeCustom(queryProject);
+		List<ProjectPropertyDTO> constBuiltTypeList = projectDao.listBuiltTypeConst(queryProject);
+		List<ProjectPropertyDTO> constBuiltTypeList2 = projectDao.listBuiltTypeConstEx(queryProject);
+
+		List<ProjectPropertyDTO> customBuiltTypeList = projectDao.listBuiltTypeCustom(queryProject);
 		if (constBuiltTypeList != null){
 			if (project.getFunctionList() == null) {
 				project.setFunctionList(new ArrayList<>());
@@ -908,7 +911,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		//先删除设计范围
 		projectDesignRangeDao.deleteDRangeByProjectId(projectId);
 		//保存设计范围
-//		saveProjectRange(dto,projectEntity);
+		saveProjectRange(dto,projectEntity);
 		ProjectDesignRangeEntity projectDesignRangeEntity = null;
 		if (dto.getProjectDesignRangeList().size() > 0) {
 			int seq = 1;
@@ -981,21 +984,29 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 							request.setClassicId(ConstService.CONST_TYPE_BUILT_TYPE);
 							String id = constService.insertConst(request);
 							builtTypeIdStr.append(id).append(",");
-						} else if ((bt.getSelected() != null) && (bt.getSelected())) {
+						} else if (isSelected(bt)) {
 							builtTypeIdStr.append(bt.getId()).append(",");
-							if ((bt.getTemplate() == null) || (!bt.getTemplate())) {
+							if (isSelected(bt)) {
 								UpdateConstDTO request = new UpdateConstDTO();
 								request.setId(bt.getId());
 								request.setTitle(bt.getName());
 								constService.updateConst(request);
 							}
-						} else if ((bt.getTemplate() == null) || (!bt.getTemplate())){
+						} else if (isTemplate(bt)){
 							constService.deleteConst(bt.getId());
 						}
 					});
 			projectEntity.setBuiltType(builtTypeIdStr.toString());
 		}
 		return projectEntity;
+	}
+
+	private boolean isSelected(ProjectPropertyDTO pty){
+		return "1".equals(pty.getIsSelected());
+	}
+
+	private boolean isTemplate(ProjectPropertyDTO pty){
+		return "1".equals(pty.getIsTemplate());
 	}
 
 	/**
@@ -1034,8 +1045,8 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 			projectDesignRangeEntity.setUpdateBy(accountId);
 			projectDesignRangeEntity.setSeq(maxSeq++);
 			projectDesignRangeDao.insert(projectDesignRangeEntity);
-		} else if ((property.getSelected() != null) && (property.getSelected())) {
-			if ((property.getTemplate() == null) || (!property.getTemplate())) {
+		} else if (isSelected(property)) {
+			if (isTemplate(property)) {
 				UpdateConstDTO request = new UpdateConstDTO();
 				request.setId(property.getId());
 				request.setTitle(property.getName());
@@ -1045,7 +1056,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 			projectDesignRangeEntity.setStatus("0");
 			projectDesignRangeEntity.setDesignRange(property.getName());
 			projectDesignRangeDao.updateById(projectDesignRangeEntity);
-		} else if ((property.getTemplate() == null) || (!property.getTemplate())){
+		} else if (isTemplate(property)){
 			constService.deleteConst(property.getId());
 			projectDesignRangeDao.deleteById(property.getId());
 		}

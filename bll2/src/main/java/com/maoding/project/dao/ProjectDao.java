@@ -111,8 +111,8 @@ public interface ProjectDao extends BaseDao<ProjectEntity> {
      * @param   query 项目查询条件
      * @return  默认的功能分类列表
      **/
-    List<ProjectBuiltTypeDTO> listBuiltTypeConst(QueryProjectDTO query);
-    List<ProjectBuiltTypeDTO> listBuiltTypeConstEx(QueryProjectDTO query);
+    List<ProjectPropertyDTO> listBuiltTypeConst(QueryProjectDTO query);
+    List<ProjectPropertyDTO> listBuiltTypeConstEx(QueryProjectDTO query);
 
 
     /**
@@ -122,5 +122,5 @@ public interface ProjectDao extends BaseDao<ProjectEntity> {
      * @param   query 项目查询条件
      * @return  自定义的功能分类列表
      **/
-    List<ProjectBuiltTypeDTO> listBuiltTypeCustom(QueryProjectDTO query);
+    List<ProjectPropertyDTO> listBuiltTypeCustom(QueryProjectDTO query);
 }

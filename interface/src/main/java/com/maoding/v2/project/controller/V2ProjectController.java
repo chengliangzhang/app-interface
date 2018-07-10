@@ -144,20 +144,8 @@ public class V2ProjectController extends BaseWSController {
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean getProjectFunctionList(@RequestBody Map<String, Object> map) {
-        try {
-            List<ProjectBuiltTypeDTO> list = projectService.getProjectBuildType((String)map.get("projectId"));//设计范围
-  //          List<Map<String, String>> list = new ArrayList<Map<String, String>>();
-//            Map<String, String> map1 = null;
-//            for (ProjectBuiltTypeDTO dto : designRangeList) {
-//                map1 = new HashMap<String, String>();
-//                map1.put("designRange", dto.getName());
-//                list.add(map1);
-//            }
-            return ResponseBean.responseSuccess("查询成功").addData("projectFunctionList", list);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseBean.responseError("查询设计范围失败！");
-        }
+        List<ProjectPropertyDTO> list = projectService.getProjectBuildType((String)map.get("projectId"));
+        return ResponseBean.responseSuccess("查询成功").addData("projectFunctionList", list);
     }
 
     /**

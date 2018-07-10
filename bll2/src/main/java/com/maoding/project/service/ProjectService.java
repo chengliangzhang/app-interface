@@ -7,7 +7,6 @@ import com.maoding.org.dto.ProjectUserDTO;
 import com.maoding.project.dto.*;
 import com.maoding.project.entity.ProjectEntity;
 import com.maoding.role.dto.ProjectOperatorDTO;
-import com.maoding.system.dto.DataDictionaryDTO;
 import com.maoding.task.dto.HomeDTO;
 import com.maoding.v2.project.dto.ProjectBaseDataDTO;
 import com.maoding.v2.project.dto.V2ProjectTableDTO;
@@ -133,7 +132,7 @@ public interface ProjectService extends BaseService<ProjectEntity>{
      */
     ProjectOperatorDTO projectNavigationRole(V2ProjectTableDTO project, String currentCompanyId, String accountId, String companyUserId) throws Exception;
 
-    List<ProjectBuiltTypeDTO> getProjectBuildType(String projectId);
+    List<ProjectPropertyDTO> getProjectBuildType(String projectId);
 
     CustomProjectPropertyEditDTO loadProjectCustomFields(ProjectCustomFieldQueryDTO query) throws Exception;
 

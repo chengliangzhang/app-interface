@@ -137,11 +137,11 @@ public class ProjectDaoImpl extends GenericDao<ProjectEntity> implements Project
      * @date 2018/6/25 17:50
      **/
     @Override
-    public List<ProjectBuiltTypeDTO> listBuiltTypeConst(QueryProjectDTO query) {
+    public List<ProjectPropertyDTO> listBuiltTypeConst(QueryProjectDTO query) {
         return this.sqlSession.selectList("ProjectMapper.listBuiltTypeConst", query);
     }
     @Override
-    public List<ProjectBuiltTypeDTO> listBuiltTypeConstEx(QueryProjectDTO query) {
+    public List<ProjectPropertyDTO> listBuiltTypeConstEx(QueryProjectDTO query) {
         return this.sqlSession.selectList("ProjectMapper.listBuiltTypeConstEx", query);
     }
 
@@ -153,7 +153,7 @@ public class ProjectDaoImpl extends GenericDao<ProjectEntity> implements Project
      * @date 2018/6/25 17:53
      **/
     @Override
-    public List<ProjectBuiltTypeDTO> listBuiltTypeCustom(QueryProjectDTO query) {
+    public List<ProjectPropertyDTO> listBuiltTypeCustom(QueryProjectDTO query) {
         return this.sqlSession.selectList("ProjectMapper.listBuiltTypeCustom", query);
     }
 }

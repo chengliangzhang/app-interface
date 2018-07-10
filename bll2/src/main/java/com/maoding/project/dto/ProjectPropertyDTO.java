@@ -2,6 +2,7 @@ package com.maoding.project.dto;
 
 import com.maoding.commonModule.dto.ContentDTO;
 import com.maoding.core.util.BeanUtilsEx;
+import com.maoding.core.util.StringUtils;
 
 /**
  * Created by Chengliang.zhang on 2017/8/14.
@@ -21,54 +22,29 @@ public class ProjectPropertyDTO extends ContentDTO {
     /** 模板内容编号 */
     private String contentId;
     /** 选中状态 */
-    private Boolean isSelected;
+    private String isSelected;
     /** 是否属于模板内容 */
-    private Boolean isTemplate;
-
-    /** 选中状态的字符串形式，0-未选中，1-选中 */
-    private String isSelectedStatus;
-
-    /** 默认功能分类字符串形式，0-不是默认，1-是默认 */
-    private String isTemplateStatus;
-
-    public String getIsSelectedStatus() {
-        return (isSelectedStatus == null) ? toString(getSelected()) : isSelectedStatus;
-    }
-
-    public void setIsSelectedStatus(String isSelectedStatus) {
-        this.isSelectedStatus = isSelectedStatus;
-        setSelected(toBoolean(isSelectedStatus));
-    }
-
-    public String getIsTemplateStatus() {
-        return (isTemplateStatus == null) ? toString(getTemplate()) : isTemplateStatus;
-    }
-
-    public void setIsTemplateStatus(String isTemplateStatus) {
-        this.isTemplateStatus = isTemplateStatus;
-        setTemplate(toBoolean(isTemplateStatus));
-    }
-
+    private String isTemplate;
 
     public ProjectPropertyDTO(){}
     public ProjectPropertyDTO(Object obj){
         BeanUtilsEx.copyProperties(obj,this);
     }
 
-    public Boolean getSelected() {
+    public String getIsSelected() {
         return isSelected;
     }
 
-    public void setSelected(Boolean selected) {
-        isSelected = selected;
+    public void setIsSelected(String isSelected) {
+        this.isSelected = isSelected;
     }
 
-    public Boolean getTemplate() {
+    public String getIsTemplate() {
         return isTemplate;
     }
 
-    public void setTemplate(Boolean template) {
-        isTemplate = template;
+    public void setIsTemplate(String isTemplate) {
+        this.isTemplate = isTemplate;
     }
 
     public String getContentId() {
@@ -123,12 +99,14 @@ public class ProjectPropertyDTO extends ContentDTO {
     public Short getChangeStatus() {
         Short c = changeStatus;
         if (c == null){
-            if (getSelected() == null){
-                c = 0;
-            } else if (getSelected()){
+            if ("1".equals(getIsSelected()) && StringUtils.isEmpty(getId())){
+                c = 1;
+            } else if ("1".equals(getIsSelected()) && !StringUtils.isEmpty(getId())){
                 c = 2;
-            } else {
+            } else if ("0".equals(getIsSelected()) && !StringUtils.isEmpty(getId())){
                 c = -1;
+            } else {
+                c = 0;
             }
         }
         return c;
@@ -136,7 +114,7 @@ public class ProjectPropertyDTO extends ContentDTO {
 
     public void setChangeStatus(Short changeStatus) {
         if ((changeStatus != null) && (changeStatus != 0)){
-            setSelected(changeStatus > 0);
+            setIsSelected((changeStatus > 0) ? "1" : "0");
         }
         this.changeStatus = changeStatus;
     }
