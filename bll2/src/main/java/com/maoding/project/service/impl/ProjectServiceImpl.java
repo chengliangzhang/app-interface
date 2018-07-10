@@ -988,7 +988,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 					String origFunctionId = origFunctionArray[i];
 					if (!StringUtils.isEmpty(origFunctionId)){
 						if (!builtTypeIdStr.toString().contains(origFunctionId)){
-							builtTypeIdStr.append(origFunctionId);
+							builtTypeIdStr.append(origFunctionId).append(",");
 						}
 					}
 				}
