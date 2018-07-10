@@ -168,7 +168,10 @@ public class V2ProjectController extends BaseWSController {
     @RequestMapping("/listProjectStatus")
     @ResponseBody
     public ResponseBean listProjectStatus() {
-        return ResponseBean.responseSuccess("查询成功").addData("statusList",SystemParameters.PROJECT_STATUS);
+        List<ProjectStatusDTO> list = new ArrayList<>();
+        SystemParameters.PROJECT_STATUS.entrySet()
+                .forEach(entry->list.add(new ProjectStatusDTO(entry.getKey(),entry.getValue())));
+        return ResponseBean.responseSuccess("查询成功").addData("statusList",list);
     }
 
 
