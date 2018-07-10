@@ -160,6 +160,18 @@ public class V2ProjectController extends BaseWSController {
         }
     }
 
+    /**
+     * @author  张成亮
+     * @date    2018/7/10
+     * @description     获取可选项目状态列表
+     **/
+    @RequestMapping("/listProjectStatus")
+    @ResponseBody
+    public ResponseBean listProjectStatus() {
+        return ResponseBean.responseSuccess("查询成功").addData("statusList",SystemParameters.PROJECT_STATUS);
+    }
+
+
 
 
 
