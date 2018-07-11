@@ -1276,7 +1276,7 @@ public class V2OrgController extends BaseWSController {
      */
     @RequestMapping(value = "/getUsedPartB", method = RequestMethod.POST)
     @ResponseBody
-//    @AuthorityCheckable
+    @AuthorityCheckable
     public ResponseBean getUsedPartB(@RequestBody ProjectDetailQueryDTO query) throws Exception {
         String companyId = query.getCurrentCompanyId();
         String parentId = companyService.getRootCompanyId(companyId);
