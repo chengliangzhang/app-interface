@@ -566,6 +566,7 @@ public class ProjectSkyDriverServiceImpl extends GenericService<ProjectSkyDriveE
 		List<Map<String,String>> list = new ArrayList<>();
 		attachEntityList.stream().forEach(c->{
 			Map<String,String> data = new HashMap<>();
+			data.put("id",c.getId());
 			data.put("fileName",c.getFileName());
 			data.put("filePath",fastdfsUrl+c.getFileGroup()+"/"+c.getFilePath());
 			list.add(data);
