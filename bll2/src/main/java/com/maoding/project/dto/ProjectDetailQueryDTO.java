@@ -1,5 +1,7 @@
 package com.maoding.project.dto;
 
+import com.maoding.core.base.dto.BaseDTO;
+
 /**
  * 深圳市卯丁技术有限公司
  *
@@ -7,5 +9,5 @@ package com.maoding.project.dto;
  * @date : 2018/7/11
  * @description :
  */
-public class ProjectDetailQueryDTO {
+public class ProjectDetailQueryDTO extends BaseDTO {
 }

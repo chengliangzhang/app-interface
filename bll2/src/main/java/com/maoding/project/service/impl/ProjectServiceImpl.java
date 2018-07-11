@@ -1831,7 +1831,24 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		}
 	}
 
-	private String saveCompanyProperty(CustomProjectPropertyDTO property,Integer seq,String companyId){
+	@Override
+	public List<CustomProjectPropertyDTO> listMeasure(ProjectDetailQueryDTO query) throws Exception {
+		//项目详情
+		ProjectDTO projectDTO = this.getProjectById(query.getId(),query.getCurrentCompanyId(),query.getAccountId());
+		return projectDTO.getProjectPropertyList();
+	}
+
+	@Override
+	public ProjectContractInfoDTO getContractInfo(ProjectDetailQueryDTO query) throws Exception {
+		//项目详情
+		ProjectDTO projectDTO = this.getProjectById(query.getId(),query.getCurrentCompanyId(),query.getAccountId());
+		ProjectContractInfoDTO contractInfo = new ProjectContractInfoDTO();
+		contractInfo.setContractAttachList(projectDTO.getContractAttachList());
+		contractInfo.setProjectDesignContentList(projectDTO.getProjectDesignContentList());
+		return contractInfo;
+	}
+
+	private String saveCompanyProperty(CustomProjectPropertyDTO property, Integer seq, String companyId){
 		CompanyPropertyEntity entity = new CompanyPropertyEntity(property);
 		entity.setCompanyId(companyId);
 		entity.setBeDefault(false);
