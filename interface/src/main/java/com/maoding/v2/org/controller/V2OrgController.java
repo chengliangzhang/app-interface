@@ -11,12 +11,13 @@ import com.maoding.dynamic.service.OrgDynamicService;
 import com.maoding.hxIm.dto.ImGroupQuery;
 import com.maoding.hxIm.service.ImService;
 import com.maoding.org.dto.*;
+import com.maoding.org.entity.CompanyEntity;
 import com.maoding.org.entity.CompanyUserEntity;
 import com.maoding.org.service.*;
 import com.maoding.project.dto.NetFileDTO;
+import com.maoding.project.dto.ProjectDetailQueryDTO;
 import com.maoding.project.service.ProjectSkyDriverService;
 import com.maoding.role.dto.InterfaceGroupAndRoleDTO;
-import com.maoding.role.service.PermissionService;
 import com.maoding.system.annotation.AuthorityCheckable;
 import com.maoding.system.controller.BaseWSController;
 import com.maoding.system.dto.DataDictionaryDTO;
@@ -29,9 +30,9 @@ import com.maoding.user.service.UserAttachService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.ArrayList;
@@ -1267,4 +1268,33 @@ public class V2OrgController extends BaseWSController {
         return ResponseBean.responseSuccess("查询成功").addData("relationData",companyRelationService.getCooperatorData(paraMap));
     }
 
+    /****************常用乙方***********************/
+    /**
+     * 方法描述：常用乙方
+     * 作者：MaoSF
+     * 日期：2016/8/26
+     */
+    @RequestMapping(value = "/getUsedPartB", method = RequestMethod.POST)
+    @ResponseBody
+//    @AuthorityCheckable
+    public ResponseBean getUsedPartB(@RequestBody ProjectDetailQueryDTO query) throws Exception {
+        String companyId = query.getCurrentCompanyId();
+        String parentId = companyService.getRootCompanyId(companyId);
+        List<CompanyEntity> companyEntityList = new ArrayList<>();
+
+        CompanyEntity companyEntity1 = companyService.selectById(companyId);
+        if (!StringUtil.isNullOrEmpty(parentId) && !parentId.equals(companyId)) {
+            CompanyEntity companyEntity = companyService.selectById(parentId);
+            companyEntityList.add(companyEntity);
+        }
+        companyEntityList.add(companyEntity1);
+        List<Object> companyList = new ArrayList<Object>();
+        for (CompanyEntity entity : companyEntityList) {
+            Map<String, String> company = new HashMap<String, String>();
+            company.put("id", entity.getId());
+            company.put("companyName", entity.getCompanyName());
+            companyList.add(company);
+        }
+        return ResponseBean.responseSuccess("查询成功").addData("companyList",companyList);
+    }
 }
