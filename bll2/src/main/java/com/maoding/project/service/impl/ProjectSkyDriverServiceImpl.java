@@ -553,7 +553,7 @@ public class ProjectSkyDriverServiceImpl extends GenericService<ProjectSkyDriveE
 		return null;
 	}
 	/**
-	 * 方法描述：获取组织logo地址(完整的url地址)
+	 * 方法描述：合同附件获取
 	 * 作者：MaoSF
 	 * 日期：2017/6/2
 	 */

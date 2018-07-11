@@ -438,7 +438,7 @@ public class V2ProjectController extends BaseWSController {
         return ResponseBean.responseSuccess("操作成功");
     }
 
-    @RequestMapping(value = "/saveProjectContract ", method = RequestMethod.POST)
+    @RequestMapping(value = "/saveProjectContract", method = RequestMethod.POST)
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean saveProjectContract(@RequestBody ProjectEditDTO dto) throws Exception {
