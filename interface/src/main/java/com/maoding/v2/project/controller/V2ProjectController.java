@@ -229,6 +229,32 @@ public class V2ProjectController extends BaseWSController {
         return ResponseBean.responseSuccess("查询成功").setData(returnMap);
     }
 
+    /**
+     * @author  张成亮
+     * @date    2018/7/11
+     * @description     获取专业信息接口
+     **/
+    @RequestMapping("/listMeasure")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean listMeasure(@RequestBody ProjectDetailQueryDTO query) throws Exception {
+        List<CustomProjectPropertyDTO> list = projectService.listMeasure(query);
+        return ResponseBean.responseSuccess("查询成功").addData("data",list);
+    }
+
+    /**
+     * @author  张成亮
+     * @date    2018/7/11
+     * @description     获取合同信息接口
+     **/
+    @RequestMapping("/getContractInfo")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getContractInfo(@RequestBody ProjectDetailQueryDTO query) throws Exception {
+        ProjectContractInfoDTO contractInfo = projectService.getContractInfo(query);
+        return ResponseBean.responseSuccess("查询成功").addData("data",contractInfo);
+    }
+
 
     /**
      * 方法描述：获取添加项目的基础数据
