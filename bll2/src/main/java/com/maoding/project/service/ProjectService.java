@@ -145,8 +145,8 @@ public interface ProjectService extends BaseService<ProjectEntity>{
     void saveProjectProfessionFields(ProjectPropertyEditDTO query) throws Exception;
 
     /** 获取专业信息列表 */
-    List<CustomProjectPropertyDTO> listMeasure(ProjectDetailQueryDTO query) throws Exception;
+    Map<String,Object> listMeasure(ProjectDetailQueryDTO query) throws Exception;
 
     /** 获取合同信息列表 */
-    ProjectContractInfoDTO getContractInfo(ProjectDetailQueryDTO query) throws Exception;
+    Map<String,Object> getContractInfo(ProjectDetailQueryDTO query) throws Exception;
 }

@@ -424,32 +424,12 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 
 		//项目类型
 		projectDTO.setProjectTypeName(projectEntity.getProjectType());
-//		if(!StringUtil.isNullOrEmpty(projectEntity.getProjectType())){
-//			DataDictionaryEntity data = this.dataDictionaryService.selectById(projectEntity.getProjectType());
-//			if(data!=null){
-//				projectDTO.setProjectTypeName(data.getName());
-//			}
-//		}
-
-		//合同附件
-		projectDTO.setContractAttachList(this.projectSkyDriverService.getProjectContractAttach(id));
-//		ProjectSkyDriveEntity projectSkyDrive = this.projectSkyDriverService.getProjectContractAttach(id);
-//		if(projectSkyDrive!=null){
-//			projectDTO.setFileName(projectSkyDrive.getFileName());
-//			projectDTO.setFilePath(fastdfsUrl+projectSkyDrive.getFileGroup()+"/"+projectSkyDrive.getFilePath());
-//		}
 
 		//项目设计范围
 		List<ProjectDesignRangeEntity> projectDesignRangeEntityList = projectDesignRangeDao.getDesignRangeByProjectId(id);
 		projectDTO.setProjectDesignRangeList(BaseDTO.copyFields(projectDesignRangeEntityList,ProjectDesignRangeDTO.class));
 
-		//项目设计阶段
-		List<ProjectDesignContentDTO> projectDesignContentList = projectDesignContentService.getProjectDesignContentByProjectId(id,companyId);
-		projectDTO.setProjectDesignContentList(projectDesignContentList);
 
-		//填充自定义属性
-		List<CustomProjectPropertyDTO> propertyList = projectPropertyDao.listProperty(id);
-		projectDTO.setProjectPropertyList(propertyList);
 
 		return projectDTO;
 	}
@@ -1832,20 +1812,34 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 	}
 
 	@Override
-	public List<CustomProjectPropertyDTO> listMeasure(ProjectDetailQueryDTO query) throws Exception {
-		//项目详情
-		ProjectDTO projectDTO = this.getProjectById(query.getId(),query.getCurrentCompanyId(),query.getAccountId());
-		return projectDTO.getProjectPropertyList();
+	public Map<String,Object> listMeasure(ProjectDetailQueryDTO query) throws Exception {
+		//自定义属性
+		List<CustomProjectPropertyDTO> propertyList = projectPropertyDao.listProperty(query.getId());
+		//能否编辑
+		int editFlag = this.getProjectEditRole(query.getId(),query.getCurrentCompanyId(),query.getAccountId());
+		//组成map返回（用于使用ResponseBean里的data属性）
+		Map<String,Object> measureMap = new HashMap<>();
+		measureMap.put("editFlag",editFlag);
+		measureMap.put("projectPropertyList",propertyList);
+		return measureMap;
 	}
 
 	@Override
-	public ProjectContractInfoDTO getContractInfo(ProjectDetailQueryDTO query) throws Exception {
-		//项目详情
-		ProjectDTO projectDTO = this.getProjectById(query.getId(),query.getCurrentCompanyId(),query.getAccountId());
-		ProjectContractInfoDTO contractInfo = new ProjectContractInfoDTO();
-		contractInfo.setContractAttachList(projectDTO.getContractAttachList());
-		contractInfo.setProjectDesignContentList(projectDTO.getProjectDesignContentList());
-		return contractInfo;
+	public Map<String,Object> getContractInfo(ProjectDetailQueryDTO query) throws Exception {
+		//合同附件
+		List<Map<String, String>> contractAttachList = projectSkyDriverService.getProjectContractAttach(query.getId());
+		//项目设计阶段
+		List<ProjectDesignContentDTO> designContentList =
+				projectDesignContentService.getProjectDesignContentByProjectId(query.getId(),query.getCurrentCompanyId());
+		//能否编辑
+		int editFlag = this.getProjectEditRole(query.getId(),query.getCurrentCompanyId(),query.getAccountId());
+
+		//组成map返回（用于使用ResponseBean里的data属性）
+		Map<String,Object> contractMap= new HashMap<>();
+		contractMap.put("contractAttachList",contractAttachList);
+		contractMap.put("designContentList",designContentList);
+		contractMap.put("editFlag",editFlag);
+		return contractMap;
 	}
 
 	private String saveCompanyProperty(CustomProjectPropertyDTO property, Integer seq, String companyId){

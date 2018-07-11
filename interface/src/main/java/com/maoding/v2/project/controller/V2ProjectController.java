@@ -144,21 +144,6 @@ public class V2ProjectController extends BaseWSController {
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean getProjectFunctionList(@RequestBody Map<String, Object> map) {
-        return realGetProjectFunctionList(map);
-    }
-
-    /**
-     * @author  张成亮
-     * @date    2018/7/10
-     * @description     获取功能分类
-     **/
-    @RequestMapping("/devGetProjectFunctionList")
-    @ResponseBody
-    public ResponseBean devGetProjectFunctionList(@RequestBody Map<String, Object> map) {
-        return realGetProjectFunctionList(map);
-    }
-
-    private ResponseBean realGetProjectFunctionList(Map<String, Object> map) {
         List<ProjectPropertyDTO> list = projectService.getProjectBuildType((String)map.get("projectId"));
         return ResponseBean.responseSuccess("查询成功").addData("projectFunctionList", list);
     }
@@ -208,22 +193,6 @@ public class V2ProjectController extends BaseWSController {
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean getProject(@RequestBody Map<String, Object> map) throws Exception {
-        return realGetProject(map);
-
-    }
-
-    /**
-     * @author  张成亮
-     * @date    2018/7/9
-     * @description     用于测试获取项目详情接口，正式版应当删除
-     **/
-    @RequestMapping("/devGetProject")
-    @ResponseBody
-    public ResponseBean devGetProject(@RequestBody Map<String, Object> map) throws Exception {
-        return realGetProject(map);
-    }
-
-    private ResponseBean realGetProject(Map<String, Object> map) throws Exception {
         String id = (String) map.get("id");
         Map<String, Object> returnMap = projectService.getProjectDetail(id, map.get("appOrgId").toString(), map.get("accountId").toString());
         return ResponseBean.responseSuccess("查询成功").setData(returnMap);
@@ -238,8 +207,8 @@ public class V2ProjectController extends BaseWSController {
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean listMeasure(@RequestBody ProjectDetailQueryDTO query) throws Exception {
-        List<CustomProjectPropertyDTO> list = projectService.listMeasure(query);
-        return ResponseBean.responseSuccess("查询成功").addData("data",list);
+        Map<String,Object> map = projectService.listMeasure(query);
+        return ResponseBean.responseSuccess("查询成功").addData(map);
     }
 
     /**
@@ -251,8 +220,8 @@ public class V2ProjectController extends BaseWSController {
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean getContractInfo(@RequestBody ProjectDetailQueryDTO query) throws Exception {
-        ProjectContractInfoDTO contractInfo = projectService.getContractInfo(query);
-        return ResponseBean.responseSuccess("查询成功").addData("data",contractInfo);
+        Map<String,Object>  map = projectService.getContractInfo(query);
+        return ResponseBean.responseSuccess("查询成功").addData(map);
     }
 
 
@@ -286,21 +255,6 @@ public class V2ProjectController extends BaseWSController {
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean saveNewProject(@RequestBody ProjectEditDTO dto) throws Exception {
-        return realSaveNewProject(dto);
-    }
-
-    /**
-     * @author  张成亮
-     * @date    2018/7/9
-     * @description     用于测试项目立项接口，正式版应该删除
-     **/
-    @RequestMapping("/devSaveNewProject")
-    @ResponseBody
-    public ResponseBean devSaveNewProject(@RequestBody ProjectEditDTO dto) throws Exception {
-        return realSaveNewProject(dto);
-    }
-
-    private ResponseBean realSaveNewProject(ProjectEditDTO dto) throws Exception {
         dto.setCompanyId(dto.getAppOrgId());
         return this.projectService.saveOrUpdateProjectNew(dto);
     }
