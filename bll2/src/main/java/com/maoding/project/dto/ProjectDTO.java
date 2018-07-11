@@ -11,7 +11,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 深圳市设计同道技术有限公司
@@ -252,7 +251,6 @@ public class ProjectDTO extends BaseDTO {
      */
     private List<ProjectDesignBasisDTO> projectDesignBasisList = new ArrayList<ProjectDesignBasisDTO>();
 
-    private  List<Map<String,String>> contractAttachList = new ArrayList<>();
     /**
      * 合同签订日期
      */
@@ -261,23 +259,10 @@ public class ProjectDTO extends BaseDTO {
     private Date contractDate;
 
     /**
-     * 自定义属性
-     */
-    private List<CustomProjectPropertyDTO> projectPropertyList = new ArrayList<>();
-
-    /**
      * 显示的项目属性（包括功能分类、设计范围、专业信息）
      */
     private List<ProjectPropertyDTO> functionList;
-    private List<ProjectPropertyDTO> measureList;
-    private List<ProjectPropertyDTO> rangeList;
 
-    /**
-     * 更改的项目属性（包括功能分类、设计范围、专业信息）
-     */
-    private List<ProjectPropertyDTO> changedFunctionList;
-    private List<ProjectPropertyDTO> changedMeasureList;
-    private List<ProjectPropertyDTO> changedRangeList;
 
     public List<ProjectPropertyDTO> getFunctionList() {
         return functionList;
@@ -287,45 +272,6 @@ public class ProjectDTO extends BaseDTO {
         this.functionList = functionList;
     }
 
-    public List<ProjectPropertyDTO> getMeasureList() {
-        return measureList;
-    }
-
-    public void setMeasureList(List<ProjectPropertyDTO> measureList) {
-        this.measureList = measureList;
-    }
-
-    public List<ProjectPropertyDTO> getRangeList() {
-        return rangeList;
-    }
-
-    public void setRangeList(List<ProjectPropertyDTO> rangeList) {
-        this.rangeList = rangeList;
-    }
-
-    public List<ProjectPropertyDTO> getChangedFunctionList() {
-        return changedFunctionList;
-    }
-
-    public void setChangedFunctionList(List<ProjectPropertyDTO> changedFunctionList) {
-        this.changedFunctionList = changedFunctionList;
-    }
-
-    public List<ProjectPropertyDTO> getChangedMeasureList() {
-        return changedMeasureList;
-    }
-
-    public void setChangedMeasureList(List<ProjectPropertyDTO> changedMeasureList) {
-        this.changedMeasureList = changedMeasureList;
-    }
-
-    public List<ProjectPropertyDTO> getChangedRangeList() {
-        return changedRangeList;
-    }
-
-    public void setChangedRangeList(List<ProjectPropertyDTO> changedRangeList) {
-        this.changedRangeList = changedRangeList;
-    }
 
     public String getCompanyId() {
         return companyId;
@@ -677,28 +623,12 @@ public class ProjectDTO extends BaseDTO {
         this.projectCreateDate = projectCreateDate;
     }
 
-    public List<CustomProjectPropertyDTO> getProjectPropertyList() {
-        return projectPropertyList;
-    }
-
-    public void setProjectPropertyList(List<CustomProjectPropertyDTO> projectPropertyList) {
-        this.projectPropertyList = projectPropertyList;
-    }
-
     public String getEnterpriseId() {
         return enterpriseId;
     }
 
     public void setEnterpriseId(String enterpriseId) {
         this.enterpriseId = enterpriseId;
-    }
-
-    public List<Map<String, String>> getContractAttachList() {
-        return contractAttachList;
-    }
-
-    public void setContractAttachList(List<Map<String, String>> contractAttachList) {
-        this.contractAttachList = contractAttachList;
     }
 
     public String getProfessionalTypeName() {
