@@ -209,7 +209,7 @@ public class V2ProjectController extends BaseWSController {
     public ResponseBean getProjectMore(@RequestBody ProjectDetailQueryDTO query) throws Exception {
         final String projectDetailKey = "projectDetail"; //项目信息的map关键字
         final String contractAttachKey = "contractAttachList"; //合同信息关键字
-        final String designContentKey = "designContentList"; //设计任务关键字
+        final String designContentKey = "projectDesignContentList"; //设计任务关键字
 
         String projectId = query.getId();
         String companyId = query.getCurrentCompanyId();
