@@ -538,7 +538,7 @@ public class ProjectSkyDriverServiceImpl extends GenericService<ProjectSkyDriveE
 			ProjectSkyDriveEntity projectSkyDrive = new ProjectSkyDriveEntity();
 			projectSkyDrive.setId(StringUtil.buildUUID());
 			projectSkyDrive.setFileName("");
-			projectSkyDrive.setType(7);
+			projectSkyDrive.setType(NetFileType.COMPANY_QR_CODE_ATTACH);
 			projectSkyDrive.setFileGroup(result.substring(0,6));
 			projectSkyDrive.setFilePath(result.substring(7));
 			projectSkyDrive.setCompanyId(companyId);
@@ -553,7 +553,7 @@ public class ProjectSkyDriverServiceImpl extends GenericService<ProjectSkyDriveE
 		return null;
 	}
 	/**
-	 * 方法描述：获取组织logo地址(完整的url地址)
+	 * 方法描述：合同附件获取
 	 * 作者：MaoSF
 	 * 日期：2017/6/2
 	 */

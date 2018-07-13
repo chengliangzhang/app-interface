@@ -1838,7 +1838,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		//组成map返回（用于使用ResponseBean里的data属性）
 		Map<String,Object> contractMap= new HashMap<>();
 		contractMap.put("contractAttachList",contractAttachList);
-		contractMap.put("designContentList",designContentList);
+		contractMap.put("projectDesignContentList",designContentList);
 		contractMap.put("editFlag",editFlag);
 		return contractMap;
 	}
