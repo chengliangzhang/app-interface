@@ -63,6 +63,70 @@ public class V2ProjectTableDTO{
 
     private List<ImGroupDataDTO> groupList = new ArrayList<>();
 
+    /* app要求在列表时返回的新增字段 */
+    /**
+     * 项目类型名称
+     */
+    private String projectTypeName;
+    /**
+     * 企业所属省
+     */
+    private String province;
+
+    /**
+     * 企业所属市
+     */
+    private String city;
+
+    /**
+     *县，区
+     */
+    private String county;
+    /**
+     * 甲方
+     */
+    private String constructCompanyName;
+
+    public String getProjectTypeName() {
+        return projectTypeName;
+    }
+
+    public void setProjectTypeName(String projectTypeName) {
+        this.projectTypeName = projectTypeName;
+    }
+
+    public String getProvince() {
+        return province;
+    }
+
+    public void setProvince(String province) {
+        this.province = province;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getCounty() {
+        return county;
+    }
+
+    public void setCounty(String county) {
+        this.county = county;
+    }
+
+    public String getConstructCompanyName() {
+        return constructCompanyName;
+    }
+
+    public void setConstructCompanyName(String constructCompanyName) {
+        this.constructCompanyName = constructCompanyName;
+    }
+
     public int getFlag() {
         return flag;
     }

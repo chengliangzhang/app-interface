@@ -241,8 +241,24 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		}
 		this.detailProjectsPersonAndDesignStatus(list,(String) param.get("appOrgId"),(String) param.get("accountId"),companyUserEntity.getId());
 
+		if (list.size() > 0){
+			list.forEach(project -> {
+				try {
+					ProjectDTO projectDetail = getProjectById(project.getId(), project.getCompanyId(), accountId);
+					project.setProjectTypeName(projectDetail.getProjectTypeName());
+					project.setProvince(projectDetail.getProvince());
+					project.setCity(projectDetail.getCity());
+					project.setCounty(projectDetail.getCounty());
+					project.setConstructCompanyName(projectDetail.getConstructCompanyName());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			});
+		}
+
 		return list;
 	}
+
 
 
 	/**
