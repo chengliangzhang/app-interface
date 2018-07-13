@@ -538,7 +538,7 @@ public class ProjectSkyDriverServiceImpl extends GenericService<ProjectSkyDriveE
 			ProjectSkyDriveEntity projectSkyDrive = new ProjectSkyDriveEntity();
 			projectSkyDrive.setId(StringUtil.buildUUID());
 			projectSkyDrive.setFileName("");
-			projectSkyDrive.setType(7);
+			projectSkyDrive.setType(NetFileType.COMPANY_QR_CODE_ATTACH);
 			projectSkyDrive.setFileGroup(result.substring(0,6));
 			projectSkyDrive.setFilePath(result.substring(7));
 			projectSkyDrive.setCompanyId(companyId);
