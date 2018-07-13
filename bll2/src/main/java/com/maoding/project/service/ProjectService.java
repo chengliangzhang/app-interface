@@ -149,4 +149,16 @@ public interface ProjectService extends BaseService<ProjectEntity>{
 
     /** 获取合同信息列表 */
     Map<String,Object> getContractInfo(ProjectDetailQueryDTO query) throws Exception;
+
+    /**
+     * @author  张成亮
+     * @date    2018/7/13
+     * @description     获取项目功能分类列表
+     * @param   projectId 项目编号
+     * @param   builtType 项目类型名称
+     * @param   includeAllTemplate 是否包含未选中的设计模板
+     *
+     * @return
+     **/
+    List<ProjectPropertyDTO> listFunction(String projectId,String builtType,boolean includeAllTemplate);
 }
