@@ -200,6 +200,47 @@ public class V2ProjectController extends BaseWSController {
 
     /**
      * @author  张成亮
+     * @date    2018/7/13
+     * @description     获取包含比基本信息更多的项目详细信息
+     **/
+    @RequestMapping("/getProjectMore")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getProjectMore(@RequestBody ProjectDetailQueryDTO query) throws Exception {
+        final String projectDetailKey = "projectDetail"; //项目信息的map关键字
+        final String contractAttachKey = "contractAttachList"; //合同信息关键字
+        final String designContentKey = "designContentList"; //设计任务关键字
+
+        String projectId = query.getId();
+        String companyId = query.getCurrentCompanyId();
+        String accountId = query.getAccountId();
+        Map<String, Object> returnMap = projectService.getProjectDetail(projectId, companyId, accountId);
+
+        //获取基本信息
+        ProjectDetailMoreDTO project = new ProjectDetailMoreDTO(returnMap.get(projectDetailKey));
+
+        //读取功能分类和合同信息
+        //功能分类
+        List<ProjectPropertyDTO> functionList = projectService.listFunction(projectId,project.getBuiltType(),false);
+        //合同信息
+        Map<String,Object>  contractInfo = projectService.getContractInfo(query);
+
+        //设置项目信息
+        //功能分类
+        project.setFunctionList(functionList);
+        if (contractInfo != null){
+            //合同附件
+            project.setContractAttachList((List<Map<String, String>>) contractInfo.get(contractAttachKey));
+            //设计任务
+            project.setProjectDesignContentList((List<ProjectDesignContentDTO>)contractInfo.get(designContentKey));
+        }
+        returnMap.put(projectDetailKey,project);
+
+        return ResponseBean.responseSuccess("查询成功").setData(returnMap);
+    }
+
+    /**
+     * @author  张成亮
      * @date    2018/7/11
      * @description     获取专业信息接口
      **/

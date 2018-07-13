@@ -488,7 +488,7 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		return returnMap;
 	}
 
-	private List<ProjectPropertyDTO> listFunction(String projectId,String builtType,boolean includeAllTemplate){
+	public List<ProjectPropertyDTO> listFunction(String projectId,String builtType,boolean includeAllTemplate){
 		QueryProjectDTO queryProject = new QueryProjectDTO();
 		queryProject.setId(projectId);
 		List<ProjectPropertyDTO> constBuiltTypeList = projectDao.listBuiltTypeConst(queryProject);
