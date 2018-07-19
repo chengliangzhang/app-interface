@@ -5,9 +5,7 @@ import com.maoding.conllaboration.service.CollaborationService;
 import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.core.base.dto.QueryDTO;
 import com.maoding.core.base.service.GenericService;
-import com.maoding.core.bean.AjaxMessage;
 import com.maoding.core.bean.ResponseBean;
-import com.maoding.core.constant.MyTaskRole;
 import com.maoding.core.constant.PermissionConst;
 import com.maoding.core.constant.SystemParameters;
 import com.maoding.core.util.*;
@@ -25,7 +23,6 @@ import com.maoding.org.dao.CompanyDao;
 import com.maoding.org.dao.CompanyRelationAuditDao;
 import com.maoding.org.dao.CompanyUserDao;
 import com.maoding.org.dto.CompanyUserDataDTO;
-import com.maoding.org.dto.CompanyUserTableDTO;
 import com.maoding.org.entity.CompanyEntity;
 import com.maoding.org.entity.CompanyRelationAuditEntity;
 import com.maoding.org.entity.CompanyUserEntity;
@@ -37,13 +34,15 @@ import com.maoding.project.entity.ProjectEntity;
 import com.maoding.project.entity.ProjectProcessNodeEntity;
 import com.maoding.project.service.ProjectProcessService;
 import com.maoding.project.service.ProjectSkyDriverService;
-import com.maoding.projectcost.dao.ProjectCostOperaterDao;
 import com.maoding.projectcost.dao.ProjectCostPaymentDetailDao;
 import com.maoding.projectcost.dao.ProjectCostPointDao;
 import com.maoding.projectcost.dao.ProjectCostPointDetailDao;
 import com.maoding.projectcost.dto.ProjectCostPaymentDetailDTO;
 import com.maoding.projectcost.dto.ProjectCostPointDataForMyTaskDTO;
-import com.maoding.projectcost.entity.*;
+import com.maoding.projectcost.entity.ProjectCostEntity;
+import com.maoding.projectcost.entity.ProjectCostPaymentDetailEntity;
+import com.maoding.projectcost.entity.ProjectCostPointDetailEntity;
+import com.maoding.projectcost.entity.ProjectCostPointEntity;
 import com.maoding.projectcost.service.ProjectCostService;
 import com.maoding.projectmember.dto.ProjectMemberDTO;
 import com.maoding.projectmember.entity.ProjectMemberEntity;
@@ -62,7 +61,6 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 深圳市设计同道技术有限公司
@@ -1749,6 +1747,10 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
             case 15:
             case 22:
                 return "设计负责人";
+            case MyTaskEntity.DELIVER_CONFIRM_FINISH:
+                return "任务负责人";
+            case MyTaskEntity.DELIVER_EXECUTE:
+                return "任务执行人";
             default:
                 return null;
         }
@@ -2318,6 +2320,18 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
                         int day = Math.abs(days);
                         dto.setOverTime((days>=0?((day+1)):day)+"");
                     }
+                }
+                return dto;
+            case MyTaskEntity.DELIVER_CONFIRM_FINISH:
+                dto.setTaskTitle("交付确认 - " + dto.getTaskTitle());
+                if(entity.getDeadline()!=null) {
+                    dto.setEndDate(DateUtils.date2Str(entity.getDeadline(), DateUtils.date_sdf2));
+                }
+                return dto;
+            case MyTaskEntity.DELIVER_EXECUTE:
+                dto.setTaskTitle("交付执行 - " + dto.getTaskTitle());
+                if(entity.getDeadline()!=null) {
+                    dto.setEndDate(DateUtils.date2Str(entity.getDeadline(), DateUtils.date_sdf2));
                 }
                 return dto;
             default:
