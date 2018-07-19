@@ -9,6 +9,8 @@ import com.maoding.core.bean.ResponseBean;
 import com.maoding.core.constant.PermissionConst;
 import com.maoding.core.constant.SystemParameters;
 import com.maoding.core.util.*;
+import com.maoding.deliver.dao.DeliverDao;
+import com.maoding.deliver.entity.DeliverEntity;
 import com.maoding.dynamic.service.DynamicService;
 import com.maoding.financial.dao.ExpMainDao;
 import com.maoding.financial.dto.ExpMainDTO;
@@ -58,6 +60,7 @@ import com.maoding.task.service.ProjectTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -74,6 +77,9 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
 
     @Autowired
     private MyTaskDao myTaskDao;
+
+    @Autowired
+    private DeliverDao deliverDao;
 
     @Autowired
     private CompanyUserDao companyUserDao;
@@ -1173,11 +1179,66 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
                 case 18:
                 case 19:
                     return handleType16(myTaskEntity, result, status, accountId, paidDate);
+                case MyTaskEntity.DELIVER_CONFIRM_FINISH:
+                    handleMyTaskDeliverResponse(myTaskEntity,dto);
+                    return ResponseBean.responseSuccess();
                 default:
                     return ResponseBean.responseError("任务信息错误");
             }
         }
         return null;
+    }
+
+    /**
+     * @author  张成亮
+     * @date    2018/7/18
+     * @description     处理交付负责人任务
+     * @param   myTask 要处理的个人任务
+     * @param   param 处理任务时的参数
+     **/
+    private void handleMyTaskDeliverResponse(MyTaskEntity myTask, HandleMyTaskDTO param){
+        if (isComplete(param)){
+            completeMyTaskDeliverResponse(myTask,param);
+        }
+    }
+
+    //判断处理任务参数是激活还是完成
+    private boolean isComplete(HandleMyTaskDTO param){
+        return "1".equals(param.getStatus());
+    }
+
+    //完成负责人的交付任务
+    private void completeMyTaskDeliverResponse(MyTaskEntity myTask, HandleMyTaskDTO param){
+        //标记此所有任务完成
+        finishMyTask(myTask);
+
+        //如果已经此交付目录没有负责人要从事的交付任务了
+        MyTaskQueryDTO query = new MyTaskQueryDTO();
+        query.setCompanyId(myTask.getCompanyId());
+        query.setTaskId(myTask.getTargetId());
+        List<MyTaskEntity> list = myTaskDao.listByQuery(query);
+        if (ObjectUtils.isEmpty(list)) {
+            //标记交付任务完成
+            DeliverEntity deliver = new DeliverEntity();
+            deliver.setId(myTask.getTargetId());
+            completeMyTaskDeliver(deliver);
+        }
+    }
+
+
+    //完成总的交付任务
+    private void completeMyTaskDeliver(DeliverEntity deliver){
+        //标记交付任务完成
+        deliver.setStatus("1");
+        deliverDao.updateById(deliver);
+
+        //标记所有交付任务的所有子任务完成 （包括所有属于此交付任务的负责人确认任务和执行交付任务，targetId等于此交付任务的id)
+        MyTaskEntity changed = new MyTaskEntity();
+        changed.setStatus("1"); //完成标志
+        MyTaskQueryDTO changedQuery = new MyTaskQueryDTO();
+        changedQuery.setCompanyId(deliver.getCompanyId());
+        changedQuery.setTaskId(deliver.getId());
+        myTaskDao.updateByQuery(changed,changedQuery);
     }
 
     private List<CompanyUserDataDTO> getFinanceUser(String companyId,Integer taskType){

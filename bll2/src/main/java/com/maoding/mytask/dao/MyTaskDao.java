@@ -7,6 +7,7 @@ import com.maoding.mytask.dto.*;
 import com.maoding.mytask.entity.MyTaskEntity;
 import com.maoding.project.dto.ProjectProgressDTO;
 import com.maoding.task.dto.ApproveCount;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Map;
@@ -132,4 +133,22 @@ public interface MyTaskDao extends BaseDao<MyTaskEntity> {
 
     /** 查询个人任务 */
     List<MyTaskDTO> listMyTask(QueryMyTaskDTO query);
+
+    /**
+     * @author  张成亮
+     * @date    2018/7/18
+     * @description     更新个人任务
+     * @param   myTask 要修改的字段，如果为null则不修改
+     * @param   query 要修改的条件
+     **/
+    void updateByQuery(@Param("myTask") MyTaskEntity myTask, @Param("query") MyTaskQueryDTO query);
+
+    /**
+     * @author  张成亮
+     * @date    2018/7/18
+     * @description     查询个人任务
+     * @param   query 查询的条件
+     * @return  个人任务列表
+     **/
+    List<MyTaskEntity> listByQuery(MyTaskQueryDTO query);
 }

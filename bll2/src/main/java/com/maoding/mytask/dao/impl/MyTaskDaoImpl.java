@@ -9,6 +9,7 @@ import com.maoding.project.dto.ProjectProgressDTO;
 import com.maoding.task.dto.ApproveCount;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -180,5 +181,32 @@ public class MyTaskDaoImpl extends GenericDao<MyTaskEntity> implements MyTaskDao
     @Override
     public List<MyTaskDTO> listMyTask(QueryMyTaskDTO query) {
         return this.sqlSession.selectList("GetMyTaskByPageMapper.listMyTask",query);
+    }
+
+    /**
+     * @param myTask 要修改的字段，如果为null则不修改
+     * @param query  要修改的条件
+     * @author 张成亮
+     * @date 2018/7/18
+     * @description 更新个人任务
+     **/
+    @Override
+    public void updateByQuery(MyTaskEntity myTask, MyTaskQueryDTO query) {
+        Map<String,Object> param = new HashMap<>();
+        param.put("myTask",myTask);
+        param.put("query",query);
+        sqlSession.update("MyTaskEntityMapper.updateByQuery",param);
+    }
+
+    /**
+     * @param query 查询的条件
+     * @return 个人任务列表
+     * @author 张成亮
+     * @date 2018/7/18
+     * @description 查询个人任务
+     **/
+    @Override
+    public List<MyTaskEntity> listByQuery(MyTaskQueryDTO query) {
+        return sqlSession.selectList("MyTaskEntityMapper.listByQuery",query);
     }
 }
