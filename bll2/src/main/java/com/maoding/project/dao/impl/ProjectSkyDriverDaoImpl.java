@@ -3,6 +3,7 @@ package com.maoding.project.dao.impl;
 import com.maoding.core.base.dao.GenericDao;
 import com.maoding.project.dao.ProjectSkyDriverDao;
 import com.maoding.project.dto.NetFileDTO;
+import com.maoding.project.dto.ProjectSkyDriverQueryDTO;
 import com.maoding.project.entity.ProjectSkyDriveEntity;
 import com.maoding.v2.project.dto.ProjectSkyDriveListDTO;
 import org.springframework.stereotype.Service;
@@ -116,5 +117,17 @@ public class ProjectSkyDriverDaoImpl extends GenericDao<ProjectSkyDriveEntity> i
     @Override
     public List<ProjectSkyDriveEntity> getDirectoryDTOList(Map<String, Object> map) {
         return this.sqlSession.selectList("ProjectSkyDriveEntityMapper.getDirectoryDTOList", map);
+    }
+
+    /**
+     * @param query 查询条件
+     * @return 文件列表
+     * @author 张成亮
+     * @date 2018/7/19
+     * @description 通用查询文件方法
+     **/
+    @Override
+    public List<ProjectSkyDriveEntity> listEntityByQuery(ProjectSkyDriverQueryDTO query) {
+        return sqlSession.selectList("ProjectSkyDriveEntityMapper.listEntityByQuery", query);
     }
 }

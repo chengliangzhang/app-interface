@@ -16,6 +16,7 @@ import com.maoding.project.dao.ProjectSkyDriverDao;
 import com.maoding.project.dto.FileDTO;
 import com.maoding.project.dto.NetFileDTO;
 import com.maoding.project.dto.ProjectSkyDriveDTO;
+import com.maoding.project.dto.ProjectSkyDriverQueryDTO;
 import com.maoding.project.entity.ProjectEntity;
 import com.maoding.project.entity.ProjectSkyDriveEntity;
 import com.maoding.project.service.ProjectSkyDriverService;
@@ -25,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -687,5 +689,30 @@ public class ProjectSkyDriverServiceImpl extends GenericService<ProjectSkyDriveE
 		map.put("createBy",map.get("accountId"));
 		map.put("companyId",map.get("appOrgId"));
 		return getAttachDataList(map);
+	}
+
+	/**
+	 * @param query 查询条件
+	 * @return 文件列表
+	 * @author 张成亮
+	 * @date 2018/7/19
+	 * @description 通用查询文件方法
+	 **/
+	@Override
+	public List<ProjectSkyDriveEntity> listEntityByQuery(ProjectSkyDriverQueryDTO query) {
+		return projectSkyDriverDao.listEntityByQuery(query);
+	}
+
+	/**
+	 * @param query 查询条件
+	 * @return 文件
+	 * @author 张成亮
+	 * @date 2018/7/19
+	 * @description 查询文件，预期只有一个
+	 **/
+	@Override
+	public ProjectSkyDriveEntity getEntityByQuery(ProjectSkyDriverQueryDTO query) {
+		List<ProjectSkyDriveEntity> list = listEntityByQuery(query);
+		return (ObjectUtils.isEmpty(list)) ? null : list.get(0);
 	}
 }

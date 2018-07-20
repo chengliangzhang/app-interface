@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="DeliverEntityMapper" >
+  <resultMap id="BaseResultMap" type="com.maoding.deliver.entity.DeliverEntity" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="task_title" property="taskTitle" jdbcType="VARCHAR" />
+    <result column="task_type" property="taskType" jdbcType="INTEGER" />
+    <result column="handler_id" property="handlerId" jdbcType="VARCHAR" />
+    <result column="company_id" property="companyId" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="VARCHAR" />
+    <result column="create_date" property="createDate" jdbcType="TIMESTAMP" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="update_date" property="updateDate" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="target_id" property="targetId" jdbcType="VARCHAR" />
+    <result column="param1" property="param1" jdbcType="VARCHAR" />
+    <result column="param2" property="param2" jdbcType="VARCHAR" />
+    <result column="param3" property="param3" jdbcType="VARCHAR" />
+    <result column="param4" property="param4" jdbcType="VARCHAR" />
+    <result column="project_id" property="projectId" jdbcType="VARCHAR" />
+    <result column="task_content" property="taskContent" jdbcType="LONGVARCHAR" />
+    <result column="deadline" property="deadline" jdbcType="DATE" />
+    <result column="complete_date" property="completeDate" jdbcType="DATE"/>
+    <result column="start_date" property="startDate" jdbcType="DATE"/>
+    <result column="send_company_id" property="sendCompanyId" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <sql id="Base_Column_List" >
+    id, task_title, task_content,task_type, handler_id, company_id, status, create_date, create_by,
+    update_date, update_by, target_id, param1, param2, param3, param4, project_id,send_company_id,
+    deadline,complete_date,start_date
+  </sql>
+
+  <!-- 插入交付任务 -->
+  <insert id="insert" parameterType="com.maoding.deliver.entity.DeliverEntity" >
+    insert into md_list_deliver (id, task_title, task_type,
+      handler_id, company_id, status,
+      create_date, create_by, update_date,
+      update_by, target_id, param1,
+      param2, param3, param4,
+      project_id, task_content,send_company_id,deadline,complete_date)
+    values (#{id,jdbcType=VARCHAR}, #{taskTitle,jdbcType=VARCHAR}, #{taskType,jdbcType=INTEGER},
+      #{handlerId,jdbcType=VARCHAR}, #{companyId,jdbcType=VARCHAR}, '0',now(),
+      #{createBy,jdbcType=VARCHAR}, #{updateDate,jdbcType=TIMESTAMP},
+      #{updateBy,jdbcType=VARCHAR}, #{targetId,jdbcType=VARCHAR}, #{param1,jdbcType=VARCHAR},
+      '0', #{param3,jdbcType=VARCHAR}, '0',
+      #{projectId,jdbcType=VARCHAR}, #{taskContent,jdbcType=LONGVARCHAR},
+       #{sendCompanyId,jdbcType=VARCHAR}, #{deadline,jdbcType=DATE}, #{completeDate,jdbcType=DATE})
+  </insert>
+
+  <!-- 根据id进行更新 -->
+  <update id="updateById" parameterType="com.maoding.deliver.entity.DeliverEntity" >
+    update md_list_deliver
+    <set >
+      <if test="taskTitle != null" >
+        task_title = #{taskTitle,jdbcType=VARCHAR},
+      </if>
+      <if test="taskType != null and taskType!=0" >
+        task_type = #{taskType,jdbcType=INTEGER},
+      </if>
+      <if test="handlerId != null" >
+        handler_id = #{handlerId,jdbcType=VARCHAR},
+      </if>
+      <if test="companyId != null" >
+        company_id = #{companyId,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=VARCHAR},
+        <choose>
+          <when test="status != '0'.toString()">
+            complete_date = now(),
+          </when>
+          <otherwise>
+            complete_date = null,
+          </otherwise>
+        </choose>
+      </if>
+      <if test="createDate != null" >
+        create_date = #{createDate,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createBy != null" >
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+      update_date =now(),
+      <if test="updateBy != null" >
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="targetId != null" >
+        target_id = #{targetId,jdbcType=VARCHAR},
+      </if>
+      <if test="param1 != null" >
+        param1 = #{param1,jdbcType=VARCHAR},
+      </if>
+      <if test="param2 != null" >
+        param2 = #{param2,jdbcType=VARCHAR},
+      </if>
+      <if test="param3 != null" >
+        param3 = #{param3,jdbcType=VARCHAR},
+      </if>
+      <if test="param4 != null" >
+        param4 = #{param4,jdbcType=VARCHAR},
+      </if>
+      <if test="projectId != null" >
+        project_id = #{projectId,jdbcType=VARCHAR},
+      </if>
+      <if test="taskContent != null" >
+        task_content = #{taskContent,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="sendCompanyId != null" >
+        send_company_id = #{sendCompanyId,jdbcType=VARCHAR},
+      </if>
+      <if test="deadline != null" >
+        deadline = #{deadline,jdbcType=DATE},
+      </if>
+    </set>
+    where id = #{id,jdbcType=VARCHAR}
+  </update>
+
+  <select id="selectById" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select
+    <include refid="Base_Column_List" />
+    from md_list_deliver
+    where id = #{id,jdbcType=VARCHAR}
+  </select>
+
+  <!-- 交付任务对象（包含负责人） -->
+  <resultMap id="DeliverMap" type="com.maoding.deliver.dto.DeliverDTO">
+    <id column="id" property="id"/>
+    <result column="name" property="name"/>
+    <result column="description" property="description"/>
+    <result column="end_time" property="endTime"/>
+    <result column="create_by" property="createBy"/>
+    <result column="create_by_name" property="createByName"/>
+    <result column="create_date" property="createDate"/>
+    <result column="is_finished" property="isFinished"/>
+    <result column="target_id" property="targetId"/>
+    <collection property="responseList" ofType="com.maoding.deliver.dto.ResponseDTO">
+      <id column="response_id" property="id"/>
+      <result column="response_name" property="name"/>
+      <result column="response_is_finished" property="isFinished"/>
+    </collection>
+  </resultMap>
+
+  <!-- 查询交付任务，包括负责人列表 -->
+  <select id="listDeliver" parameterType="com.maoding.mytask.dto.MyTaskQueryDTO" resultMap="DeliverMap">
+    select
+        deliver_task.id
+        ,deliver_task.task_title as name
+        ,deliver_task.task_content as description
+        ,deliver_task.deadline as end_time
+        ,deliver_task.create_by
+        ,deliver_task.create_date
+        ,if(deliver_task.complete_date is null,'0','1') as is_finished
+        ,deliver_task.target_id
+        ,company_user.id as response_id
+        ,user_response.user_name as response_name
+        ,if(response_task.complete_date is null,'0','1') as response_is_finished
+        ,user_create.user_name as create_by_name
+    from md_list_deliver deliver_task
+        inner join maoding_web_my_task response_task on (response_task.target_id = deliver_task.id and response_task.task_type = 26)
+        inner join maoding_web_company_user company_user on (company_user.id = response_task.handler_id)
+        inner join maoding_web_account user_response on (user_response.id = company_user.user_id)
+        inner join maoding_web_account user_create on (user_create.id = deliver_task.create_by)
+        <if test="taskId != null or nodeId != null">
+          inner join maoding_web_project_sky_drive node on (
+              deliver_task.target_id = node.id
+              <if test="nodeId != null">
+                and node.id = #{nodeId}
+              </if>
+            )
+          <if test="taskId != null">
+            inner join maoding_web_project_task issue_task on (issue_task.id = node.task_id
+              and issue_task.id = #{taskId})
+          </if>
+        </if>
+    where
+        deliver_task.param4 = '0'
+  </select>
+
+  <!-- 删除交付任务，包括所有负责人的确认完成和执行任务 -->
+  <update id="fakeDeleteDeliver" parameterType="com.maoding.core.base.dto.BaseDTO">
+    update md_list_deliver deliver
+    inner join maoding_web_my_task my_task on (my_task.target_id = deliver.id)
+    <set>
+        deliver.param4 = 1,
+        my_task.param4 = 1,
+        deliver.update_date = now(),
+        my_task.update_date = now(),
+        <if test="accountId != null">
+          deliver.update_by = #{accountId},
+          my_task.update_by = #{accountId},
+        </if>
+    </set>
+    where deliver.id = #{id,jdbcType=VARCHAR}
+  </update>
+</mapper>

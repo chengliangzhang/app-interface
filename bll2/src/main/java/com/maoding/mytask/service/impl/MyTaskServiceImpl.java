@@ -3,6 +3,7 @@ package com.maoding.mytask.service.impl;
 import com.maoding.conllaboration.SyncCmd;
 import com.maoding.conllaboration.service.CollaborationService;
 import com.maoding.core.base.dto.BaseDTO;
+import com.maoding.core.base.dto.BaseShowDTO;
 import com.maoding.core.base.dto.QueryDTO;
 import com.maoding.core.base.service.GenericService;
 import com.maoding.core.bean.ResponseBean;
@@ -32,8 +33,10 @@ import com.maoding.org.service.CompanyService;
 import com.maoding.org.service.CompanyUserService;
 import com.maoding.project.dao.ProjectDao;
 import com.maoding.project.dao.ProjectProcessNodeDao;
+import com.maoding.project.dto.ProjectSkyDriverQueryDTO;
 import com.maoding.project.entity.ProjectEntity;
 import com.maoding.project.entity.ProjectProcessNodeEntity;
+import com.maoding.project.entity.ProjectSkyDriveEntity;
 import com.maoding.project.service.ProjectProcessService;
 import com.maoding.project.service.ProjectSkyDriverService;
 import com.maoding.projectcost.dao.ProjectCostPaymentDetailDao;
@@ -1216,12 +1219,15 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
         MyTaskQueryDTO query = new MyTaskQueryDTO();
         query.setCompanyId(myTask.getCompanyId());
         query.setTaskId(myTask.getTargetId());
-        List<MyTaskEntity> list = myTaskDao.listByQuery(query);
-        if (ObjectUtils.isEmpty(list)) {
+        query.setMyTaskType(MyTaskEntity.DELIVER_CONFIRM_FINISH);
+        query.setStatus(0);
+        List<MyTaskEntity> list = myTaskDao.listEntityByQuery(query);
+        if (ObjectUtils.isEmpty(list) && !StringUtils.isEmpty(myTask.getTargetId())) {
             //标记交付任务完成
-            DeliverEntity deliver = new DeliverEntity();
-            deliver.setId(myTask.getTargetId());
-            completeMyTaskDeliver(deliver);
+            DeliverEntity deliver = deliverDao.selectById(myTask.getTargetId());
+            if (deliver != null) {
+                completeMyTaskDeliver(deliver);
+            }
         }
     }
 
@@ -2394,6 +2400,9 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
                 if(entity.getDeadline()!=null) {
                     dto.setEndDate(DateUtils.date2Str(entity.getDeadline(), DateUtils.date_sdf2));
                 }
+                //填充相关目录编号和目录名
+                BaseShowDTO dir = getDirInfo(entity.getTargetId());
+                dto.setTaskMemo(dir.getId() + "," + dir.getName());
                 return dto;
             default:
                 dto.setTaskTitle("");
@@ -2402,6 +2411,28 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
                 dto.setProjectName(projectEntity != null?projectEntity.getProjectName():"");
                 return dto;
         }
+    }
+
+    /**
+     * @author  张成亮
+     * @date    2018/7/19
+     * @description     查找交付任务的相关目录信息
+     * @param   deliverId 交付任务的编号
+     * @return  目录信息
+     **/
+    private BaseShowDTO getDirInfo(String deliverId){
+        BaseShowDTO result = new BaseShowDTO("","");
+        if (!StringUtils.isEmpty(deliverId)) {
+            //查找与交付任务相关的目录
+            ProjectSkyDriverQueryDTO query = new ProjectSkyDriverQueryDTO();
+            query.setDeliverId(deliverId);
+            ProjectSkyDriveEntity dir = projectSkyDriverService.getEntityByQuery(query);
+            if (dir != null) {
+                result.setId(dir.getId());
+                result.setName(dir.getFileName());
+            }
+        }
+        return result;
     }
 
     /**

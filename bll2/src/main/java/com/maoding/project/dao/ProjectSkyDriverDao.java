@@ -3,6 +3,7 @@ package com.maoding.project.dao;
 
 import com.maoding.core.base.dao.BaseDao;
 import com.maoding.project.dto.NetFileDTO;
+import com.maoding.project.dto.ProjectSkyDriverQueryDTO;
 import com.maoding.project.entity.ProjectSkyDriveEntity;
 import com.maoding.v2.project.dto.ProjectSkyDriveListDTO;
 
@@ -88,4 +89,13 @@ public interface ProjectSkyDriverDao extends BaseDao<ProjectSkyDriveEntity> {
      * 查询文件夹顺序
      */
     List<ProjectSkyDriveEntity> getDirectoryDTOList(Map<String, Object> map);
+
+    /**
+     * @author  张成亮
+     * @date    2018/7/19
+     * @description     通用查询文件方法
+     * @param   query 查询条件
+     * @return  文件列表
+     **/
+    List<ProjectSkyDriveEntity> listEntityByQuery(ProjectSkyDriverQueryDTO query);
 }

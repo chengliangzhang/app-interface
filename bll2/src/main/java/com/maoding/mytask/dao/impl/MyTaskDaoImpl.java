@@ -206,7 +206,7 @@ public class MyTaskDaoImpl extends GenericDao<MyTaskEntity> implements MyTaskDao
      * @description 查询个人任务
      **/
     @Override
-    public List<MyTaskEntity> listByQuery(MyTaskQueryDTO query) {
-        return sqlSession.selectList("MyTaskEntityMapper.listByQuery",query);
+    public List<MyTaskEntity> listEntityByQuery(MyTaskQueryDTO query) {
+        return sqlSession.selectList("MyTaskEntityMapper.listEntityByQuery",query);
     }
 }

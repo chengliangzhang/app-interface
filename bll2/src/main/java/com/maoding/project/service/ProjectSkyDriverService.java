@@ -5,12 +5,12 @@ import com.maoding.core.base.service.BaseService;
 import com.maoding.core.bean.ResponseBean;
 import com.maoding.project.dto.NetFileDTO;
 import com.maoding.project.dto.ProjectSkyDriveDTO;
+import com.maoding.project.dto.ProjectSkyDriverQueryDTO;
 import com.maoding.project.entity.ProjectEntity;
 import com.maoding.project.entity.ProjectSkyDriveEntity;
 import com.maoding.task.entity.ProjectTaskEntity;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -151,4 +151,22 @@ public interface ProjectSkyDriverService extends BaseService<ProjectSkyDriveEnti
      * 获取个人文件
      */
     List<FileDataDTO> getPersonalFile(Map<String, Object> map) throws Exception;
+
+    /**
+     * @author  张成亮
+     * @date    2018/7/19
+     * @description     通用查询文件方法
+     * @param   query 查询条件
+     * @return  文件列表
+     **/
+    List<ProjectSkyDriveEntity> listEntityByQuery(ProjectSkyDriverQueryDTO query);
+
+    /**
+     * @author  张成亮
+     * @date    2018/7/19
+     * @description     查询文件，预期只有一个
+     * @param   query 查询条件
+     * @return  文件
+     **/
+    ProjectSkyDriveEntity getEntityByQuery(ProjectSkyDriverQueryDTO query);
 }
