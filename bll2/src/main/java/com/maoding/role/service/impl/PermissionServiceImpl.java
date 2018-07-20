@@ -116,6 +116,7 @@ public class PermissionServiceImpl  extends GenericService<PermissionEntity> imp
 
             }
         }
+        operator.init();
         return operator;
     }
 

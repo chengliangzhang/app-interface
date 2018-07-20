@@ -101,9 +101,9 @@ public class OperatorDTO implements Serializable {
     private int laborHourModule = 1;//工时
     private int calendarModule = 1;//日历
     private int lightTaskModule = 1;//轻量任务
-    private int orgMultipleEdit;//编辑组织信息 包括（创建人员、管理部门、创建分支机构，邀请事业合伙人）
+    private int orgMultipleEdit;// 包括（创建人员、管理部门、创建分支机构，邀请事业合伙人）
 
-    private int orgEdit;//编辑组织信息 包括（管理人员、管理部门、创建分支机构、邀请分支机构、邀请事业合伙人）
+    private int orgEdit;// 包括（管理人员、管理部门、创建分支机构、邀请分支机构、邀请事业合伙人）
     private int roleManager;//权限管理===权限配置
     private int partnerOrgCreate; //创建事业合伙人
     private int projectDocView;//项目文档库入口

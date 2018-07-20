@@ -282,4 +282,6 @@ public interface CompanyService extends BaseService<CompanyEntity>{
 	 */
 	String getFinancialHandleCompanyId(String companyId);
 
+	List<Map<String,String>> getUsedPartB(String companyId);
+
 }

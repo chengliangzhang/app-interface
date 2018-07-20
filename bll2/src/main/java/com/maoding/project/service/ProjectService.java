@@ -56,7 +56,9 @@ public interface ProjectService extends BaseService<ProjectEntity>{
      * 作者：MaoSF
      * 日期：2016/7/28
      */
-    Map<String, Object> getProjectDetail(String id, String companyId, String userId) throws Exception;
+    Map<String, Object> getProjectDetail(ProjectDetailQueryDTO query) throws Exception;
+
+    Map<String, Object> getProjectMore(ProjectDetailQueryDTO query) throws Exception;
 
     /**
      * 方法描述：根据companyId查询所有有效项目(我要报销 选择项目下拉框 )

@@ -1278,23 +1278,6 @@ public class V2OrgController extends BaseWSController {
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean getUsedPartB(@RequestBody ProjectDetailQueryDTO query) throws Exception {
-        String companyId = query.getCurrentCompanyId();
-        String parentId = companyService.getRootCompanyId(companyId);
-        List<CompanyEntity> companyEntityList = new ArrayList<>();
-
-        CompanyEntity companyEntity1 = companyService.selectById(companyId);
-        if (!StringUtil.isNullOrEmpty(parentId) && !parentId.equals(companyId)) {
-            CompanyEntity companyEntity = companyService.selectById(parentId);
-            companyEntityList.add(companyEntity);
-        }
-        companyEntityList.add(companyEntity1);
-        List<Object> companyList = new ArrayList<Object>();
-        for (CompanyEntity entity : companyEntityList) {
-            Map<String, String> company = new HashMap<String, String>();
-            company.put("id", entity.getId());
-            company.put("companyName", entity.getCompanyName());
-            companyList.add(company);
-        }
-        return ResponseBean.responseSuccess("查询成功").addData("companyList",companyList);
+        return ResponseBean.responseSuccess("查询成功").addData("companyList",this.companyService.getUsedPartB(query.getAppOrgId()));
     }
 }

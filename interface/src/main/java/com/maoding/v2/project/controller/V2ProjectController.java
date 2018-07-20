@@ -192,9 +192,8 @@ public class V2ProjectController extends BaseWSController {
     @RequestMapping("/getProject")
     @ResponseBody
     @AuthorityCheckable
-    public ResponseBean getProject(@RequestBody Map<String, Object> map) throws Exception {
-        String id = (String) map.get("id");
-        Map<String, Object> returnMap = projectService.getProjectDetail(id, map.get("appOrgId").toString(), map.get("accountId").toString());
+    public ResponseBean getProject(@RequestBody ProjectDetailQueryDTO query) throws Exception {
+        Map<String, Object> returnMap = projectService.getProjectDetail(query);
         return ResponseBean.responseSuccess("查询成功").setData(returnMap);
     }
 
@@ -207,36 +206,7 @@ public class V2ProjectController extends BaseWSController {
     @ResponseBody
     @AuthorityCheckable
     public ResponseBean getProjectMore(@RequestBody ProjectDetailQueryDTO query) throws Exception {
-        final String projectDetailKey = "projectDetail"; //项目信息的map关键字
-        final String contractAttachKey = "contractAttachList"; //合同信息关键字
-        final String designContentKey = "projectDesignContentList"; //设计任务关键字
-
-        String projectId = query.getId();
-        String companyId = query.getCurrentCompanyId();
-        String accountId = query.getAccountId();
-        Map<String, Object> returnMap = projectService.getProjectDetail(projectId, companyId, accountId);
-
-        //获取基本信息
-        ProjectDetailMoreDTO project = new ProjectDetailMoreDTO(returnMap.get(projectDetailKey));
-
-        //读取功能分类和合同信息
-        //功能分类
-        List<ProjectPropertyDTO> functionList = projectService.listFunction(projectId,project.getBuiltType(),false);
-        //合同信息
-        Map<String,Object>  contractInfo = projectService.getContractInfo(query);
-
-        //设置项目信息
-        //功能分类
-        project.setFunctionList(functionList);
-        if (contractInfo != null){
-            //合同附件
-            project.setContractAttachList((List<Map<String, String>>) contractInfo.get(contractAttachKey));
-            //设计任务
-            project.setProjectDesignContentList((List<ProjectDesignContentDTO>)contractInfo.get(designContentKey));
-        }
-        returnMap.put(projectDetailKey,project);
-
-        return ResponseBean.responseSuccess("查询成功").setData(returnMap);
+        return ResponseBean.responseSuccess("查询成功").setData(this.projectService.getProjectMore(query));
     }
 
     /**

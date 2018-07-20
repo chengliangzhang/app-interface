@@ -16,12 +16,22 @@ public class ProjectDetailMoreDTO extends ProjectDTO {
     /** 合同附件 */
     private List<Map<String, String>> contractAttachList;
 
+    private List<CustomProjectPropertyDTO> projectPropertyList;
+
     public List<Map<String, String>> getContractAttachList() {
         return contractAttachList;
     }
 
     public void setContractAttachList(List<Map<String, String>> contractAttachList) {
         this.contractAttachList = contractAttachList;
+    }
+
+    public List<CustomProjectPropertyDTO> getProjectPropertyList() {
+        return projectPropertyList;
+    }
+
+    public void setProjectPropertyList(List<CustomProjectPropertyDTO> projectPropertyList) {
+        this.projectPropertyList = projectPropertyList;
     }
 
     public ProjectDetailMoreDTO(){}

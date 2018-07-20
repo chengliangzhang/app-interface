@@ -1709,5 +1709,25 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
         }
     }
 
+    @Override
+    public List<Map<String, String>> getUsedPartB(String companyId) {
+        String parentId = this.getRootCompanyId(companyId);
+        List<CompanyEntity> companyEntityList = new ArrayList<>();
+
+        CompanyEntity companyEntity1 = this.selectById(companyId);
+        if (!StringUtil.isNullOrEmpty(parentId) && !parentId.equals(companyId)) {
+            CompanyEntity companyEntity = this.selectById(parentId);
+            companyEntityList.add(companyEntity);
+        }
+        companyEntityList.add(companyEntity1);
+        List<Map<String, String>> companyList = new ArrayList<>();
+        for (CompanyEntity entity : companyEntityList) {
+            Map<String, String> company = new HashMap<String, String>();
+            company.put("id", entity.getId());
+            company.put("companyName", entity.getCompanyName());
+            companyList.add(company);
+        }
+        return companyList;
+    }
 
 }

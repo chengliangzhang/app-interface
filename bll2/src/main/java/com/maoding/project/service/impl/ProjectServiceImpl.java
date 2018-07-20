@@ -457,25 +457,21 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 	 */
 
 	@Override
-	public Map<String, Object> getProjectDetail(String id, String companyId, String userId) throws Exception {
+	public Map<String, Object> getProjectDetail(ProjectDetailQueryDTO query) throws Exception {
+		String projectId = query.getId();
+		String companyId = query.getAppOrgId();
+		String accountId = query.getAccountId();
 		//项目详情
-		ProjectDTO projectDTO= this.getProjectById(id,companyId,userId);
+		ProjectDTO projectDTO= this.getProjectById(projectId,companyId,accountId);
 //		//甲方
 //		List<ProjectConstructDTO> constructList = projectConstructDao.getConstructByCompanyId(companyId);
 		//乙方
-		List<CompanyEntity> companyList =new ArrayList<CompanyEntity>();
-		CompanyEntity companyEntity=companyService.selectById(companyId);
-		String rootId = companyService.getRootCompanyId(companyId);
-		companyList.add(companyEntity);
-		if(!StringUtil.isNullOrEmpty(rootId) && !companyId.equals(rootId)){
-			CompanyEntity parentCompanyEntity = companyService.selectById(rootId);
-			companyList.add(parentCompanyEntity);
-		}
+		List<Map<String,String>> companyList =this.companyService.getUsedPartB(companyId);
 
 		if(!StringUtil.isNullOrEmpty(projectDTO.getCompanyBid()) && !projectDTO.getCompanyBid().equals(projectDTO.getCompanyId())){
 			//乙方经营负责人
 			//获取当前项目在当前团队的经营负责人和项目负责人
-			List<ProjectMemberDTO> managerListPartB = this.projectMemberService.listProjectMemberByParam(id,projectDTO.getCompanyBid(),null,null);
+			List<ProjectMemberDTO> managerListPartB = this.projectMemberService.listProjectMemberByParam(projectId,projectDTO.getCompanyBid(),null,null);
 			for(ProjectMemberDTO managerDTO:managerListPartB){
 				if(managerDTO.getMemberType()==ProjectMemberType.PROJECT_OPERATOR_MANAGER){
 					projectDTO.setPartBManagerId(managerDTO.getCompanyUserId());
@@ -488,8 +484,8 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 			}
 		}
 
-		int editFlag = this.getProjectEditRole(id,companyId,userId);
-
+		//获取编辑权限的标识
+		int editFlag = this.getProjectEditRole(projectId,companyId,accountId);
 		if (projectDTO.getStatus() != null && StringUtil.isEmpty(projectDTO.getStatusName())) {
 			//todo 改为从数据库读取，目前为常量定义
 			projectDTO.setStatusName(SystemParameters.PROJECT_STATUS.get(projectDTO.getStatus()));
@@ -500,7 +496,41 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 		returnMap.put("editFlag",editFlag);
 	//	returnMap.put("constructList",constructList);
 		returnMap.put("companyList",companyList);
-		returnMap.put("operatorManager",this.projectMemberService.getOperatorManagerDTO(id,companyId));
+		//获取经营负责人
+		returnMap.put("operatorManager",this.projectMemberService.getOperatorManagerDTO(projectId,companyId));
+		return returnMap;
+	}
+
+	@Override
+	public  Map<String, Object> getProjectMore(ProjectDetailQueryDTO query) throws Exception {
+		final String projectDetailKey = "projectDetail"; //项目信息的map关键字
+		final String contractAttachKey = "contractAttachList"; //合同信息关键字
+		final String designContentKey = "projectDesignContentList"; //设计任务关键字
+		final String projectPropertyList = "projectPropertyList"; //设计任务关键字
+
+		String projectId = query.getId();
+		Map<String, Object> returnMap = this.getProjectDetail(query);
+		//获取基本信息
+		ProjectDetailMoreDTO project = new ProjectDetailMoreDTO(returnMap.get(projectDetailKey));
+		//读取功能分类和合同信息
+		//功能分类
+		List<ProjectPropertyDTO> functionList = this.listFunction(projectId,project.getBuiltType(),false);
+		//合同信息
+		Map<String,Object>  contractInfo = this.getContractInfo(query);
+		//设置项目信息
+		//功能分类
+		project.setFunctionList(functionList);
+		if (contractInfo != null){
+			//合同附件
+			project.setContractAttachList((List<Map<String, String>>) contractInfo.get(contractAttachKey));
+			//设计任务
+			project.setProjectDesignContentList((List<ProjectDesignContentDTO>)contractInfo.get(designContentKey));
+		}
+		//专业信息
+		List<CustomProjectPropertyDTO> propertyList = projectPropertyDao.listProperty(projectId);
+		project.setProjectPropertyList(propertyList);
+		returnMap.put(projectDetailKey,project);
+		//returnMap.put(projectPropertyList,propertyList);
 		return returnMap;
 	}
 
