@@ -1279,7 +1279,10 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
 
                 .replaceAll("%address%",getValue(dto.getAddress()))
                 .replaceAll("%reason%",getValue(dto.getReason()))
-                .replaceAll("%leaveTypeName%",getValue(dto.getLeaveTypeName()));
+                .replaceAll("%leaveTypeName%",getValue(dto.getLeaveTypeName()))
+                .replaceAll("%responseName%", getValue(dto.getResponseName()))
+                .replaceAll("%deliverName%", getValue(dto.getDeliverName()))
+                ;
 
         return msg;
     }

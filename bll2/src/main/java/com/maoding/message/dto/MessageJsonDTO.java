@@ -58,6 +58,62 @@ public class MessageJsonDTO {
     private String scheduleContent;
     private String reminderTime;
 
+    /**
+     * 发送归档通知
+     */
+    private String deadline;
+
+    private String remarks;
+
+    private String userName;
+
+    /** */
+    /** 交付名称 */
+    private String deliverName;
+    /** 交付负责人名称 */
+    private String responseName;
+
+
+    public String getDeadline() {
+        return deadline;
+    }
+
+    public void setDeadline(String deadline) {
+        this.deadline = deadline;
+    }
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getDeliverName() {
+        return deliverName;
+    }
+
+    public void setDeliverName(String deliverName) {
+        this.deliverName = deliverName;
+    }
+
+    public String getResponseName() {
+        return responseName;
+    }
+
+    public void setResponseName(String responseName) {
+        this.responseName = responseName;
+    }
+
     public String getProjectName() {
         return projectName;
     }
