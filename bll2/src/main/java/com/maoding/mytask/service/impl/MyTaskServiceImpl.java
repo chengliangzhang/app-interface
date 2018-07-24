@@ -1729,6 +1729,7 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
             if(type == 100) { //自定义
                 r =  ResponseBean.responseSuccess().addData("detail", getMyTaskById(id,accountId));
             }
+            if (type == MyTaskEntity.DELIVER_EXECUTE)
             r.addData("status", myTaskEntity.getStatus());
             r.addData("tips", this.getTaskTitle(type));
             r.addData("role", "任务角色：" + getRole(type, myTaskEntity.getTaskContent()));

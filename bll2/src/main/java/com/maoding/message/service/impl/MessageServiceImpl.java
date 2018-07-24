@@ -44,6 +44,7 @@ import com.maoding.project.dao.ProjectDao;
 import com.maoding.project.dao.ProjectProcessNodeDao;
 import com.maoding.project.entity.ProjectEntity;
 import com.maoding.project.entity.ProjectProcessNodeEntity;
+import com.maoding.project.entity.ProjectSkyDriveEntity;
 import com.maoding.project.service.ProjectSkyDriverService;
 import com.maoding.projectcost.dao.ProjectCostPaymentDetailDao;
 import com.maoding.projectcost.dao.ProjectCostPointDao;
@@ -1224,7 +1225,12 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
     private List<MessageDTO> conversionToTemplate(List<MessageDTO> list) throws Exception {
         List<MessageDTO> resultList = new ArrayList<>();
         for (MessageDTO dto : list) {
-            dto.setMessageTitle("");
+            //如果是上传交付文件消息，设置MessageTitle为目录名称，否则设置MessageTitle为空
+            if (isDeleverUpload(dto)){
+                dto.setMessageTitle(getSkyDriveFileName(dto.getTargetId()));
+            } else {
+                dto.setMessageTitle("");
+            }
             dto.setMessageContent(getMessageContent(dto.getMessageContent(),dto.getMessageType(),dto.getId(),dto));
             dto.setIsNotice(SystemParameters.message2.get(Integer.toString(dto.getMessageType())).getType());
             MessageDTO messageDTO =  handleMessageStateForMyTask(dto);
@@ -1234,6 +1240,18 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
         }
         return resultList;
     }
+
+    //判断是否是上传交付文件信息
+    private boolean isDeleverUpload(MessageDTO dto){
+        return SystemParameters.MESSAGE_TYPE_DELIVER_UPLOAD == dto.getMessageType();
+    }
+
+    //获取目录名
+    private String getSkyDriveFileName(String id){
+        ProjectSkyDriveEntity node = projectSkyDriverService.selectById(id);
+        return (node != null) ? node.getFileName() : "";
+    }
+
     private String getMessageContent(String messageContent,Integer messageType,String id,MessageDTO messageDTO) throws Exception{
 
         MessageJsonDTO dto = new MessageJsonDTO();
