@@ -9,6 +9,7 @@ import com.maoding.project.dto.ProjectSkyDriverQueryDTO;
 import com.maoding.project.entity.ProjectEntity;
 import com.maoding.project.entity.ProjectSkyDriveEntity;
 import com.maoding.task.entity.ProjectTaskEntity;
+import com.maoding.v2.project.dto.ProjectSkyDriveListDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -160,6 +161,7 @@ public interface ProjectSkyDriverService extends BaseService<ProjectSkyDriveEnti
      * @return  文件列表
      **/
     List<ProjectSkyDriveEntity> listEntityByQuery(ProjectSkyDriverQueryDTO query);
+    List<ProjectSkyDriveListDTO> listSkyDriver(ProjectSkyDriverQueryDTO query);
 
     /**
      * @author  张成亮

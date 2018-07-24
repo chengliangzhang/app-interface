@@ -98,4 +98,5 @@ public interface ProjectSkyDriverDao extends BaseDao<ProjectSkyDriveEntity> {
      * @return  文件列表
      **/
     List<ProjectSkyDriveEntity> listEntityByQuery(ProjectSkyDriverQueryDTO query);
+    List<ProjectSkyDriveListDTO> listSkyDriver(ProjectSkyDriverQueryDTO query);
 }

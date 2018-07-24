@@ -29,4 +29,5 @@ public class DeliverDaoImpl extends GenericDao<DeliverEntity> implements Deliver
     public List<DeliverDTO> listDeliver(MyTaskQueryDTO query) {
         return sqlSession.selectList("DeliverEntityMapper.listDeliver",query);
     }
+
 }

@@ -18,7 +18,7 @@ public interface DeliverDao extends BaseDao<DeliverEntity> {
     /**
      * @author  张成亮
      * @date    2018/7/18
-     * @description     查询交付任务
+     * @description     使用个人任务查询条件查询交付任务
      * @param   query 交付任务查询条件
      * @return  交付任务列表
      **/

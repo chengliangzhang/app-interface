@@ -703,6 +703,22 @@ public class ProjectSkyDriverServiceImpl extends GenericService<ProjectSkyDriveE
 		return projectSkyDriverDao.listEntityByQuery(query);
 	}
 
+	@Override
+	public List<ProjectSkyDriveListDTO> listSkyDriver(ProjectSkyDriverQueryDTO query) {
+		List<ProjectSkyDriveListDTO> list = projectSkyDriverDao.listSkyDriver(query);
+		if (!ObjectUtils.isEmpty(list)){
+			list.forEach(file -> {
+				if (!StringUtils.isEmpty(file.getFileGroup()) && !StringUtils.isEmpty(file.getFilePath())){
+					file.setFileUrl(fastdfsUrl
+							+ file.getFileGroup()
+							+ "/"
+							+ file.getFilePath());
+				}
+			});
+		}
+		return list;
+	}
+
 	/**
 	 * @param query 查询条件
 	 * @return 文件

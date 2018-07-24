@@ -83,6 +83,17 @@ public class ProjectSkyDriveListDTO{
 
     private boolean childId;
 
+    /** 文件链接地址 */
+    private String fileUrl;
+
+    public String getFileUrl() {
+        return fileUrl;
+    }
+
+    public void setFileUrl(String fileUrl) {
+        this.fileUrl = fileUrl;
+    }
+
     public String getId() {
         return id;
     }

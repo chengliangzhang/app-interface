@@ -130,4 +130,9 @@ public class ProjectSkyDriverDaoImpl extends GenericDao<ProjectSkyDriveEntity> i
     public List<ProjectSkyDriveEntity> listEntityByQuery(ProjectSkyDriverQueryDTO query) {
         return sqlSession.selectList("ProjectSkyDriveEntityMapper.listEntityByQuery", query);
     }
+
+    @Override
+    public List<ProjectSkyDriveListDTO> listSkyDriver(ProjectSkyDriverQueryDTO query) {
+        return sqlSession.selectList("ProjectSkyDriveEntityMapper.listSkyDriver", query);
+    }
 }

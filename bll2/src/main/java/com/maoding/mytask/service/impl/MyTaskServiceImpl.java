@@ -11,6 +11,7 @@ import com.maoding.core.constant.PermissionConst;
 import com.maoding.core.constant.SystemParameters;
 import com.maoding.core.util.*;
 import com.maoding.deliver.dao.DeliverDao;
+import com.maoding.deliver.dto.DeliverDTO;
 import com.maoding.deliver.entity.DeliverEntity;
 import com.maoding.dynamic.service.DynamicService;
 import com.maoding.financial.dao.ExpMainDao;
@@ -60,6 +61,7 @@ import com.maoding.task.dto.ProjectTaskDTO;
 import com.maoding.task.dto.ProjectTaskDetailDTO;
 import com.maoding.task.entity.ProjectTaskEntity;
 import com.maoding.task.service.ProjectTaskService;
+import com.maoding.v2.project.dto.ProjectSkyDriveListDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -1729,13 +1731,36 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
             if(type == 100) { //自定义
                 r =  ResponseBean.responseSuccess().addData("detail", getMyTaskById(id,accountId));
             }
-            if (type == MyTaskEntity.DELIVER_EXECUTE)
+            if (type == MyTaskEntity.DELIVER_CONFIRM_FINISH) {
+                r = ResponseBean.responseSuccess().addData("detail", getDeliverByMyTask(myTaskEntity));
+            }
             r.addData("status", myTaskEntity.getStatus());
             r.addData("tips", this.getTaskTitle(type));
             r.addData("role", "任务角色：" + getRole(type, myTaskEntity.getTaskContent()));
             r.addData("myTaskId",myTaskEntity.getId());
         }
         return r;
+    }
+
+    //获取确认交付任务的详情, 包括交付名称，节点信息，交付说明，截止时间，负责人，相关目录已提交的文件列表（包含文件名，文件上传时间，上传人，文件链接地址）。
+    private DeliverDTO getDeliverByMyTask(MyTaskEntity myTask){
+        //查询交付信息
+        MyTaskQueryDTO deliverQuery = new MyTaskQueryDTO();
+        deliverQuery.setId(myTask.getTargetId());
+        List<DeliverDTO> deliverList = deliverDao.listDeliver(deliverQuery);
+        if (ObjectUtils.isEmpty(deliverList)){
+            return null;
+        }
+        DeliverDTO deliver = deliverList.get(0);
+
+        //查询已交付文件
+        ProjectSkyDriverQueryDTO fileQuery = new ProjectSkyDriverQueryDTO();
+        fileQuery.setPid(deliver.getTargetId());
+        fileQuery.setIsFile("1");
+        List<ProjectSkyDriveListDTO> fileList = projectSkyDriverService.listSkyDriver(fileQuery);
+        deliver.setUploadedList(fileList);
+
+        return deliver;
     }
 
     @Override

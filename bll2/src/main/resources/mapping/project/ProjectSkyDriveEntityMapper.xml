@@ -396,7 +396,7 @@
     </if>
   </select>
 
-  <!-- 通用文件查询 -->
+  <!-- 文件查询，查询结果为记录 -->
   <select id="listEntityByQuery" resultMap="BaseResultMap" parameterType="com.maoding.project.dto.ProjectSkyDriverQueryDTO">
     select sky_drive.*
     from maoding_web_project_sky_drive sky_drive
@@ -408,4 +408,56 @@
         </if>
     where sky_drive.status = '0'
   </select>
+
+  <!-- ProjectSkyDriveListDTO转换器 -->
+  <resultMap id="ProjectSkyDriveMap" type="com.maoding.v2.project.dto.ProjectSkyDriveListDTO">
+    <id column="id" property="id"/>
+    <result column="file_name" property="fileName"/>
+    <result column="upload_date" property="uploadDate"/>
+    <result column="user_name" property="uploadUserName"/>
+    <result column="file_group" property="fileGroup"/>
+    <result column="file_path" property="filePath"/>
+  </resultMap>
+
+  <!-- 文件查询条件实现 -->
+  <sql id="FilterByProjectSkyDriverQuery">
+    <if test="pid != null">
+      <choose>
+        <when test="pid != '-'.toString()">
+          and (sky_drive.pid = #{pid})
+        </when>
+        <otherwise>
+          and (sky_drive.pid is null)
+        </otherwise>
+      </choose>
+    </if>
+    <if test="parentId != null">
+      and (position(#{parentId} in sky_drive.sky_drive_path) > 0)
+    </if>
+    <if test="isFile != null and isFile != '0'.toString()">
+      and ((sky_drive.file_path is not null) and (sky_drive.file_size > 0))
+    </if>
+  </sql>
+
+  <!-- 文件查询，查询结果为ProjectSkyDriveListDTO -->
+  <select id="listSkyDriver" resultMap="ProjectSkyDriveMap" parameterType="com.maoding.project.dto.ProjectSkyDriverQueryDTO">
+    select
+        date_format(ifnull(sky_drive.update_date,sky_drive.create_by),'%Y-%m-%d') as upload_date,
+        account.user_name,
+        sky_drive.*
+    from maoding_web_project_sky_drive sky_drive
+      inner join maoding_web_account account on (
+          account.status = '0'
+          and account.id = ifnull(sky_drive.update_by,sky_drive.create_by)
+      )
+      <if test="deliverId != null">
+        inner join md_list_deliver deliver on (
+          deliver.param4 = 0 and deliver.target_id = sky_drive.id
+          and deliver.id = #{deliverId}
+        )
+      </if>
+    where sky_drive.status = '0'
+      <include refid="FilterByProjectSkyDriverQuery"/>
+  </select>
+
 </mapper>

@@ -2,6 +2,7 @@ package com.maoding.deliver.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.maoding.core.base.dto.BaseShowDTO;
+import com.maoding.v2.project.dto.ProjectSkyDriveListDTO;
 
 import java.util.Date;
 import java.util.List;
@@ -28,8 +29,28 @@ public class DeliverDTO extends BaseShowDTO {
     private Date createDate;
     /** 交付是否已经结束 */
     private String isFinished;
+    /** 交付目录编号 */
+    private String targetId;
     /** 负责人列表 */
     private List<ResponseDTO> responseList;
+    /** 交付目录下的文件 */
+    private List<ProjectSkyDriveListDTO> uploadedList;
+
+    public List<ProjectSkyDriveListDTO> getUploadedList() {
+        return uploadedList;
+    }
+
+    public void setUploadedList(List<ProjectSkyDriveListDTO> uploadedList) {
+        this.uploadedList = uploadedList;
+    }
+
+    public String getTargetId() {
+        return targetId;
+    }
+
+    public void setTargetId(String targetId) {
+        this.targetId = targetId;
+    }
 
     public String getCreateByName() {
         return createByName;
