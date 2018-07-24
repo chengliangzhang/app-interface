@@ -1226,7 +1226,7 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
         List<MessageDTO> resultList = new ArrayList<>();
         for (MessageDTO dto : list) {
             //如果是上传交付文件消息，设置MessageTitle为目录名称，否则设置MessageTitle为空
-            if (isDeleverUpload(dto)){
+            if (isDeliverUpload(dto)){
                 dto.setMessageTitle(getSkyDriveFileName(dto.getTargetId()));
             } else {
                 dto.setMessageTitle("");
@@ -1242,7 +1242,7 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
     }
 
     //判断是否是上传交付文件信息
-    private boolean isDeleverUpload(MessageDTO dto){
+    private boolean isDeliverUpload(MessageDTO dto){
         return SystemParameters.MESSAGE_TYPE_DELIVER_UPLOAD == dto.getMessageType();
     }
 
