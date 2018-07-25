@@ -2421,14 +2421,14 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
                 return dto;
             case MyTaskEntity.DELIVER_CONFIRM_FINISH:
                 dto.setTaskTitle("交付确认");
-                dto.setTaskContent(dto.getTaskTitle());
+                dto.setTaskContent(entity.getTaskTitle());
                 if(entity.getDeadline()!=null) {
                     dto.setEndDate(DateUtils.date2Str(entity.getDeadline(), DateUtils.date_sdf2));
                 }
                 return dto;
             case MyTaskEntity.DELIVER_EXECUTE:
                 dto.setTaskTitle("交付执行");
-                dto.setTaskContent(dto.getTaskTitle());
+                dto.setTaskContent(entity.getTaskTitle());
                 if(entity.getDeadline()!=null) {
                     dto.setEndDate(DateUtils.date2Str(entity.getDeadline(), DateUtils.date_sdf2));
                 }
