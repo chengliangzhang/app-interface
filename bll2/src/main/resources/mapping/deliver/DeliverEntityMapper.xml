@@ -137,11 +137,12 @@
     <result column="issue_id" property="issueId"/>
     <collection property="responseList" ofType="com.maoding.deliver.dto.ResponseDTO">
       <id column="response_id" property="id"/>
-      <result column="response_name" property="name"/>
-      <result column="response_company_user_name" property="companyUserName"/>
+      <result column="response_name" property="accountName"/>
+      <result column="response_company_user_name" property="userName"/>
       <result column="response_user_id" property="userId"/>
-      <result column="response_user_name" property="userName"/>
-      <result column="response_cell_phone" property="cellPhone"/>
+      <result column="response_cell_phone" property="cellphone"/>
+      <result column="response_email" property="email"/>
+      <result column="response_email" property="email"/>
       <result column="response_file_full_path" property="fileFullPath"/>
       <result column="response_is_finished" property="isFinished"/>
     </collection>
@@ -163,11 +164,39 @@
         ,company_user.user_name as response_name
         ,company_user.user_name as response_company_user_name
         ,company_user.user_id as response_user_id
-        ,user_response.user_name as response_user_name
         ,user_response.cellphone as response_cell_phone
+        ,user_response.email as response_email
         ,if(response_task.complete_date is null,'0','1') as response_is_finished
         ,user_create.user_name as create_by_name
         ,concat(response_attach.file_group,'/',response_attach.attach_path) as response_file_full_path
+        ,group_concat(
+          distinct (
+          case `project_role_list`.`member_type`
+          WHEN 0 THEN
+          '立项人'
+          WHEN 1 THEN
+          '经营负责人'
+          WHEN 2 THEN
+          '设计负责人'
+          WHEN 3 THEN
+          '任务负责人'
+          WHEN 4 THEN
+          '设计人'
+          WHEN 5 THEN
+          '校对人'
+          WHEN 6 THEN
+          '审核人'
+          WHEN 7 THEN
+          '经营助理'
+          WHEN 8 THEN
+          '设计助理'
+          ELSE
+          ''
+          END
+          )
+      ORDER BY
+      `project_role_list`.`member_type` ASC SEPARATOR '/'
+      ) AS `title`
     from md_list_deliver deliver_task
         inner join maoding_web_my_task response_task on (response_task.target_id = deliver_task.id and response_task.task_type = 26)
         inner join maoding_web_company_user company_user on (company_user.id = response_task.handler_id)
@@ -184,12 +213,16 @@
             and issue_task.id = #{taskId}
           )
         </if>
-        left join maoding_web_user_attach response_attach on (
-            response_attach.attach_type = 5
-            and response_attach.user_id = user_response.id
-        )
-    where
-        deliver_task.param4 = '0'
+      inner join maoding_web_project_member member_list on (
+          member_list.deleted = 0
+          and member_list.account_id = account_list.id
+      )
+      left join maoding_web_user_attach response_attach on (
+      response_attach.attach_type = 5
+      and response_attach.user_id = user_response.id
+      )
+      where
+      deliver_task.param4 = '0'
   </select>
 
   <!-- 删除交付任务，包括所有负责人的确认完成和执行任务 -->
