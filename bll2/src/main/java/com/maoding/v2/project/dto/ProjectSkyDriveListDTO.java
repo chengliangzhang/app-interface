@@ -84,14 +84,14 @@ public class ProjectSkyDriveListDTO{
     private boolean childId;
 
     /** 文件链接地址 */
-    private String fileUrl;
+    private String fileFullPath;
 
-    public String getFileUrl() {
-        return fileUrl;
+    public String getFileFullPath() {
+        return fileFullPath;
     }
 
-    public void setFileUrl(String fileUrl) {
-        this.fileUrl = fileUrl;
+    public void setFileFullPath(String fileFullPath) {
+        this.fileFullPath = fileFullPath;
     }
 
     public String getId() {

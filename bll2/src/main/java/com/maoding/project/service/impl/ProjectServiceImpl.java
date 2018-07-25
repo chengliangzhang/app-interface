@@ -491,6 +491,18 @@ public class ProjectServiceImpl extends GenericService<ProjectEntity>  implement
 			projectDTO.setStatusName(SystemParameters.PROJECT_STATUS.get(projectDTO.getStatus()));
 		}
 
+		//获取项目权限
+		V2ProjectTableDTO project = new V2ProjectTableDTO();
+		project.setId(projectDTO.getId());
+		project.setCreateBy(projectDTO.getCreateBy());
+		project.setCompanyId(projectDTO.getCompanyId());
+		project.setCompanyBid(projectDTO.getCompanyBid());
+		CompanyUserEntity companyUser = companyUserDao.getCompanyUserByUserIdAndCompanyId(accountId,companyId);
+		if (companyUser != null){
+			ProjectOperatorDTO operator = projectNavigationRole(project,companyId,accountId,companyUser.getId());
+			projectDTO.setProjectOperator(operator);
+		}
+
 		Map<String, Object> returnMap = new HashMap<String,Object>();
 		returnMap.put("projectDetail",projectDTO);
 		returnMap.put("editFlag",editFlag);

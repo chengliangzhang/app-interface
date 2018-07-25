@@ -709,7 +709,7 @@ public class ProjectSkyDriverServiceImpl extends GenericService<ProjectSkyDriveE
 		if (!ObjectUtils.isEmpty(list)){
 			list.forEach(file -> {
 				if (!StringUtils.isEmpty(file.getFileGroup()) && !StringUtils.isEmpty(file.getFilePath())){
-					file.setFileUrl(fastdfsUrl
+					file.setFileFullPath(fastdfsUrl
 							+ file.getFileGroup()
 							+ "/"
 							+ file.getFilePath());

@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class DeliverDTO extends BaseShowDTO {
     /** 交付说明 */
-    private String description;
+    private String remark;
     /** 截止时间 */
     @JsonFormat(pattern="yyyy-MM-dd",timezone = "GMT+8")
     private Date endTime;
@@ -31,6 +31,11 @@ public class DeliverDTO extends BaseShowDTO {
     private String isFinished;
     /** 交付目录编号 */
     private String targetId;
+    /** 签发任务编号 */
+    private String issueId;
+    /** 签发任务路径 */
+    private String issuePath;
+
     /** 负责人列表 */
     private List<ResponseDTO> responseList;
     /** 交付目录下的文件 */
@@ -38,6 +43,22 @@ public class DeliverDTO extends BaseShowDTO {
 
     public List<ProjectSkyDriveListDTO> getUploadedList() {
         return uploadedList;
+    }
+
+    public String getIssuePath() {
+        return issuePath;
+    }
+
+    public void setIssuePath(String issuePath) {
+        this.issuePath = issuePath;
+    }
+
+    public String getIssueId() {
+        return issueId;
+    }
+
+    public void setIssueId(String issueId) {
+        this.issueId = issueId;
     }
 
     public void setUploadedList(List<ProjectSkyDriveListDTO> uploadedList) {
@@ -60,12 +81,12 @@ public class DeliverDTO extends BaseShowDTO {
         this.createByName = createByName;
     }
 
-    public String getDescription() {
-        return description;
+    public String getRemark() {
+        return remark;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 
     public Date getEndTime() {

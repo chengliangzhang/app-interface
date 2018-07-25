@@ -5,6 +5,7 @@ import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.core.constant.SystemParameters;
 import com.maoding.core.util.DateUtils;
 import com.maoding.core.util.StringUtil;
+import com.maoding.role.dto.ProjectOperatorDTO;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
@@ -263,6 +264,16 @@ public class ProjectDTO extends BaseDTO {
      */
     private List<ProjectPropertyDTO> functionList;
 
+    /** 项目操作权限 */
+    private ProjectOperatorDTO projectOperator;
+
+    public ProjectOperatorDTO getProjectOperator() {
+        return projectOperator;
+    }
+
+    public void setProjectOperator(ProjectOperatorDTO projectOperator) {
+        this.projectOperator = projectOperator;
+    }
 
     public List<ProjectPropertyDTO> getFunctionList() {
         return functionList;

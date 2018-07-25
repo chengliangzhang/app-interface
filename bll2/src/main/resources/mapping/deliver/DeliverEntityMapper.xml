@@ -127,16 +127,22 @@
   <resultMap id="DeliverMap" type="com.maoding.deliver.dto.DeliverDTO">
     <id column="id" property="id"/>
     <result column="name" property="name"/>
-    <result column="description" property="description"/>
+    <result column="description" property="remark"/>
     <result column="end_time" property="endTime"/>
     <result column="create_by" property="createBy"/>
     <result column="create_by_name" property="createByName"/>
     <result column="create_date" property="createDate"/>
     <result column="is_finished" property="isFinished"/>
-    <result column="target_id" property="targetId"/>
+    <result column="node_id" property="targetId"/>
+    <result column="issue_id" property="issueId"/>
     <collection property="responseList" ofType="com.maoding.deliver.dto.ResponseDTO">
       <id column="response_id" property="id"/>
       <result column="response_name" property="name"/>
+      <result column="response_company_user_name" property="companyUserName"/>
+      <result column="response_user_id" property="userId"/>
+      <result column="response_user_name" property="userName"/>
+      <result column="response_cell_phone" property="cellPhone"/>
+      <result column="response_file_full_path" property="fileFullPath"/>
       <result column="response_is_finished" property="isFinished"/>
     </collection>
   </resultMap>
@@ -151,28 +157,37 @@
         ,deliver_task.create_by
         ,deliver_task.create_date
         ,if(deliver_task.complete_date is null,'0','1') as is_finished
-        ,deliver_task.target_id
+        ,deliver_task.target_id as node_id
+        ,node.task_id as issue_id
         ,company_user.id as response_id
-        ,user_response.user_name as response_name
+        ,company_user.user_name as response_name
+        ,company_user.user_name as response_company_user_name
+        ,company_user.user_id as response_user_id
+        ,user_response.user_name as response_user_name
+        ,user_response.cellphone as response_cell_phone
         ,if(response_task.complete_date is null,'0','1') as response_is_finished
         ,user_create.user_name as create_by_name
+        ,concat(response_attach.file_group,'/',response_attach.attach_path) as response_file_full_path
     from md_list_deliver deliver_task
         inner join maoding_web_my_task response_task on (response_task.target_id = deliver_task.id and response_task.task_type = 26)
         inner join maoding_web_company_user company_user on (company_user.id = response_task.handler_id)
         inner join maoding_web_account user_response on (user_response.id = company_user.user_id)
         inner join maoding_web_account user_create on (user_create.id = deliver_task.create_by)
-        <if test="taskId != null or nodeId != null">
-          inner join maoding_web_project_sky_drive node on (
-              deliver_task.target_id = node.id
-              <if test="nodeId != null">
-                and node.id = #{nodeId}
-              </if>
-            )
-          <if test="taskId != null">
-            inner join maoding_web_project_task issue_task on (issue_task.id = node.task_id
-              and issue_task.id = #{taskId})
-          </if>
+        inner join maoding_web_project_sky_drive node on (
+            deliver_task.target_id = node.id
+            <if test="nodeId != null">
+              and node.id = #{nodeId}
+            </if>
+        )
+        <if test="taskId != null">
+          inner join maoding_web_project_task issue_task on (issue_task.id = node.task_id
+            and issue_task.id = #{taskId}
+          )
         </if>
+        left join maoding_web_user_attach response_attach on (
+            response_attach.attach_type = 5
+            and response_attach.user_id = user_response.id
+        )
     where
         deliver_task.param4 = '0'
   </select>

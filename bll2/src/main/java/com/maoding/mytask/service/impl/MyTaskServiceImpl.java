@@ -13,6 +13,7 @@ import com.maoding.core.util.*;
 import com.maoding.deliver.dao.DeliverDao;
 import com.maoding.deliver.dto.DeliverDTO;
 import com.maoding.deliver.entity.DeliverEntity;
+import com.maoding.deliver.service.DeliverService;
 import com.maoding.dynamic.service.DynamicService;
 import com.maoding.financial.dao.ExpMainDao;
 import com.maoding.financial.dto.ExpMainDTO;
@@ -85,6 +86,9 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
 
     @Autowired
     private DeliverDao deliverDao;
+
+    @Autowired
+    private DeliverService deliverService;
 
     @Autowired
     private CompanyUserDao companyUserDao;
@@ -1747,7 +1751,7 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
         //查询交付信息
         MyTaskQueryDTO deliverQuery = new MyTaskQueryDTO();
         deliverQuery.setId(myTask.getTargetId());
-        List<DeliverDTO> deliverList = deliverDao.listDeliver(deliverQuery);
+        List<DeliverDTO> deliverList = deliverService.listDeliver(deliverQuery);
         if (ObjectUtils.isEmpty(deliverList)){
             return null;
         }
