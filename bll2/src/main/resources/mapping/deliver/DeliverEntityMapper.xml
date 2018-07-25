@@ -137,14 +137,15 @@
     <result column="issue_id" property="issueId"/>
     <collection property="responseList" ofType="com.maoding.deliver.dto.ResponseDTO">
       <id column="response_id" property="id"/>
-      <result column="response_name" property="accountName"/>
       <result column="response_company_user_name" property="userName"/>
       <result column="response_user_id" property="userId"/>
       <result column="response_cell_phone" property="cellphone"/>
+      <result column="response_user_name" property="accountName"/>
       <result column="response_email" property="email"/>
-      <result column="response_email" property="email"/>
-      <result column="response_file_full_path" property="fileFullPath"/>
       <result column="response_is_finished" property="isFinished"/>
+      <result column="response_file_full_path" property="fileFullPath"/>
+      <result column="response_company_alias_name" property="companyName"/>
+      <result column="response_title" property="title"/>
     </collection>
   </resultMap>
 
@@ -158,45 +159,35 @@
         ,deliver_task.create_by
         ,deliver_task.create_date
         ,if(deliver_task.complete_date is null,'0','1') as is_finished
+        ,user_create.user_name as create_by_name
         ,deliver_task.target_id as node_id
         ,node.task_id as issue_id
-        ,company_user.id as response_id
-        ,company_user.user_name as response_name
+        ,response_task.handler_id as response_id
         ,company_user.user_name as response_company_user_name
         ,company_user.user_id as response_user_id
         ,user_response.cellphone as response_cell_phone
+        ,user_response.user_name as response_user_name
         ,user_response.email as response_email
         ,if(response_task.complete_date is null,'0','1') as response_is_finished
-        ,user_create.user_name as create_by_name
         ,concat(response_attach.file_group,'/',response_attach.attach_path) as response_file_full_path
+        ,if(partner_list.nick_name is null or partner_list.nick_name='',
+            company_list.company_name,partner_list.nick_name) as response_company_alias_name
         ,group_concat(
-          distinct (
-          case `project_role_list`.`member_type`
-          WHEN 0 THEN
-          '立项人'
-          WHEN 1 THEN
-          '经营负责人'
-          WHEN 2 THEN
-          '设计负责人'
-          WHEN 3 THEN
-          '任务负责人'
-          WHEN 4 THEN
-          '设计人'
-          WHEN 5 THEN
-          '校对人'
-          WHEN 6 THEN
-          '审核人'
-          WHEN 7 THEN
-          '经营助理'
-          WHEN 8 THEN
-          '设计助理'
-          ELSE
-          ''
-          END
-          )
-      ORDER BY
-      `project_role_list`.`member_type` ASC SEPARATOR '/'
-      ) AS `title`
+            distinct
+            (case member_list.member_type
+                when 0 then '立项人'
+                when 1 then '经营负责人'
+                when 2 then '设计负责人'
+                when 3 then '任务负责人'
+                when 4 then '设计人'
+                when 5 then '校对人'
+                when 6 then '审核人'
+                when 7 then '经营助理'
+                when 8 then '设计助理'
+                else ''
+            end) order by member_list.member_type asc
+            separator '/'
+        ) as `response_title`
     from md_list_deliver deliver_task
         inner join maoding_web_my_task response_task on (response_task.target_id = deliver_task.id and response_task.task_type = 26)
         inner join maoding_web_company_user company_user on (company_user.id = response_task.handler_id)
@@ -215,11 +206,18 @@
         </if>
       inner join maoding_web_project_member member_list on (
           member_list.deleted = 0
-          and member_list.account_id = account_list.id
+          and member_list.account_id = company_user.user_id
+      )
+      inner JOIN maoding_web_company company_list on (
+          company_list.id = deliver_task.company_id
       )
       left join maoding_web_user_attach response_attach on (
-      response_attach.attach_type = 5
-      and response_attach.user_id = user_response.id
+          response_attach.attach_type = 5
+          and response_attach.user_id = user_response.id
+      )
+      left join maoding_web_business_partner partner_list on (
+          partner_list.type = 3
+          and partner_list.id = deliver_task.company_id
       )
       where
       deliver_task.param4 = '0'
