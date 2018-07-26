@@ -149,6 +149,13 @@
     </collection>
   </resultMap>
 
+  <!-- 查询交付任务的过滤器 -->
+  <sql id="FilterByMyTaskQuery">
+    <if test="id != null">
+        and (deliver_task.id = #{id})
+    </if>
+  </sql>
+
   <!-- 查询交付任务，包括负责人列表 -->
   <select id="listDeliver" parameterType="com.maoding.mytask.dto.MyTaskQueryDTO" resultMap="DeliverMap">
     select
@@ -220,7 +227,8 @@
           and partner_list.id = deliver_task.company_id
       )
       where
-      deliver_task.param4 = '0'
+          deliver_task.param4 = '0'
+          <include refid="FilterByMyTaskQuery"/>
   </select>
 
   <!-- 删除交付任务，包括所有负责人的确认完成和执行任务 -->
