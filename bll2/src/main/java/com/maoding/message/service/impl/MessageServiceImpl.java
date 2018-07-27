@@ -1196,6 +1196,11 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
                         }
                     }
                     return audit;
+                case SystemParameters.MESSAGE_TYPE_DELIVER_CONFIRM:
+                    map.put("taskType",MyTaskEntity.DELIVER_CONFIRM_FINISH);
+                    map.put("id",m.getTargetId());
+                    map.remove("targetId");
+                    break;
                 default:
                     return null;
             }

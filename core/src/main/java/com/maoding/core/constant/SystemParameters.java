@@ -554,7 +554,7 @@ public interface SystemParameters {
 			put(String.format("%d",MESSAGE_TYPE_710),new MessageTemplate( "你的会议“%scheduleContent%”即将开始，点击查看详情。",1));
 
 			put(String.format("%d", MESSAGE_TYPE_FILING_NOTICE),new MessageTemplate( "请大家于%startTime1%日进行%projectName%系统的归档，归档人员名单“%toNodeName%”。备注：%remarks%",1));
-			put(String.format("%d", MESSAGE_TYPE_DELIVER_CONFIRM),new MessageTemplate( "%sendUserName% 发起了 %deliverName% 交付任务，并将你设置为任务负责人，截止时间：%endTime1%，请你确认。",1));
+			put(String.format("%d", MESSAGE_TYPE_DELIVER_CONFIRM),new MessageTemplate( "%sendUserName% 发起了 %deliverName% 交付任务，并将你设置为任务负责人，截止时间：%endTime1%，请你确认。",0));
 			put(String.format("%d", MESSAGE_TYPE_DELIVER_UPLOAD),new MessageTemplate( "%sendUserName% 发起了 %deliverName% 交付任务，任务负责人为 %responseName% ; 截止时间为：%endTime1%，请您提交交付文件。",1));
 
 			put(String.format("%d", MESSAGE_TYPE_901),new MessageTemplate( "%sendUserName% 给你安排了“%taskName%”任务，内容：%scheduleContent%，开始时间：%startTime1%，截止时间：%endTime1%，点击查看详情。",0));
