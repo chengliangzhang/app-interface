@@ -106,6 +106,11 @@ public class ProjectTaskDTO{
     private String completeDate;
 
     /**
+     * 完成情况
+     */
+    private String completion;
+
+    /**
      *共多少天
      */
     private int allDay;
@@ -254,6 +259,14 @@ public class ProjectTaskDTO{
 
     public void setCompleteDate(String completeDate) {
         this.completeDate = completeDate;
+    }
+
+    public String getCompletion() {
+        return completion;
+    }
+
+    public void setCompletion(String completion) {
+        this.completion = completion;
     }
 
     public int getAllDay() {

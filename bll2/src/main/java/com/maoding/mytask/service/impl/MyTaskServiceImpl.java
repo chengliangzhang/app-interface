@@ -1171,7 +1171,7 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
                 case 3:
                     return handleType1(myTaskEntity, status, accountId);
                 case 13:
-                    return handleType13(myTaskEntity, status, accountId);
+                    return handleType13(myTaskEntity, status, accountId,dto.getResult(),dto.getPaidDate());
                 case 4:
                 case 6:
                     return handleType4(myTaskEntity, result, accountId);
@@ -1372,9 +1372,9 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
      * @param:
      * @return:
      */
-    private ResponseBean handleType13(MyTaskEntity myTask, String status, String accountId) throws Exception {
+    private ResponseBean handleType13(MyTaskEntity myTask, String status, String accountId,String result,String paidDate) throws Exception {
         if ("1".equals(status)) { //如果是完成
-            ResponseBean responseBean = this.projectTaskService.completeProductTask(myTask.getProjectId(), myTask.getTargetId(), myTask.getCompanyId(), accountId);
+            ResponseBean responseBean = this.projectTaskService.completeProductTask(myTask.getProjectId(), myTask.getTargetId(), myTask.getCompanyId(), accountId,result,paidDate);
             if (responseBean != null && "0".equals(responseBean.getError())) {
                 //处理我的任务
                 this.finishMyTask(myTask.getId());
@@ -1989,6 +1989,8 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
         ProjectTaskEntity targetTask = new ProjectTaskEntity();
         BeanUtilsEx.copyProperties(task, targetTask);
         targetTask.setCompleteDate(null);
+        //设置情况为null
+        targetTask.setCompletion(null);
         //保存项目动态
         dynamicService.addDynamic(task, targetTask, companyUser.getCompanyId(), companyUser.getUserId());
 

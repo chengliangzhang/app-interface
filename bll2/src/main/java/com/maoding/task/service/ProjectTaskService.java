@@ -1,6 +1,5 @@
 package com.maoding.task.service;
 
-import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.core.base.service.BaseService;
 import com.maoding.core.bean.ResponseBean;
 import com.maoding.task.dto.*;
@@ -217,7 +216,7 @@ public interface ProjectTaskService extends BaseService<ProjectTaskEntity>{
      * 作者：MaoSF
      * 日期：2017/3/12
      */
-    ResponseBean completeProductTask(String projectId, String taskId, String companyId, String accountId) throws Exception;
+    ResponseBean completeProductTask(String projectId, String taskId, String companyId, String accountId,String result,String paidDate) throws Exception;
 
     /**
      * 方法描述：对象信息复制（用于数据记录更新的时候，不存在被修改的记录，则产生一条永不修改的记录数据）

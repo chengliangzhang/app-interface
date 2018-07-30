@@ -101,6 +101,18 @@ public class ProjectTaskEntity extends BaseEntity {
      * 结束状态：0=未开始，1=已完成，2=已终止
      */
     private Integer endStatus;
+    /**
+     * 完成情况
+     */
+    private String completion;
+
+    public String getCompletion() {
+        return completion;
+    }
+
+    public void setCompletion(String completion) {
+        this.completion = completion;
+    }
 
     public String getCompanyId() {
         return companyId;

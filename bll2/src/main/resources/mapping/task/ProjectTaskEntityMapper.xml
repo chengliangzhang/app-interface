@@ -196,6 +196,9 @@
       <if test="endStatus != null" >
         end_status = #{endStatus,jdbcType=INTEGER},
       </if>
+      <if test="completion != null" >
+        completion = #{completion,jdbcType=VARCHAR},
+      </if>
     </set>
     where id = #{id,jdbcType=VARCHAR}
   </update>
@@ -443,7 +446,7 @@
 
   <update id="resetTaskCompleteStatus" parameterType="java.lang.String" >
     update maoding_web_project_task
-    set complete_date=null
+    set complete_date=null,end_status = 0,completion=null
     <where>
       id = #{taskId}
       and task_status='0'

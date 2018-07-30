@@ -2845,7 +2845,7 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
      * @param accountId
      */
     @Override
-    public ResponseBean completeProductTask(String projectId, String taskId, String companyId, String accountId) throws Exception {
+    public ResponseBean completeProductTask(String projectId, String taskId, String companyId, String accountId, String result,String paidDate) throws Exception {
         ProjectTaskEntity projectTaskEntity = this.projectTaskDao.selectById(taskId);
         if (projectTaskEntity == null) {
             return ResponseBean.responseError("操作失败");
@@ -2883,7 +2883,8 @@ public class ProjectTaskServiceImpl extends GenericService<ProjectTaskEntity> im
             ProjectTaskEntity originTask = new ProjectTaskEntity();
             BeanUtilsEx.copyProperties(projectTaskEntity, originTask);
             projectTaskEntity.setEndStatus(1);
-            projectTaskEntity.setCompleteDate(DateUtils.getDate());
+			projectTaskEntity.setCompletion(result);
+            projectTaskEntity.setCompleteDate(StringUtil.isNullOrEmpty(paidDate)?DateUtils.getDate():DateUtils.str2Date(paidDate));
             this.projectTaskDao.updateById(projectTaskEntity);
 
             //生成项目动态

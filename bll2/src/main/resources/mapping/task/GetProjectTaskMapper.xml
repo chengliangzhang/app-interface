@@ -24,6 +24,7 @@
       <result column="task_remark" property="taskRemark" jdbcType="VARCHAR" />
       <result column="be_modify_id" property="beModifyId" jdbcType="VARCHAR" />
       <result column="task_status" property="taskStatus" jdbcType="VARCHAR" />
+      <result column="completion" property="completion" jdbcType="VARCHAR" />
   </resultMap>
 
     <resultMap id="BaseResultMap2" type="com.maoding.task.dto.ProjectTaskDTO" extends="BaseResultMap">
@@ -115,7 +116,7 @@
     <!-- 根据id查询 -->
     <select id="getProjectTaskById" parameterType="java.util.Map" resultMap="BaseResultMap2">
         select a.id ,a.task_pid,a.project_id,a.task_level,a.company_id,a.task_type,a.task_name,a.task_path,
-        a.is_operater_task,a.complete_date,a.org_id,a.task_remark, a.start_time, a.end_time,
+        a.is_operater_task,a.complete_date,a.org_id,a.task_remark, a.start_time, a.end_time,a.completion,
        (select d.depart_name from maoding_web_depart d where d.id = a.org_id) depart_name,
          a.is_operater_task  as isRootTask
         FROM maoding_web_project_task a
