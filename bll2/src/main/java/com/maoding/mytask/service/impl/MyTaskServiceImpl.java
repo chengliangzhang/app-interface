@@ -1396,7 +1396,7 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
             if (data == 0) {
                 return ResponseBean.responseSuccess("操作成功");
             }
-            return ResponseBean.responseSuccess(" 激活失败，请稍后再试");
+            return ResponseBean.responseError("激活失败，请稍后再试");
         }
     }
 
@@ -1422,7 +1422,7 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
             if (data == 0) {
                 return ResponseBean.responseSuccess("操作成功");
             }
-            return ResponseBean.responseSuccess("激活失败，请稍后再试");
+            return ResponseBean.responseError("激活失败，请稍后再试");
         }
     }
 
