@@ -84,6 +84,11 @@ public interface ExpMainDao  extends BaseDao<ExpMainEntity> {
      */
     public ExpMainDTO getByMainIdForMyTask(String mainId);
 
+    /**
+     * 根据关联项获取审批单
+     */
+    ExpMainDTO getExpMainByRelationId(String relationId);
+
     /**********************************************v2******************************************/
 
     /**
@@ -147,4 +152,7 @@ public interface ExpMainDao  extends BaseDao<ExpMainEntity> {
      * 我申请的（报销，费用申请，请假，出差）统计
      */
     TotalDTO getMyApplyData(QueryAuditDTO query);
+
+
+
 }

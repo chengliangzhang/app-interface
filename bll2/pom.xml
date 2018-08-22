@@ -21,6 +21,11 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.designplus</groupId>
+            <artifactId>activiti</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- 单元测试 -->
         <dependency>
             <groupId>junit</groupId>
@@ -284,6 +289,11 @@
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.designplus</groupId>
+            <artifactId>activiti</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

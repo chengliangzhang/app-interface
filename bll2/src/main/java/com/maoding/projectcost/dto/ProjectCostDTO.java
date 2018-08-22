@@ -14,6 +14,7 @@ import java.util.Date;
  */
 public class ProjectCostDTO extends BaseDTO {
 
+    private String operateCompanyId;
     /**
      * 项目id
      */
@@ -151,6 +152,14 @@ public class ProjectCostDTO extends BaseDTO {
 
     public String getFlag() {
         return flag;
+    }
+
+    public String getOperateCompanyId() {
+        return operateCompanyId;
+    }
+
+    public void setOperateCompanyId(String operateCompanyId) {
+        this.operateCompanyId = operateCompanyId;
     }
 
     public void setFlag(String flag) {

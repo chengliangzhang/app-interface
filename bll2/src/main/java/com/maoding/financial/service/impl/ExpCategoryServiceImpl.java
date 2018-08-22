@@ -260,15 +260,15 @@ public class ExpCategoryServiceImpl extends GenericDao<ExpCategoryEntity> implem
             map.put("companyUserId",u.getId());
         }
         //如果没有参加任何项目的情况下，去掉“直接项目成本”
-        List<ProjectDTO> list =  this.projectService.getProjectListByCompanyId(map);
-        if(CollectionUtils.isEmpty(list)){
-            for(ExpTypeDTO dto:expTypes){
-                if("直接项目成本".equals(dto.getParent().getName())){
-                    expTypes.remove(dto);
-                    return expTypes;
-                }
-            }
-        }
+//        List<ProjectDTO> list =  this.projectService.getProjectListByCompanyId(map);
+//        if(CollectionUtils.isEmpty(list)){
+//            for(ExpTypeDTO dto:expTypes){
+//                if("直接项目成本".equals(dto.getParent().getName())){
+//                    expTypes.remove(dto);
+//                    return expTypes;
+//                }
+//            }
+//        }
         return expTypes;
     }
 

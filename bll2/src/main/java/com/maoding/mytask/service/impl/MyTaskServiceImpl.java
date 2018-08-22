@@ -6,7 +6,9 @@ import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.core.base.dto.BaseShowDTO;
 import com.maoding.core.base.dto.QueryDTO;
 import com.maoding.core.base.service.GenericService;
+import com.maoding.core.bean.AjaxMessage;
 import com.maoding.core.bean.ResponseBean;
+import com.maoding.core.constant.CompanyBillType;
 import com.maoding.core.constant.PermissionConst;
 import com.maoding.core.constant.SystemParameters;
 import com.maoding.core.util.*;
@@ -18,6 +20,7 @@ import com.maoding.dynamic.service.DynamicService;
 import com.maoding.financial.dao.ExpMainDao;
 import com.maoding.financial.dto.ExpMainDTO;
 import com.maoding.financial.service.ExpMainService;
+import com.maoding.invoice.dto.InvoiceEditDTO;
 import com.maoding.message.entity.MessageEntity;
 import com.maoding.message.service.MessageService;
 import com.maoding.mytask.dao.MyTaskDao;
@@ -713,25 +716,18 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
      * 方法描述：技术审查费付款确认，合作技术费付款确认（taskType=4 or 6）
      * 作者：MaoSF
      * 日期：2017/3/6
-     *
-     * @param targetId
-     * @param taskType
-     * @param companyId
-     * @param:
-     * @return:
      */
     @Override
     public ResponseBean saveMyTask(String targetId, int taskType, String companyId, String createBy,String currentCompanyId) throws Exception {
-        ProjectCostPaymentDetailEntity detailEntity = this.projectCostPaymentDetailDao.selectById(targetId);
+        ProjectCostPointDetailEntity detailEntity = this.projectCostPointDetailDao.selectById(targetId);
         if (detailEntity != null) {
             if (taskType == 4 || taskType == 6) {
                 this.saveMyTaskFor4Or6(targetId, taskType, companyId, detailEntity.getProjectId(), createBy,currentCompanyId);
             }
 
-            if (taskType == 10 || taskType == 20 || taskType == 21) {
+            if (taskType == 10 || taskType == 20 || taskType == 21 || taskType >= 29 && taskType<=33) {
                 this.saveMyTask(targetId, companyId, taskType, null, detailEntity.getProjectId(), createBy,currentCompanyId);
             }
-
         }
         return null;
     }
@@ -787,20 +783,6 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
         String type = getFinanceCode(taskType);
         companyId = companyService.getFinancialHandleCompanyId(companyId);
         List<CompanyUserDataDTO> companyUserList = getFinanceUser(companyId,taskType);;
-//        if(taskType==SystemParameters.TECHNICAL_REVIEW_FEE_FOR_PAY
-//                || taskType==SystemParameters.COOPERATIVE_DESIGN_FEE_FOR_PAY
-//                || taskType==SystemParameters.OTHER_FEE_FOR_PAY){
-//            companyUserList = this.companyUserService.getFinancialManager(companyId);
-//            type = MyTaskRole.FINANCE_PAY;
-//        }
-//        if(taskType==SystemParameters.CONTRACT_FEE_PAYMENT_CONFIRM
-//                || taskType==SystemParameters.TECHNICAL_REVIEW_FEE_FOR_PAID
-//                || taskType==SystemParameters.COOPERATIVE_DESIGN_FEE_FOR_PAID
-//                || taskType==SystemParameters.OTHER_FEE_FOR_PAID){
-//            companyUserList = this.companyUserService.getFinancialManagerForReceive(companyId);
-//            type = MyTaskRole.FINANCE_RECEIVE;
-//        }
-
         MyTaskEntity taskEntity = this.getMyTaskEntity(targetId, taskType);
         //插入空的数据
         taskEntity.setId(StringUtil.buildUUID());
@@ -887,12 +869,17 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
             case 5:
             case 6:
             case 7:
+            case 29:
                 return taskEntity4(targetId);
             case 8:
             case 9:
             case 10:
             case 20:
             case 21:
+            case 30:
+            case 31:
+            case 32:
+            case 33:
                 return taskEntity8(targetId);
             case 11:
             case 23:
@@ -1182,12 +1169,18 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
                 case 10:
                 case 20:
                 case 21:
+                case 30:
+                case 31:
+                case 32:
+                case 33:
                     return handleType10(myTaskEntity, result, status, accountId, paidDate);
                 case 16:
                 case 17:
                 case 18:
                 case 19:
                     return handleType16(myTaskEntity, result, status, accountId, paidDate);
+                case 29:
+                    return handleType29(myTaskEntity, dto);
                 case MyTaskEntity.DELIVER_CONFIRM_FINISH:
                     handleMyTaskDeliverResponse(myTaskEntity,dto);
                     return ResponseBean.responseSuccess();
@@ -1269,6 +1262,13 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
                 return companyUserService.getFinancialManagerReceiveForCooperation(companyId);
             case SystemParameters.OTHER_FEE_FOR_PAID:
                 return companyUserService.getFinancialManagerReceiveForOther(companyId);
+            case SystemParameters.TECHNICAL_REVIEW_FEE_FOR_PAID_2:
+            case SystemParameters.COOPERATIVE_DESIGN_FEE_FOR_PAID_2:
+            case SystemParameters.INVOICE_FINN_IN_FOR_PAID:
+                return companyUserService.getFinancialManagerForReceive(companyId);
+            case SystemParameters.TECHNICAL_REVIEW_FEE_FOR_PAY_2:
+            case SystemParameters.COOPERATIVE_DESIGN_FEE_FOR_PAY_2:
+                return companyUserService.getFinancialManagerForPay(companyId);
             default:return null;
         }
     }
@@ -1281,6 +1281,9 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
                 return "1";
             case SystemParameters.OTHER_FEE_FOR_PAY:
                 return "1";
+            case SystemParameters.TECHNICAL_REVIEW_FEE_FOR_PAY_2:
+            case SystemParameters.COOPERATIVE_DESIGN_FEE_FOR_PAY_2:
+                return "1";
             case SystemParameters.CONTRACT_FEE_PAYMENT_CONFIRM:
                 return "2";
             case SystemParameters.TECHNICAL_REVIEW_FEE_FOR_PAID:
@@ -1288,6 +1291,9 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
             case SystemParameters.COOPERATIVE_DESIGN_FEE_FOR_PAID:
                 return "2";
             case SystemParameters.OTHER_FEE_FOR_PAID:
+            case SystemParameters.INVOICE_FINN_IN_FOR_PAID:
+            case SystemParameters.TECHNICAL_REVIEW_FEE_FOR_PAID_2:
+            case SystemParameters.COOPERATIVE_DESIGN_FEE_FOR_PAID_2:
                 return "2";
             default:return null;
         }
@@ -1444,6 +1450,7 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
         detailDTO.setAccountId(accountId);
         detailDTO.setCurrentCompanyId(myTask.getCompanyId());
         detailDTO.setTaskType(myTask.getTaskType());
+        detailDTO.setOperateFlag(3);//经营负责人操作
         ResponseBean responseBean = this.projectCostService.saveCostPaymentDetail(detailDTO);
         if ("1".equals(responseBean.getError())) {//如果失败，则返回
             return responseBean;
@@ -1526,10 +1533,14 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
         //新增记录,调用
         ProjectCostPaymentDetailDTO detailDTO = new ProjectCostPaymentDetailDTO();
         detailDTO.setPointDetailId(myTask.getTargetId());
-        if (null != myTask && myTask.getTaskType() == SystemParameters.OTHER_FEE_FOR_PAY) {//其他费用－付款
+        if (null != myTask && (myTask.getTaskType() == SystemParameters.OTHER_FEE_FOR_PAY
+                || myTask.getTaskType()==SystemParameters.TECHNICAL_REVIEW_FEE_FOR_PAY_2
+                || myTask.getTaskType()==SystemParameters.COOPERATIVE_DESIGN_FEE_FOR_PAY_2)) {//其他费用－付款
             detailDTO.setPayDate(paidDate);
+            detailDTO.setOperateFlag(CompanyBillType.DIRECTION_PAYER);
         } else {
             detailDTO.setPaidDate(paidDate);
+            detailDTO.setOperateFlag(CompanyBillType.DIRECTION_PAYEE);
         }
         detailDTO.setCurrentCompanyUserId(handler.getId());
         detailDTO.setFee(new BigDecimal(result));
@@ -1572,9 +1583,11 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
         detailDTO.setCurrentCompanyUserId(handler.getId());
         if (myTask.getTaskType() == 16 || myTask.getTaskType() == 18) {
             detailDTO.setPayDate(paidDate);
+            detailDTO.setOperateFlag(CompanyBillType.DIRECTION_PAYEE);
         }
         if (myTask.getTaskType() == 17 || myTask.getTaskType() == 19) {
             detailDTO.setPaidDate(paidDate);
+            detailDTO.setOperateFlag(CompanyBillType.DIRECTION_PAYER);//付款
         }
         detailDTO.setProjectId(myTask.getProjectId());
         detailDTO.setCurrentCompanyId(myTask.getCompanyId());
@@ -1590,6 +1603,38 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
         this.finishMyTask(myTask);
         return ResponseBean.responseSuccess("操作成功");
 
+    }
+
+    /**
+     * 方法描述：财务到款确认 type=29（财务发票信息确认）
+     * 作者：MaoSF
+     * 日期：2017/1/17
+     */
+    private ResponseBean handleType29(MyTaskEntity myTask, HandleMyTaskDTO dto) throws Exception {
+        String accountId = dto.getAccountId();
+        //验证身份
+        ResponseBean ajaxMessage = validateIdentity(myTask,accountId);
+        if(ajaxMessage!=null){
+            return ajaxMessage;
+        }
+        CompanyUserEntity handler = companyUserDao.getCompanyUserByUserIdAndCompanyId(accountId,myTask.getCompanyId());
+        if(handler==null){
+            return ResponseBean.responseError("参数错误");
+        }
+        //todo 暂时不处理 等web端处理好了，再处理此处
+        InvoiceEditDTO invoiceEditDTO = dto.getInvoiceData();
+        invoiceEditDTO.setPointDetailId(myTask.getTargetId());
+        invoiceEditDTO.setCurrentCompanyUserId(handler.getId());
+        invoiceEditDTO.setCurrentCompanyId(myTask.getCompanyId());
+        invoiceEditDTO.setAccountId(accountId);
+        ajaxMessage = this.projectCostService.saveCostPointDetailForInvoice(invoiceEditDTO);
+        if ("1".equals(ajaxMessage.getError())) {//如果失败，则返回
+            return ajaxMessage;
+        }
+        //2.处理我的任务
+        myTask.setHandlerId(handler.getId());
+        this.finishMyTask(myTask);
+        return ResponseBean.responseSuccess("操作成功");
     }
 
     /**
@@ -2366,7 +2411,22 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
                 if(StringUtil.isNullOrEmpty(dto.getTaskTitle())) {
                     dto.setTaskTitle("合同回款·" + projectEntity.getProjectName());
                 }
-
+            case 30: //"合同回款 - 确认到账金额及日期";
+                if(StringUtil.isNullOrEmpty(dto.getTaskTitle())) {
+                    dto.setTaskTitle("技术审查费·" + projectEntity.getProjectName());
+                }
+            case 31: //"合同回款 - 确认到账金额及日期";
+                if(StringUtil.isNullOrEmpty(dto.getTaskTitle())) {
+                    dto.setTaskTitle("技术审查费·" + projectEntity.getProjectName());
+                }
+            case 32: //"合同回款 - 确认到账金额及日期";
+                if(StringUtil.isNullOrEmpty(dto.getTaskTitle())) {
+                    dto.setTaskTitle("合作设计费·" + projectEntity.getProjectName());
+                }
+            case 33: //"合同回款 - 确认到账金额及日期";
+                if(StringUtil.isNullOrEmpty(dto.getTaskTitle())) {
+                    dto.setTaskTitle("合作设计费·" + projectEntity.getProjectName());
+                }
             case 20: //"其他费用 - 确认付款金额及日期";
                 if(StringUtil.isNullOrEmpty(dto.getTaskTitle())) {
                     dto.setTaskTitle("其他费用·" + projectEntity.getProjectName());
@@ -2410,6 +2470,13 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
                 dto.setProjectName(projectEntity.getProjectName());
 //                dto.setUnPayFee(dataDTO.getUnpaid());
 //                dto.setPlanFee(dataDTO.getPaymentFee());
+                return dto;
+
+            case 29: //财务发票确认;
+                dto.setTaskTitle("发票确认·" + projectEntity.getProjectName());
+                dto.setTaskMemo(this.projectCostPointDao.getPointNameByDetailId(entity.getTargetId()));
+              //  dto.setTaskContent(StringUtil.toNumberStr6(paymentFee.getFee().doubleValue()));
+                dto.setProjectName(projectEntity.getProjectName());
                 return dto;
             case 100:
                 if(entity.getDeadline()!=null){

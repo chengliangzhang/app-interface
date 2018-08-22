@@ -2,6 +2,9 @@ package com.maoding.system.aop;
 
 import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.core.util.StringUtil;
+import com.maoding.exception.CustomException;
+import com.maoding.org.dao.CompanyUserDao;
+import com.maoding.org.entity.CompanyUserEntity;
 import com.maoding.system.controller.BaseWSController;
 import com.maoding.version.dao.InterfaceVersionDao;
 import com.maoding.version.entity.InterfaceVersionEntity;
@@ -37,6 +40,9 @@ public class AuthorityCheckableAOP {
 	@Autowired
 	private InterfaceVersionDao interfaceVersionDao;
 
+	@Autowired
+	private CompanyUserDao companyUserDao;
+
 	//@Pointcut("execution(@com.maoding.system.annotation.AuthorityCheckable * com.maoding.*.controller.*.*(..))")
 	@Pointcut("@annotation(com.maoding.system.annotation.AuthorityCheckable)")
 	public void _check_ws_authority(){}
@@ -48,16 +54,25 @@ public class AuthorityCheckableAOP {
 		boolean passable=false;
 		Object arg0=call.getArgs()[0];
 		Integer interfaceVersion = 0;
+		String accountId = null;
+		String appOrgId = null;
 		if(arg0 instanceof Map){
 			Map<String, Object>param=(Map<String, Object>) arg0;
 			String version = (String)param.get("interfaceVersion");
 			interfaceVersion = Integer.parseInt(version==null?"0":version);
+			accountId = (String) param.get("accountId");
+			appOrgId = (String) param.get("appOrgId");
+			((Map) arg0).put("currentCompanyUserId",this.getCompanyUserId(accountId,appOrgId));
 			passable =bc.checkToken((String) param.get("accountId"),(String) param.get("token"),(String) param.get("platform"),(String) param.get("IMEI"));
 		}else if(arg0 instanceof BaseDTO){
+			accountId = ((BaseDTO) arg0).getAccountId();
+			appOrgId = ((BaseDTO) arg0).getAppOrgId();
 			BaseDTO param=(BaseDTO) arg0;
+			((BaseDTO) arg0).setCurrentCompanyUserId(this.getCompanyUserId(accountId,appOrgId));
 			interfaceVersion = param.getInterfaceVersion();
 			passable =bc.checkToken(param.getAccountId(),param.getToken(),param.getPlatform(),param.getIMEI());
 		}
+
 
 		//判断版本号是否匹配当前接口的版本号，如果app前端传递的
 		if(!isSuitableVersion(call,interfaceVersion)){
@@ -73,6 +88,16 @@ public class AuthorityCheckableAOP {
 		}
 	}
 
+	private String getCompanyUserId(String accountId,String companyId) {
+		if(!StringUtil.isNullOrEmpty(companyId)){
+			CompanyUserEntity u = companyUserDao.getCompanyUserByUserIdAndCompanyId(accountId,companyId);
+			if(u==null){
+				throw new CustomException("权限拦截中----》参数错误");
+			}
+			return u.getId();
+		}
+		return null;
+	}
 
 	/**
 	 * 判断当前版本号是否是合适的版本号，app端的interfaceVersion>=后台的版本号，则可行，否则不可使用

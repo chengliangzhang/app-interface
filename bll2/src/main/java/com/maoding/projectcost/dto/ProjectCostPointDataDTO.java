@@ -17,17 +17,9 @@ public class ProjectCostPointDataDTO {
     private String id;
 
     /**
-     * 任务id（只有从任务自动产生的节点才有taskId）
-     */
-    private String taskId;
-
-    /**
      * 项目id
      */
     private String projectId;
-
-
-    private String status;
 
     /**
      * 回款节点描述
@@ -111,13 +103,6 @@ public class ProjectCostPointDataDTO {
         this.projectId = projectId;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
 
     public String getFeeDescription() {
         return feeDescription;
@@ -189,14 +174,6 @@ public class ProjectCostPointDataDTO {
 
     public void setPointDetailList(List<ProjectCostPointDetailDataDTO> pointDetailList) {
         this.pointDetailList = pointDetailList;
-    }
-
-    public String getTaskId() {
-        return taskId;
-    }
-
-    public void setTaskId(String taskId) {
-        this.taskId = taskId;
     }
 
     public BigDecimal getTotalFee() {

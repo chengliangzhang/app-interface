@@ -58,4 +58,15 @@ public class RelationRecordServiceImpl extends NewBaseService implements Relatio
         }
         return CollectionUtils.isEmpty(list)?null:list.get(0);
     }
+
+    @Override
+    public RelationRecordEntity getRelationRecord(String mainId) {
+        QueryRelationRecordDTO query = new QueryRelationRecordDTO();
+        query.setTargetId(mainId);
+        List<RelationRecordEntity> relationList = this.relationRecordDao.getRelationRecord(query);
+        if(CollectionUtils.isEmpty(relationList)){
+            return null;
+        }
+        return relationList.get(0);
+    }
 }

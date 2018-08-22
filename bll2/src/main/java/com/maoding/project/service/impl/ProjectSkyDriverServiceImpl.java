@@ -20,6 +20,7 @@ import com.maoding.project.dto.ProjectSkyDriverQueryDTO;
 import com.maoding.project.entity.ProjectEntity;
 import com.maoding.project.entity.ProjectSkyDriveEntity;
 import com.maoding.project.service.ProjectSkyDriverService;
+import com.maoding.projectcost.dto.ProjectCostEditDTO;
 import com.maoding.task.entity.ProjectTaskEntity;
 import com.maoding.v2.project.dto.ProjectSkyDriveListDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -730,5 +731,37 @@ public class ProjectSkyDriverServiceImpl extends GenericService<ProjectSkyDriveE
 	public ProjectSkyDriveEntity getEntityByQuery(ProjectSkyDriverQueryDTO query) {
 		List<ProjectSkyDriveEntity> list = listEntityByQuery(query);
 		return (ObjectUtils.isEmpty(list)) ? null : list.get(0);
+	}
+
+	@Override
+	public void saveProjectFeeContractAttach(ProjectCostEditDTO dto) throws Exception {
+		//先删除原来的，删除在做添加修改处理
+		Map<String,Object> deleteParam = new HashMap<>();
+		deleteParam.put("targetId",dto.getId());
+		deleteParam.put("accountId",dto.getAccountId());
+		projectSkyDriverDao.updateSkyDriveStatus(deleteParam);
+		dto.getContactAttachList().stream().forEach(attach->{
+			String id = attach.getId();
+			ProjectSkyDriveEntity file = this.projectSkyDriverDao.selectById(id);
+			file.setTargetId(dto.getId());
+			file.setProjectId(dto.getProjectId());
+			file.setType(NetFileType.PROJECT_FEE_ARCHIVE);
+			if(!"1".equals(attach.getIsUploadFile())){
+				file.setId(StringUtil.buildUUID());
+				projectSkyDriverDao.insert(file);
+			}else {
+				file.setId(attach.getId());
+				file.setStatus("0");
+				projectSkyDriverDao.updateById(file);
+			}
+		});
+
+	}
+
+	@Override
+	public List<FileDataDTO> getAttachListByTargetId(String targetId) throws Exception {
+		Map<String, Object> map = new HashMap<>();
+		map.put("targetId",targetId);
+		return getAttachDataList(map);
 	}
 }

@@ -1,5 +1,6 @@
 package com.maoding.core.base.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.maoding.core.util.StringUtil;
 
@@ -18,6 +19,7 @@ import java.util.List;
  * 日    期：2016年7月7日-下午3:18:22
  */
 @SuppressWarnings("serial")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class BaseDTO implements Serializable {
 
     private String id;
@@ -50,6 +52,11 @@ public abstract class BaseDTO implements Serializable {
      * 当前公司
      */
     private String currentCompanyId;
+
+    /**
+     * 当前人所在组织id
+     */
+    private String currentCompanyUserId;
 
 
 
@@ -179,4 +186,11 @@ public abstract class BaseDTO implements Serializable {
         this.interfaceVersion = interfaceVersion;
     }
 
+    public String getCurrentCompanyUserId() {
+        return currentCompanyUserId;
+    }
+
+    public void setCurrentCompanyUserId(String currentCompanyUserId) {
+        this.currentCompanyUserId = currentCompanyUserId;
+    }
 }

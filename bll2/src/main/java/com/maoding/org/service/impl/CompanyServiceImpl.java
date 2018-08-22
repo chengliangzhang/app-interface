@@ -9,11 +9,9 @@ import com.maoding.core.bean.ResponseBean;
 import com.maoding.core.component.sms.SmsSender;
 import com.maoding.core.component.sms.bean.Sms;
 import com.maoding.core.constant.NetFileType;
+import com.maoding.core.constant.ProjectCostConst;
 import com.maoding.core.constant.SystemParameters;
-import com.maoding.core.util.DateUtils;
-import com.maoding.core.util.MD5Helper;
-import com.maoding.core.util.StringUtil;
-import com.maoding.core.util.StringUtils;
+import com.maoding.core.util.*;
 import com.maoding.financial.service.ExpAuditService;
 import com.maoding.hxIm.service.ImService;
 import com.maoding.org.dao.*;
@@ -22,7 +20,9 @@ import com.maoding.org.entity.*;
 import com.maoding.org.service.*;
 import com.maoding.partner.dao.PartnerDao;
 import com.maoding.partner.entity.PartnerEntity;
+import com.maoding.project.dao.ProjectDao;
 import com.maoding.project.dto.NetFileDTO;
+import com.maoding.project.entity.ProjectEntity;
 import com.maoding.project.service.ProjectSkyDriverService;
 import com.maoding.projectmember.service.ProjectMemberService;
 import com.maoding.system.dao.DataDictionaryDao;
@@ -115,6 +115,9 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
 
     @Autowired
     private PartnerDao partnerDao;
+
+    @Autowired
+    private ProjectDao projectDao;
 
 
     /**
@@ -1730,4 +1733,112 @@ public class CompanyServiceImpl extends GenericService<CompanyEntity> implements
         return companyList;
     }
 
+
+    /**
+     * 描述     查询组织信息
+     *
+     * @param query 组织查询条件
+     * @return 组织信息
+     * @author 张成亮
+     **/
+    @Override
+    public List<CompanyDTO> listCompany(CompanyQueryDTO query) {
+        TraceUtils.check(query != null);
+
+        //默认设置为收款
+        if (StringUtils.isEmpty(query.getIsPay())){
+            query.setIsPay("0");
+        }
+
+        //获取项目信息用于判断是否立项方，及获取甲方名称
+        TraceUtils.check(StringUtils.isNotEmpty(query.getProjectId()),log,"!projectId不能为空");
+        ProjectEntity project = getProjectInfo(query.getProjectId());
+
+        List<CompanyDTO> result = null;
+        if (!isPayQuery(query)) {
+            //如果是收款查询，合同回款返回甲方，乙方查询技术审查费返回立项方，合作设计费返回发出签发任务合作方
+            if (isContract(query.getFeeType()) && isCreator(project,query.getCurrentCompanyId())){
+                //合同回款
+                result = listCompanyA(project);
+            } else if (isCheck(query.getFeeType()) && !isCreator(project,query.getCurrentCompanyId())) {
+                //技术审查费
+                result = listCompany(project.getCompanyId());
+            } else if (isCooperate(query.getFeeType())) {
+                //合作设计费
+                result = companyDao.listCompanyCooperate(query);
+            }
+        } else {
+            //否则，如果是付款查询，立项方查询技术审查费返回乙方，合作设计费返回接收签发任务合作方
+            if (isCheck(query.getFeeType()) && isCreator(project,query.getCurrentCompanyId())){
+                //技术审查费
+                result = listCompany(project.getCompanyBid());
+            } else if (isCooperate(query.getFeeType())){
+                //合作设计费
+                result = companyDao.listCompanyCooperate(query);
+            }
+        }
+        return result;
+    }
+
+    //是否合同回款
+    private boolean isContract(Integer type){
+        return (ProjectCostConst.FEE_TYPE_CONTRACT == type);
+    }
+
+    //是否技术审查费
+    private boolean isCheck(Integer type){
+        return (ProjectCostConst.FEE_TYPE_TECHNICAL == type);
+    }
+
+    //是否合作设计费
+    private boolean isCooperate(Integer type){
+        return (ProjectCostConst.FEE_TYPE_COOPERATE == type);
+    }
+
+    //是否付款查询
+    private boolean isPayQuery(CompanyQueryDTO query){
+        return StringUtils.isSame("1",query.getIsPay());
+    }
+
+    //是否立项方发起的查询
+    private boolean isCreator(ProjectEntity project, String companyId){
+        TraceUtils.check(project != null);
+        return StringUtils.isSame(project.getCompanyId(),companyId);
+    }
+
+    //获取项目信息
+    private ProjectEntity getProjectInfo(String projectId){
+        return projectDao.selectById(projectId);
+    }
+
+    //获取甲方信息
+    private List<CompanyDTO> listCompanyA(ProjectEntity project){
+        TraceUtils.check(project != null);
+
+        List<CompanyDTO> result = new ArrayList<>();
+
+        //如果甲方不为空返回甲方
+        String id = project.getConstructCompany();
+        if (StringUtils.isNotEmpty(id)) {
+            String name = projectDao.getEnterpriseName(id);
+            CompanyDTO company = new CompanyDTO();
+            company.setId(id);
+            company.setCompanyName(name);
+
+            result.add(company);
+        }
+
+        return result;
+    }
+
+    //获取公司信息,并包装为列表
+    private List<CompanyDTO> listCompany(String companyId){
+        List<CompanyDTO> result = new ArrayList<>();
+        if (StringUtils.isNotEmpty(companyId)) {
+            CompanyEntity companyEntity = companyDao.selectById(companyId);
+            CompanyDTO company = BeanUtils.createFrom(companyEntity,CompanyDTO.class);
+            result.add(company);
+        }
+        return result;
+    }
 }

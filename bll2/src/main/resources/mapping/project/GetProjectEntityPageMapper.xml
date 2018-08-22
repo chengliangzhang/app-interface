@@ -102,11 +102,11 @@
     a.project_name as projectName,
     (select company_name from maoding_web_company c1 WHERE c1.id=a.company_id) as companyName
     FROM maoding_web_project a
-    left join maoding_web_project_task c on a.id=c.project_id and c.task_status='0'
+    left join maoding_web_project_task_relation c on a.id=c.project_id and c.relation_status='0'
     LEFT JOIN maoding_web_project_member d on a.id = d.project_id and d.deleted=0 and d.company_user_id=#{companyUserId}
     WHERE a.pstatus='0'
     and (a.company_id = #{companyId} or a.company_bid = #{companyId}
-    or c.company_id = #{companyId} or c.from_company_id = #{companyId})
+    or c.to_company_id = #{companyId} or c.from_company_id = #{companyId})
     <if test="searchVal!=null">
       and a.project_name like '%' #{searchVal} '%'
     </if>

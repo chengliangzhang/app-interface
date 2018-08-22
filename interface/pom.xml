@@ -23,6 +23,12 @@
             <artifactId>bll2</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.designplus</groupId>
+            <artifactId>activiti</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- 单元测试 -->
         <dependency>
             <groupId>junit</groupId>

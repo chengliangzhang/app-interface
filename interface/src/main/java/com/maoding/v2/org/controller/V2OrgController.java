@@ -4,9 +4,7 @@ import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.core.bean.AjaxMessage;
 import com.maoding.core.bean.ResponseBean;
 import com.maoding.core.constant.SystemParameters;
-import com.maoding.core.util.MD5Helper;
-import com.maoding.core.util.StringUtil;
-import com.maoding.core.util.StringUtils;
+import com.maoding.core.util.*;
 import com.maoding.dynamic.service.OrgDynamicService;
 import com.maoding.hxIm.dto.ImGroupQuery;
 import com.maoding.hxIm.service.ImService;
@@ -148,7 +146,6 @@ public class V2OrgController extends BaseWSController {
 
         List<CompanyDTO> returList = new ArrayList<>();
 
-        outer:
         for (CompanyDTO companyDto : orgList) {
             List<CompanyDTO> list = new ArrayList<>();
             String id = companyDto.getId();
@@ -1279,5 +1276,31 @@ public class V2OrgController extends BaseWSController {
     @AuthorityCheckable
     public ResponseBean getUsedPartB(@RequestBody ProjectDetailQueryDTO query) throws Exception {
         return ResponseBean.responseSuccess("查询成功").addData("companyList",this.companyService.getUsedPartB(query.getAppOrgId()));
+    }
+
+    /**
+     * 描述       根据收付款类型获取单位列表
+     * 日期       2018/8/8
+     * @author   张成亮
+     * @param   query 查询条件
+     *                projectId 项目编号
+     *                feeType 费用类型：1-合同回款，2-技术审查费，3-合作设计费，4-其他费用（付款），5-其他费用（收款）
+     *                isPay 0/null-查询收款，1-查询付款
+     * @return  组织信息序列
+     *              id 组织编号
+     *              name 组织名称
+     **/
+    @RequestMapping(value = "/listCompany", method = RequestMethod.POST)
+    @ResponseBody
+    public ResponseBean listCompany(@RequestBody CompanyQueryDTO query) throws Exception {
+        List<CompanyDataDTO> result = new ArrayList<>();
+        List<CompanyDTO> list = companyService.listCompany(query);
+        if (ObjectUtils.isNotEmpty(list)){
+            list.forEach(c -> {
+                CompanyDataDTO company = BeanUtils.createFrom(c,CompanyDataDTO.class);
+                result.add(company);
+            });
+        }
+        return ResponseBean.responseSuccess().addData("companyList",result);
     }
 }

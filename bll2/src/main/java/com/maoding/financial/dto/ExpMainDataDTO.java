@@ -1,6 +1,7 @@
 package com.maoding.financial.dto;
 
 import com.maoding.attach.dto.FilePathDTO;
+import com.maoding.org.dto.CompanyUserDataDTO;
 
 import java.util.Date;
 
@@ -11,24 +12,14 @@ import java.util.Date;
  * 作    者 : LY
  * 日    期 : 2016/7/26 15:15
  */
-public class ExpMainDataDTO extends FilePathDTO {
+public class ExpMainDataDTO extends CompanyUserDataDTO {
 
     private String id;
-
-    /**
-     *  用户id
-     */
-    private String companyUserId;
 
     /**
      * accountId
      */
     private String accountId;
-
-    /**
-     * 报销人
-     */
-    private String userName;
 
     /**
      * 报销日期
@@ -72,42 +63,19 @@ public class ExpMainDataDTO extends FilePathDTO {
      */
     private Integer type;
 
-    /** 所在组织名称 */
-    private String companyName;
+    /**
+     * 拨款日期
+     */
+    private Date allocationDate;
 
-    /** 当前处理人 所在组织id */
-    private String companyId;
-
-    public String getCompanyName() {
-        return companyName;
-    }
-
-    public void setCompanyName(String companyName) {
-        this.companyName = companyName;
-    }
-
+    @Override
     public String getId() {
         return id;
     }
 
+    @Override
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getCompanyUserId() {
-        return companyUserId;
-    }
-
-    public void setCompanyUserId(String companyUserId) {
-        this.companyUserId = companyUserId;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
     }
 
     public Date getExpDate() {
@@ -182,19 +150,19 @@ public class ExpMainDataDTO extends FilePathDTO {
         this.type = type;
     }
 
-    public String getCompanyId() {
-        return companyId;
-    }
-
-    public void setCompanyId(String companyId) {
-        this.companyId = companyId;
-    }
-
     public String getAuditMessage() {
         return auditMessage;
     }
 
     public void setAuditMessage(String auditMessage) {
         this.auditMessage = auditMessage;
+    }
+
+    public Date getAllocationDate() {
+        return allocationDate;
+    }
+
+    public void setAllocationDate(Date allocationDate) {
+        this.allocationDate = allocationDate;
     }
 }

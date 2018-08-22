@@ -81,4 +81,16 @@
 		from maoding_web_company_relation a,maoding_web_org b
 		where a.id = b.id and a.org_id = #{orgId,jdbcType=VARCHAR}
 	</select>
+
+	<select id="getOrgType" resultMap="BaseResultMap" parameterType="java.lang.String">
+		SELECT
+		b.id as org_id,
+		t.id,
+		t.org_pid,
+		t.type_id,
+		b.company_name as company_name
+		FROM maoding_web_company b
+		LEFT JOIN maoding_web_company_relation t ON t.org_id = b.id
+		where b.id=#{orgId}
+	</select>
 </mapper>

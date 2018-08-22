@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -35,6 +36,7 @@ import java.util.*;
 @EnableScheduling
 @EnableAspectJAutoProxy(exposeProxy = true)
 @EnableJms
+@EnableWebSecurity  //SpringBoot会根据依赖的jar包而自动配置相应的功能。Activiti Modeler中却引用了Spring Security的jar，所以访问任意地址都要验证。 不需要身份验证，加入此注解
 public class Application {
 
     @Autowired

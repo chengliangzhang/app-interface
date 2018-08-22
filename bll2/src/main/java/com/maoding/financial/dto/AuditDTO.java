@@ -1,6 +1,7 @@
 package com.maoding.financial.dto;
 
 import com.maoding.attach.dto.FilePathDTO;
+import com.maoding.org.dto.CompanyUserDataDTO;
 
 import java.util.Date;
 
@@ -11,16 +12,15 @@ import java.util.Date;
  * 作    者 : MaoSF
  * 日    期 : 2016/7/26 15:14
  */
-public class AuditDTO extends FilePathDTO {
+public class AuditDTO extends CompanyUserDataDTO {
 
 
     private String id;
 
-    private String companyUserId;
-
+    /**
+     *
+     */
     private String accountId;
-
-    private String userName;
 
     /**
      * 是否最新审核 Y是 N否
@@ -37,6 +37,9 @@ public class AuditDTO extends FilePathDTO {
      */
     private String approveStatus;
 
+    /**
+     * 审批状态名称
+     */
     private String approveStatusName;
 
     /**
@@ -67,13 +70,6 @@ public class AuditDTO extends FilePathDTO {
         this.id = id;
     }
 
-    public String getCompanyUserId() {
-        return companyUserId;
-    }
-
-    public void setCompanyUserId(String companyUserId) {
-        this.companyUserId = companyUserId;
-    }
 
     public String getAccountId() {
         return accountId;
@@ -81,14 +77,6 @@ public class AuditDTO extends FilePathDTO {
 
     public void setAccountId(String accountId) {
         this.accountId = accountId;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
     }
 
     public String getIsNew() {
@@ -164,9 +152,14 @@ public class AuditDTO extends FilePathDTO {
             return "删除";
         } else if ("5".equals(approveStatus)) {
             return "审批中";
+        }else if ("6".equals(approveStatus)) {
+            return "已拨款";
+        }else if("7".equals(approveStatus)){
+            return "等待财务拨款";
         }
         return "发起申请";
     }
+
 
     public void setApproveStatusName(String approveStatusName) {
         this.approveStatusName = approveStatusName;

@@ -42,6 +42,18 @@ public class LeaveDTO extends AuditDetailDTO{
 
     private String submitTime;
 
+    private Object processFlag;
+
+    /**
+     * 流程的条件列表（人员列表）
+     */
+    private Object conditionList;
+
+    /**
+     * 流程的类型
+     */
+    private Object processType;
+
     private List<CompanyUserDataDTO> ccCompanyUserList;
 
     public String getLeaveType() {
@@ -140,5 +152,29 @@ public class LeaveDTO extends AuditDetailDTO{
 
     public void setCcCompanyUserList(List<CompanyUserDataDTO> ccCompanyUserList) {
         this.ccCompanyUserList = ccCompanyUserList;
+    }
+
+    public Object getProcessFlag() {
+        return processFlag;
+    }
+
+    public void setProcessFlag(Object processFlag) {
+        this.processFlag = processFlag;
+    }
+
+    public Object getConditionList() {
+        return conditionList;
+    }
+
+    public void setConditionList(Object conditionList) {
+        this.conditionList = conditionList;
+    }
+
+    public Object getProcessType() {
+        return processType;
+    }
+
+    public void setProcessType(Object processType) {
+        this.processType = processType;
     }
 }

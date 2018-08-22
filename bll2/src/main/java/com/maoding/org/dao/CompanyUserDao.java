@@ -148,7 +148,7 @@ public interface CompanyUserDao extends BaseDao<CompanyUserEntity>{
 	 * 日        期：2016年7月8日-下午4:24:08
 	 */
 	CompanyUserAppDTO getCompanyUserByUserId(Map<String, Object> param);
-
+	CompanyUserAppDTO getCompanyUserDataById(String companyUserId);
 	/**
 	 * 方法描述：获取当前用户所在的团队及团对中的权限（用于组织切换）
 	 * 作者：MaoSF

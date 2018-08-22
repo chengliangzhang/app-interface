@@ -2,6 +2,8 @@ package com.maoding.projectcost.dao;
 
 import com.maoding.core.base.dao.BaseDao;
 import com.maoding.projectcost.dto.ProjectCostPaymentDetailDTO;
+import com.maoding.projectcost.dto.ProjectCostPointReceiveOrPayInfoDTO;
+import com.maoding.projectcost.dto.ProjectCostQueryDTO;
 import com.maoding.projectcost.entity.ProjectCostPaymentDetailEntity;
 
 import java.util.List;
@@ -47,5 +49,20 @@ public interface ProjectCostPaymentDetailDao extends BaseDao<ProjectCostPaymentD
      * @return:
      */
     int updateCostPaymentDetailByPointDetailId(ProjectCostPaymentDetailEntity entity);
+
+    /**
+     * 获取收付款明细
+     */
+    List<ProjectCostPaymentDetailDTO> listProjectPaymentFeeByPointDetailId(ProjectCostQueryDTO query);
+
+    /**
+     * 收付款详情列表
+     */
+    List<ProjectCostPointReceiveOrPayInfoDTO> listProjectCostPointReceiveOrPayInfo(ProjectCostQueryDTO query);
+
+    /**
+     * 应收付款详情列表
+     */
+    List<ProjectCostPointReceiveOrPayInfoDTO> listProjectCostPointNotReceiveOrPayInfo(ProjectCostQueryDTO query);
 
 }

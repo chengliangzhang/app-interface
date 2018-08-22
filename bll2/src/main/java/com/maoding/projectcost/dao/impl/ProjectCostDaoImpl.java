@@ -47,6 +47,11 @@ public class ProjectCostDaoImpl extends GenericDao<ProjectCostEntity> implements
     }
 
     @Override
+    public ProjectCooperatorCostDTO getProjectAmountFeeByCostId(ProjectCostQueryDTO queryDTO) {
+        return this.sqlSession.selectOne("GetProjectCostMapper.getProjectAmountFeeByCostId", queryDTO);
+    }
+
+    @Override
     public List<ProjectCostSummaryDTO> getProjectCostSummary(ProjectCostQueryDTO query) {
         return this.sqlSession.selectList("GetProjectCostSummaryMapper.getProjectCostSummary", query);
     }
@@ -57,5 +62,10 @@ public class ProjectCostDaoImpl extends GenericDao<ProjectCostEntity> implements
         map.put("projectId",projectId);
         map.put("companyId",companyId);
         return this.sqlSession.selectList("GetProjectCostMapper.getProjectTechAmountFee", map);
+    }
+
+    @Override
+    public ProjectCostEntity getProjectCostByPointId(String pointId) {
+        return this.sqlSession.selectOne("ProjectCostEntityMapper.getProjectCostByPointId",pointId);
     }
 }

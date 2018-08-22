@@ -65,6 +65,11 @@ public class NetFileType {
     public static final Integer SCHEDULE_ATTACH = 60;
 
     /**
+     * 70：项目费用关联的合同
+     */
+    public static final Integer PROJECT_FEE_ARCHIVE = 70;
+
+    /**
      * 100：个人(文件夹)
      */
     private static final Integer DIRECTORY_PERSONALLY = 100;

@@ -34,6 +34,11 @@ public interface ProjectCostDao extends BaseDao<ProjectCostEntity> {
     ProjectAmountFee getProjectAmountFee(String projectId,String companyId);
 
     /**
+     * 根据costId 查询应收，应付，已收，已付
+     */
+    ProjectCooperatorCostDTO getProjectAmountFeeByCostId(ProjectCostQueryDTO queryDTO);
+
+    /**
      * 项目费用汇总
      */
     List<ProjectCostSummaryDTO> getProjectCostSummary(ProjectCostQueryDTO query);
@@ -43,4 +48,9 @@ public interface ProjectCostDao extends BaseDao<ProjectCostEntity> {
      * 合作设计费查费汇总界面
      */
     List<ProjectCooperatorCostDTO> getProjectCooperatorFee(String projectId, String companyId);
+
+    /**
+     * @param pointId (费用节点的id)
+     */
+    ProjectCostEntity getProjectCostByPointId(String pointId);
 }

@@ -6,6 +6,8 @@ import com.maoding.core.util.StringUtil;
 import com.maoding.org.dao.CompanyDao;
 import com.maoding.org.dto.CompanyDTO;
 import com.maoding.org.dto.CompanyDataDTO;
+import com.maoding.org.dto.CompanyQueryDTO;
+import com.maoding.org.dto.CompanyRelationDTO;
 import com.maoding.org.entity.CompanyEntity;
 import com.maoding.role.dao.RolePermissionDao;
 import com.maoding.role.entity.RolePermissionEntity;
@@ -160,5 +162,22 @@ public class CompanyDaoImpl extends GenericDao<CompanyEntity> implements Company
 			return names.get(0);
 		}
 		return null;
+	}
+
+	/**
+	 * 描述     查询相关合作方
+	 * 日期     2018/8/8
+	 *
+	 * @param query 查询条件
+	 * @return 符合条件的公司信息列表
+	 * @author 张成亮
+	 **/
+	@Override
+	public List<CompanyDTO> listCompanyCooperate(CompanyQueryDTO query) {
+		return sqlSession.selectList("CompanyMapper.listCompanyCooperate", query);
+	}
+
+	public CompanyRelationDTO getOrgType(String orgId) {
+		return this.sqlSession.selectOne("QueryCompanyRelationEntityMapper.getOrgType", orgId);
 	}
 }

@@ -192,5 +192,20 @@ public interface ExpMainService extends BaseService<ExpMainEntity>{
     HomeDTO getApproveDataForHome(Map<String,Object> param) throws Exception;
 
     AuditStaticDataDTO getAuditStaticData(QueryAuditDTO query) throws Exception;
-    
+
+    void saveCopy(List<String> ccCompanyUserList,String sendCompanyUserId,String targetId,String operateRecordId) throws Exception;
+
+
+    /**
+     * 方法描述：项目费用申请
+     * 作   者：MaoSF
+     * 日   期：2016/7/26 17:35
+     */
+    AjaxMessage applyProjectCost(ApplyProjectCostDTO dto) throws Exception;
+
+    /**
+     * 根据付款申请的id获取审核信息
+     * @param relationId(发起付款申请的id)
+     */
+    Map<String,Object> getAuditInfoByRelationId(String relationId,String companyUserId) throws Exception;
 }

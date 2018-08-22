@@ -39,6 +39,11 @@ public class AuditDetailDTO {
     private String accountId;
 
     /**
+     * userId = accountId 前端需要用userId
+     */
+    private String userId;
+
+    /**
      * 姓名
      */
     private String userName;
@@ -99,6 +104,10 @@ public class AuditDetailDTO {
      */
     private List<AuditDTO> auditList = new ArrayList<>();
 
+    /**
+     * 当前审核人记录
+     */
+    private AuditDTO currentAuditPerson = new AuditDTO();
     /**
      * 附件
      */
@@ -278,5 +287,21 @@ public class AuditDetailDTO {
 
     public void setAttachList(List<FileDataDTO> attachList) {
         this.attachList = attachList;
+    }
+
+    public AuditDTO getCurrentAuditPerson() {
+        return currentAuditPerson;
+    }
+
+    public void setCurrentAuditPerson(AuditDTO currentAuditPerson) {
+        this.currentAuditPerson = currentAuditPerson;
+    }
+
+    public String getUserId() {
+        return accountId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 }

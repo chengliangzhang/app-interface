@@ -24,13 +24,11 @@ import java.util.Map;
 @Service("expMainDao")
 public class ExpMainDaoImpl extends GenericDao<ExpMainEntity> implements ExpMainDao{
 
-
     /**
      * 方法描述：我的报销列表
      * 作   者：LY
      * 日   期：2016/7/28 16:34
      * @param  param 查询条件
-     * @return
      *
      */
     public List<ExpMainDTO> getExpMainPage(Map<String,Object> param){
@@ -41,7 +39,6 @@ public class ExpMainDaoImpl extends GenericDao<ExpMainEntity> implements ExpMain
      * 作   者：LY
      * 日   期：2016/7/28 16:34
      * @param  param 查询条件
-     * @return
      *
      */
     public List<ExpMainDTO> getExpMainPageInterface(Map<String,Object> param){
@@ -55,7 +52,6 @@ public class ExpMainDaoImpl extends GenericDao<ExpMainEntity> implements ExpMain
      * 方法描述：查询报销主表记录并关联账号表
      * 作   者：LY
      * 日   期：2016/8/2 15:10
-     * @param
      */
     public ExpMainDataDTO selectByIdWithUserName(Map<String, Object> param){
         return this.sqlSession.selectOne("ExpMainEntityMapper.selectByIdWithUserNameByParam", param);
@@ -98,14 +94,15 @@ public class ExpMainDaoImpl extends GenericDao<ExpMainEntity> implements ExpMain
      * 方法描述：查询报销单（用于我的任务中）
      * 作者：MaoSF
      * 日期：2016/12/22
-     *
-     * @param mainId
-     * @param:
-     * @return:
      */
     @Override
     public ExpMainDTO getByMainIdForMyTask(String mainId) {
         return this.sqlSession.selectOne("GetExpMainPageMapper.getByMainIdForMyTask", mainId);
+    }
+
+    @Override
+    public ExpMainDTO getExpMainByRelationId(String relationId) {
+        return this.sqlSession.selectOne("GetExpMainPageMapper.getExpMainByRelationId", relationId);
     }
 
 
@@ -123,8 +120,6 @@ public class ExpMainDaoImpl extends GenericDao<ExpMainEntity> implements ExpMain
      * 方法描述：获取某组织中最大值
      * 作者：MaoSF
      * 日期：2016/8/5
-     * @param:
-     * @return:
      */
     @Override
     public String getMaxExpNo(Map<String,Object> param) {

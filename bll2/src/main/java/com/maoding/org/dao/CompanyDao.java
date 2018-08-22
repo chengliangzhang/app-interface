@@ -3,6 +3,8 @@ package com.maoding.org.dao;
 import com.maoding.core.base.dao.BaseDao;
 import com.maoding.org.dto.CompanyDTO;
 import com.maoding.org.dto.CompanyDataDTO;
+import com.maoding.org.dto.CompanyQueryDTO;
+import com.maoding.org.dto.CompanyRelationDTO;
 import com.maoding.org.entity.CompanyEntity;
 
 import java.util.List;
@@ -120,4 +122,15 @@ public interface CompanyDao extends BaseDao<CompanyEntity>{
 	List<String> listCompanyIdByProjectId(String projectId);
 
 	String getCompanyName(String id);
+
+	/**
+	 * 描述     查询相关乙方
+	 * 日期     2018/8/8
+	 * @author  张成亮
+	 * @return  符合条件的公司信息列表
+	 * @param   query 查询条件
+	 **/
+	List<CompanyDTO> listCompanyCooperate(CompanyQueryDTO query);
+
+	CompanyRelationDTO getOrgType(String orgId);
 }

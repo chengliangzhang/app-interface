@@ -9,6 +9,7 @@ import com.maoding.core.bean.AjaxMessage;
 import com.maoding.core.bean.ResponseBean;
 import com.maoding.core.constant.CopyTargetType;
 import com.maoding.core.constant.NetFileType;
+import com.maoding.core.constant.ProcessTypeConst;
 import com.maoding.core.constant.SystemParameters;
 import com.maoding.core.util.DateUtils;
 import com.maoding.core.util.StringUtil;
@@ -25,6 +26,8 @@ import com.maoding.financial.service.LeaveService;
 import com.maoding.mytask.service.MyTaskService;
 import com.maoding.org.dao.CompanyUserDao;
 import com.maoding.org.entity.CompanyUserEntity;
+import com.maoding.process.dto.ActivitiDTO;
+import com.maoding.process.service.ProcessService;
 import com.maoding.project.entity.ProjectSkyDriveEntity;
 import com.maoding.project.service.ProjectSkyDriverService;
 import com.maoding.user.service.UserAttachService;
@@ -62,10 +65,13 @@ public class LeaveServiceImpl implements LeaveService {
     @Autowired
     private CopyRecordService copyRecordService;
 
+    @Autowired
+    private ProcessService processService;
+
     ResponseBean validateSaveLeave(SaveLeaveDTO dto){
-        if (StringUtil.isNullOrEmpty(dto.getAuditPerson())) {
-            return ResponseBean.responseError("审批人不能为空");
-        }
+//        if (StringUtil.isNullOrEmpty(dto.getAuditPerson())) {
+//            return ResponseBean.responseError("审批人不能为空");
+//        }
         if (!StringUtil.isNullOrEmpty(dto.getRemark()) && dto.getRemark().length() > 255) {
             return ResponseBean.responseError("备注长度过长");
         }
@@ -75,8 +81,7 @@ public class LeaveServiceImpl implements LeaveService {
         return null;
     }
 
-    @Override
-    public ResponseBean saveLeave(SaveLeaveDTO dto) throws Exception {
+    public ResponseBean saveLeave_old(SaveLeaveDTO dto) throws Exception {
         ResponseBean responseBean = validateSaveLeave(dto);
         if(responseBean!=null){
             return responseBean;
@@ -167,6 +172,70 @@ public class LeaveServiceImpl implements LeaveService {
     }
 
 
+    @Override
+    public ResponseBean saveLeave(SaveLeaveDTO dto) throws Exception {
+        ResponseBean responseBean = validateSaveLeave(dto);
+        if(responseBean!=null){
+            return responseBean;
+        }
+        String companyId = dto.getAppOrgId();
+        String userId = dto.getAccountId();
+        if(StringUtil.isNullOrEmpty(dto.getCompanyId())){
+            dto.setCompanyId(companyId);
+        }
+        boolean flag = false;
+        //保存报销主表
+        ExpMainEntity entity = new ExpMainEntity();
+        BaseDTO.copyFields(dto, entity);
+        entity.setApproveStatus("0");
+        if (StringUtil.isNullOrEmpty(dto.getId())) {//插入
+            saveExpMain(entity,dto);
+            flag = true;
+        } else {//保存
+            ExpMainEntity exp = expMainDao.selectById(dto.getId());
+            if(exp!=null && ("2".equals(exp.getApproveStatus()) || "3".equals(exp.getApproveStatus()))){
+                exp.setExpFlag(1);
+                entity.setExpFlag(2);
+                expMainDao.updateById(exp);
+                //新增
+                saveExpMain(entity,dto);
+                //复制原来的附件记录
+                projectSkyDriverService.copyFileToNewObject(entity.getId(),dto.getId(),NetFileType.EXPENSE_ATTACH,dto.getDeleteAttachList());
+                flag = true;
+            }else {
+                entity.set4Base(null, userId, null, new Date());
+                //版本控制
+                int result = expMainDao.updateById(entity);
+                if (result == 0) {
+                    return ResponseBean.responseError("保存失败");
+                }
+            }
+        }
+        //主表Id
+        String id = entity.getId();
+        //处理图片
+        if(!CollectionUtils.isEmpty(dto.getDeleteAttachList())){
+            projectSkyDriverService.deleteSysDrive(dto.getDeleteAttachList(),dto.getAccountId(),id);
+        }
+        //    Integer myTaskType = this.getMyTaskType(entity);
+        //保存报销明细表
+        this.saveLeaveDetail(dto,id);
+
+        //处理抄送
+        SaveCopyRecordDTO copyDTO = new SaveCopyRecordDTO();
+        copyDTO.setCompanyUserList(dto.getCcCompanyUserList());
+        copyDTO.setSendCompanyUserId(companyUserDao.getUserNameByCompanyIdAndUserId(dto.getAppOrgId(),dto.getAccountId()));
+        copyDTO.setOperateRecordId(id);
+        copyDTO.setTargetId(id);
+        copyDTO.setRecordType(CopyTargetType.EXP_MAIN);
+        copyRecordService.saveCopyRecode(copyDTO);
+//        for(String companyUserId:dto.getCcCompanyUserList()){
+//            this.expMainService.sendMessageForAudit(entity.getId(),companyId,companyUserId,entity.getType(),dto.getAccountId(),null,"7");//抄送
+//        }
+        return ResponseBean.responseSuccess("保存成功");
+    }
+
+
     /**
      * 方法描述：报销详情与审批记录
      * 作   者：LY
@@ -190,12 +259,22 @@ public class LeaveServiceImpl implements LeaveService {
             AuditDTO audit = auditList.get(0);
             result.setAuditPersonName(audit.getUserName());
             result.setAuditPerson(audit.getCompanyUserId());
+
+            //copy一份最后审批人到到你跟前审批人上
+            AuditDTO currentAuditPerson = new AuditDTO();
+            BaseDTO.copyFields(auditList.get(auditList.size()-1),currentAuditPerson);
+            result.setCurrentAuditPerson(currentAuditPerson);
         }
         //发起申请的记录
         AuditDTO applyDTO = new AuditDTO();
         applyDTO.setUserName(result.getUserName());
         applyDTO.setCompanyUserId(result.getCompanyUserId());
         applyDTO.setApproveDate(result.getExpDate());
+        if("3".equals(result.getApproveStatus())){
+            applyDTO.setApproveStatus(result.getApproveStatus());
+        }else {
+            applyDTO.setApproveStatus(null);
+        }
         applyDTO.setApproveStatusName("发起申请");
         applyDTO.setFileFullPath(userAttachService.getHeadImgNotFullPath(result.getAccountId()));
         auditList.add(0,applyDTO);
@@ -208,10 +287,16 @@ public class LeaveServiceImpl implements LeaveService {
 
         //获取抄送人
         result.setCcCompanyUserList(copyRecordService.getCopyRecode(new QueryCopyRecordDTO(id)));
+        //返回流程标识，给前端控制是否要给审批人，以及按钮显示的控制
+        Map<String,Object> processData = processService.getCurrentTaskUser(new AuditEditDTO(id,null,null),auditList,result.getLeaveTime());
+        result.setProcessFlag(processData.get("processFlag"));
+        result.setProcessType(processData.get("processType"));
+        result.setConditionList(processData.get("conditionList"));
+
         return result;
     }
 
-    private ExpMainEntity saveExpMain(ExpMainEntity entity, SaveLeaveDTO dto){
+    private ExpMainEntity saveExpMain(ExpMainEntity entity, SaveLeaveDTO dto) throws Exception{
         String companyId = dto.getAppOrgId();
         String userId = dto.getAccountId();
         String expNo = this.getExpNo(companyId);
@@ -229,6 +314,18 @@ public class LeaveServiceImpl implements LeaveService {
         entity.set4Base(userId, userId, new Date(), new Date());
         entity.setCompanyId(companyId);
         expMainDao.insert(entity);
+
+        // 启动流程
+        String targetType = null;
+        if(entity.getType()==3){
+            targetType = ProcessTypeConst.PROCESS_TYPE_LEAVE;
+        }else {
+            targetType= ProcessTypeConst.PROCESS_TYPE_ON_BUSINESS;
+        }
+        ActivitiDTO activitiDTO = new ActivitiDTO(entity.getId(),entity.getCompanyUserId(),companyId,userId,dto.getLeaveTime(),targetType);
+        activitiDTO.getParam().put("approveUser",dto.getAuditPerson());
+        this.processService.startProcessInstance(activitiDTO);
+
         return entity;
     }
 

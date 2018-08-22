@@ -203,6 +203,11 @@ public class CompanyUserDaoImpl extends GenericDao<CompanyUserEntity> implements
 		return this.sqlSession.selectOne("GetCompanyUserByOrgIdMapper.getCompanyUserByUserId", param);
 	}
 
+	@Override
+	public CompanyUserAppDTO getCompanyUserDataById(String companyUserId) {
+		return this.sqlSession.selectOne("GetCompanyUserByOrgIdMapper.getCompanyUserDataById", companyUserId);
+	}
+
 	/**
 	 * 方法描述：获取当前用户所在的团队及团对中的权限（用于组织切换）
 	 * 作者：MaoSF

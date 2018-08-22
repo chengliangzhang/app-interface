@@ -1,6 +1,7 @@
 package com.maoding.mytask.dto;
 
 import com.maoding.core.base.dto.BaseDTO;
+import com.maoding.invoice.dto.InvoiceEditDTO;
 
 public class HandleMyTaskDTO extends BaseDTO {
 
@@ -9,6 +10,11 @@ public class HandleMyTaskDTO extends BaseDTO {
     private String status;
 
     private String paidDate;
+
+    /**
+     * 发票信息
+     */
+    private InvoiceEditDTO invoiceData;
 
     public String getResult() {
         return result;
@@ -32,5 +38,13 @@ public class HandleMyTaskDTO extends BaseDTO {
 
     public void setPaidDate(String paidDate) {
         this.paidDate = paidDate;
+    }
+
+    public InvoiceEditDTO getInvoiceData() {
+        return invoiceData;
+    }
+
+    public void setInvoiceData(InvoiceEditDTO invoiceData) {
+        this.invoiceData = invoiceData;
     }
 }

@@ -5,6 +5,7 @@ import com.maoding.core.bean.AjaxMessage;
 import com.maoding.core.bean.ResponseBean;
 import com.maoding.core.util.StringUtil;
 import com.maoding.financial.dto.*;
+import com.maoding.financial.service.ExpAuditService;
 import com.maoding.financial.service.ExpCategoryService;
 import com.maoding.financial.service.ExpDetailService;
 import com.maoding.financial.service.ExpMainService;
@@ -14,6 +15,8 @@ import com.maoding.org.dto.DepartDataDTO;
 import com.maoding.org.service.CompanyService;
 import com.maoding.org.service.CompanyUserService;
 import com.maoding.org.service.DepartService;
+import com.maoding.process.dto.ActivitiDTO;
+import com.maoding.process.service.ProcessService;
 import com.maoding.system.annotation.AuthorityCheckable;
 import com.maoding.system.controller.BaseWSController;
 import com.maoding.v2.financial.dto.V2ExpMainDTO;
@@ -57,6 +60,10 @@ public class V2FinancialController extends BaseWSController {
     private ExpDetailService expDetailService;
     @Autowired
     private ExpCategoryService expCategoryService;
+    @Autowired
+    private ExpAuditService expAuditService;
+    @Autowired
+    private ProcessService processService;
 
     /**
      * 方法描述：自定义报销类别查询
@@ -369,7 +376,11 @@ public class V2FinancialController extends BaseWSController {
     @ResponseBody
     public ResponseBean recallExpMain(@RequestBody ExpAuditDTO dto) {
         try {
-            int i = expMainService.recallExpMain(dto);
+            SaveExpMainDTO saveExpMain = new SaveExpMainDTO();
+            BaseDTO.copyFields(dto,saveExpMain);
+            saveExpMain.setId(dto.getMainId());
+            saveExpMain.setApproveStatus("2");//退回状态
+            int i = this.expAuditService.completeAudit(saveExpMain);
             if (i > 0) {
 
                 return ResponseBean.responseSuccess("报销退回成功");
@@ -431,7 +442,9 @@ public class V2FinancialController extends BaseWSController {
     @AuthorityCheckable
     @ResponseBody
     public ResponseBean agreeExpMain(@RequestBody SaveExpMainDTO expMainDTO) throws Exception{
-        int i = expMainService.agreeExpMain(expMainDTO);
+      //  int i = expMainService.agreeExpMain(expMainDTO);
+        expMainDTO.setApproveStatus("1");//同意的状态
+        int i = this.expAuditService.completeAudit(expMainDTO);
         if (i > 0) {
             return ResponseBean.responseSuccess("操作成功");
         } else {
@@ -448,7 +461,9 @@ public class V2FinancialController extends BaseWSController {
     @AuthorityCheckable
     @ResponseBody
     public ResponseBean agreeAndTransAuditPerExpMain(@RequestBody SaveExpMainDTO expMainDTO) throws Exception{
-        int i = expMainService.agreeAndTransAuditPerExpMain(expMainDTO);
+       // int i = expMainService.agreeAndTransAuditPerExpMain(expMainDTO);
+        expMainDTO.setApproveStatus("1");//同意的状态
+        int i = this.expAuditService.completeAudit(expMainDTO);
         if (i > 0) {
             return ResponseBean.responseSuccess("转发成功");
         } else {
@@ -742,6 +757,40 @@ public class V2FinancialController extends BaseWSController {
     @ResponseBody
     public ResponseBean getAuditStaticData(@RequestBody QueryAuditDTO query) throws Exception{
         return ResponseBean.responseSuccess("查询成功").addData("auditStaticData", expMainService.getAuditStaticData(query));
+    }
+
+    /**
+     * 方法描述：在新增审批单据的时候，请求审批人接口
+     * 作   者：MaoSF
+     * 日   期：2016/12/22
+     */
+    @RequestMapping("/getProcessType")
+    @AuthorityCheckable
+    @ResponseBody
+    public ResponseBean getProcessType(@RequestBody AuditEditDTO dto) throws Exception{
+        return ResponseBean.responseSuccess("查询成功")
+                .setData(processService.getCurrentProcess(dto));
+    }
+
+//    /**
+//     * 方法描述：在新增审批单据的时候，请求审批人接口
+//     * 作   者：MaoSF
+//     * 日   期：2016/12/22
+//     */
+//    @RequestMapping("/getUserListForAudit")
+//    @AuthorityCheckable
+//    @ResponseBody
+//    private ResponseBean getUserListForAudit(@RequestBody AuditEditDTO dto) throws Exception{
+//        return ResponseBean.responseSuccess("查询成功").addData("userList", processService.getUserListForAudit(dto));
+//    }
+
+
+    @RequestMapping("/repealApprove")
+    @AuthorityCheckable
+    @ResponseBody
+    public ResponseBean repealApprove(@RequestBody SaveExpMainDTO dto) throws Exception {
+        int i = processService.suspendProcess(dto);
+        return i>0?ResponseBean.responseSuccess("操作成功"):ResponseBean.responseError("操作失败");
     }
 
 }

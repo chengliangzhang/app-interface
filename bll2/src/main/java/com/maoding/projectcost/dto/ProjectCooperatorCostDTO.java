@@ -15,6 +15,7 @@ public class ProjectCooperatorCostDTO {
         sumPayFee = new BigDecimal("0");
         sumPaidFee = new BigDecimal("0");
         detailFee = new BigDecimal("0");
+        detailPayFee = new BigDecimal("0");
     }
     /**
      * 对应费用的id
@@ -37,30 +38,36 @@ public class ProjectCooperatorCostDTO {
     private Integer feeType;
 
     /**
-     * 收付详情费用统计
+     * 收：详情费用统计
      */
     private BigDecimal detailFee;
 
-
     /**
-     * 计划付款,未付
+     * 计划付款,计划收款
      */
     private BigDecimal planFee;
 
+    /** 计划收款使用的数据 ******/
     /**
      * 未收
      */
     private BigDecimal notPaidFee;
+    /**
+     * 累计到款金额
+     */
+    private BigDecimal sumPaidFee;
+
+    /** 计划付款使用的数据 ******/
+
+    /**
+     * 付：详情费用统计
+     */
+    private BigDecimal detailPayFee;
 
     /**
      * 未付
      */
     private BigDecimal notPayFee;
-
-    /**
-     * 累计到款金额
-     */
-    private BigDecimal sumPaidFee;
 
     /**
      * 累计付款金额
@@ -101,11 +108,11 @@ public class ProjectCooperatorCostDTO {
     }
 
     public BigDecimal getNotPayFee() {
-        if(detailFee!=null){
+        if(detailPayFee!=null){
             if(sumPayFee==null){
                 sumPayFee = new BigDecimal("0");
             }
-            notPayFee = detailFee.subtract(sumPayFee);
+            notPayFee = detailPayFee.subtract(sumPayFee);
         }
         return notPayFee;
     }
@@ -158,5 +165,13 @@ public class ProjectCooperatorCostDTO {
 
     public void setDetailFee(BigDecimal detailFee) {
         this.detailFee = detailFee;
+    }
+
+    public BigDecimal getDetailPayFee() {
+        return detailPayFee;
+    }
+
+    public void setDetailPayFee(BigDecimal detailPayFee) {
+        this.detailPayFee = detailPayFee;
     }
 }

@@ -1,6 +1,8 @@
 package com.maoding.v2.project.controller;
 
+import com.maoding.core.bean.AjaxMessage;
 import com.maoding.core.bean.ResponseBean;
+import com.maoding.core.constant.ProjectCostConst;
 import com.maoding.projectcost.dto.*;
 import com.maoding.projectcost.service.ProjectCostService;
 import com.maoding.system.annotation.AuthorityCheckable;
@@ -29,6 +31,24 @@ public class V2ProjectCostController extends BaseWSController {
     @Autowired
     private ProjectCostService projectCostService;
 
+
+
+    /**
+     * 方法描述:获取费用类型
+     * 保存费用总金额（type=1:合同总金额,type=2:技术审查费，type=3：合作设计费）
+     * 作者：MaoSF
+     * 日期：2018/8/10
+     */
+    @RequestMapping("/getCostType")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getCostType(@RequestBody ProjectCostEditDTO projectCostDto) throws Exception {
+        if(projectCostDto.getPayType()==null || projectCostDto.getPayType()==1){
+            return ResponseBean.responseSuccess().addData("costTypeList", ProjectCostConst.COST_TYPE_RECEIVE_LIST);
+        }else {
+            return ResponseBean.responseSuccess().addData("costTypeList", ProjectCostConst.COST_TYPE_PAY_LIST);
+        }
+    }
     /*****************================合同回款================*****************/
     /**
      * 方法描述：设置修改合同总金额
@@ -39,9 +59,21 @@ public class V2ProjectCostController extends BaseWSController {
     @RequestMapping("/saveOrUpdateContract")
     @ResponseBody
     @AuthorityCheckable
-    public ResponseBean saveOrUpdateContract(@RequestBody ProjectCostDTO projectCostDto) throws Exception {
+    public ResponseBean saveOrUpdateContract(@RequestBody ProjectCostEditDTO projectCostDto) throws Exception {
         return this.projectCostService.saveOrUpdateProjectCost(projectCostDto);
+    }
 
+    /**
+     * 方法描述：增加收付款计划
+     * 保存费用总金额（type=1:合同总金额,type=2:技术审查费，type=3：合作设计费
+     * 作者：chenzhujie
+     * 日期：2017/3/1
+     */
+    @RequestMapping("/saveProjectCost")
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean saveProjectCost(@RequestBody ProjectCostEditDTO projectCostDto) throws Exception {
+        return this.projectCostService.saveOrUpdateProjectCost(projectCostDto);
     }
 
     /**
@@ -245,12 +277,114 @@ public class V2ProjectCostController extends BaseWSController {
      */
     @RequestMapping(value = {"/getProjectCooperatorFee"}, method = RequestMethod.POST)
     @ResponseBody
-    //  @AuthorityCheckable
+    @AuthorityCheckable
     public ResponseBean getProjectCooperatorFee(@RequestBody ProjectCostQueryDTO queryDTO) throws Exception {
         return ResponseBean.responseSuccess().addData("cooperatorFee",this.projectCostService.getProjectCooperatorFee(queryDTO));
     }
 
+    /**
+     * 方法描述：项目计划收款，计划付款列表
+     * 参数：projectId= 项目id，payType：（1：收款计划2：付款计划）
+     * 作者：MaoSF
+     * 日期：2017/3/7
+     */
+    @RequestMapping(value = {"/listProjectCost"}, method = RequestMethod.POST)
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean listProjectCost(@RequestBody ProjectCostQueryDTO queryDTO) throws Exception {
+        return ResponseBean.responseSuccess().setData(this.projectCostService.listProjectCost(queryDTO));
+    }
 
+    /**
+     * 方法描述：收付款计划节点信息
+     * 参数：projectId= 项目id，payType：（1：收款计划2：付款计划），costId：收付款计划id
+     * 作者：MaoSF
+     * 日期：2017/3/7
+     */
+    @RequestMapping(value = {"/getProjectCostPointByCostId"}, method = RequestMethod.POST)
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getProjectCostPointByCostId(@RequestBody ProjectCostQueryDTO queryDTO) throws Exception {
+        return ResponseBean.responseSuccess().setData(this.projectCostService.getProjectCostPointByCostId(queryDTO));
+    }
+
+    /**
+     * 方法描述：发起收付款计划节点信息
+     * 参数：projectId= 项目id，pointId:节点id，costId：收付款计划id
+     * 作者：MaoSF
+     * 日期：2017/3/7
+     */
+    @RequestMapping(value = {"/getProjectCostPointDetailByPointId"}, method = RequestMethod.POST)
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getProjectCostPointDetailByCostId(@RequestBody ProjectCostQueryDTO queryDTO) throws Exception {
+        return ResponseBean.responseSuccess().setData(this.projectCostService.getProjectCostPointDetailByCostId(queryDTO));
+    }
+
+
+    /**
+     * 方法描述：发起收款计划节点信息
+     * 参数：projectId= 项目id，pointId:节点id，costId：收付款计划id
+     * 作者：MaoSF
+     * 日期：2017/3/7
+     */
+    @RequestMapping(value = {"/getProjectCostPaymentDetailByPointDetailIdForReceive"}, method = RequestMethod.POST)
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getProjectCostPaymentDetailByPointDetailIdForReceive(@RequestBody ProjectCostQueryDTO queryDTO) throws Exception {
+        return ResponseBean.responseSuccess().setData(this.projectCostService.getProjectCostPaymentDetailByPointDetailIdForReceive(queryDTO));
+    }
+
+    /**
+     * 方法描述：发起付款计划节点信息
+     * 参数：projectId= 项目id，pointId:节点id，costId：收付款计划id
+     * 作者：MaoSF
+     * 日期：2017/3/7
+     */
+    @RequestMapping(value = {"/getProjectCostPaymentDetailByPointDetailIdForPay"}, method = RequestMethod.POST)
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getProjectCostPaymentDetailByPointDetailIdForPay(@RequestBody ProjectCostQueryDTO queryDTO) throws Exception {
+        return ResponseBean.responseSuccess().setData(this.projectCostService.getProjectCostPaymentDetailByPointDetailIdForPay(queryDTO));
+    }
+
+    /**
+     * 方法描述：单个计划，到账，付款 汇总
+     * 参数：projectId= 项目id，pointId:节点id，costId：收付款计划id
+     * 作者：MaoSF
+     * 日期：2017/3/7
+     */
+    @RequestMapping(value = {"/getProjectCostReceiveByCostId"}, method = RequestMethod.POST)
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getProjectCostReceiveByCostId(@RequestBody ProjectCostQueryDTO queryDTO) throws Exception {
+        return ResponseBean.responseSuccess().setData(this.projectCostService.getProjectCostReceiveByCostId(queryDTO));
+    }
+
+    /**
+     * 方法描述：单个计划，应到账，付款 汇总
+     * 参数：projectId= 项目id，pointId:节点id，costId：收付款计划id
+     * 作者：MaoSF
+     * 日期：2017/3/7
+     */
+    @RequestMapping(value = {"/getProjectCostNotReceiveByCostId"}, method = RequestMethod.POST)
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getProjectCostNotReceiveByCostId(@RequestBody ProjectCostQueryDTO queryDTO) throws Exception {
+        return ResponseBean.responseSuccess().setData(this.projectCostService.getProjectCostNotReceiveByCostId(queryDTO));
+    }
+
+    /**
+     * 方法描述：经营负责人  申请付款（内部组织使用）
+     * 作者：MaoSF
+     * 日期：2017/3/7
+     */
+    @RequestMapping(value ={"/applyProjectCostPayFee"} , method = RequestMethod.POST)
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean applyProjectCostPayFee(@RequestBody ProjectCostPointDetailDTO dto) throws Exception{
+        return this.projectCostService.applyProjectCostPayFee(dto);
+    }
 }
 
 

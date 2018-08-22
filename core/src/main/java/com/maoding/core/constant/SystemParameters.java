@@ -199,6 +199,14 @@ public interface SystemParameters {
 	int TECHNICAL_REVIEW_FEE_FOR_PAID = 17;//技术审查费到款（财务）
 	int COOPERATIVE_DESIGN_FEE_FOR_PAY = 18;//合作设计费付款（财务）
 	int COOPERATIVE_DESIGN_FEE_FOR_PAID = 19;//合作设计费到款（财务）
+
+	//修改后的
+	int TECHNICAL_REVIEW_FEE_FOR_PAY_2 = 30;//技术审查费付款（财务）
+	int TECHNICAL_REVIEW_FEE_FOR_PAID_2 = 31;//技术审查费到账（财务）
+	int COOPERATIVE_DESIGN_FEE_FOR_PAY_2 = 32;//合作设计费付款（财务）
+	int COOPERATIVE_DESIGN_FEE_FOR_PAID_2 = 33;//合作设计费到账（财务）
+	int INVOICE_FINN_IN_FOR_PAID = 29;//（财务填写发票信息）
+
 	int OTHER_FEE_FOR_PAY = 20;//其他费付款（财务）
 	int OTHER_FEE_FOR_PAID = 21;//其他费到款（财务）
     int TASK_COMPLETE = 22;//生产根任务已完成，给设计负责人推送任务
@@ -437,30 +445,30 @@ public interface SystemParameters {
 			/**************报销***************/
 			put("19",new MessageTemplate("%sendUserName%申请报销“%expName%”，共计%expAmount%元，请你审批。",0));//ok
 			//?共计?元的报销申请不予批准---XXX拒绝了你申请的“办公用品”报销金额200.00元
-			put("20",new MessageTemplate("%sendUserName%拒绝了你申请的“%expName%”报销，金额%expAmount%元，退回原因：%reason%。",1));//ok
+			put("20",new MessageTemplate("你申请的报销“%expName%”，共计%expAmount%元，已被退回，退回原因：%reason%。",1));//ok
 			//你申请“?”共计?元已审批通过 -- XXX同意你“办公用品”的报销金额为2000元，
-			put("22",new MessageTemplate("%sendUserName%同意你“%expName%”的报销，金额为%expAmount%元。",1));
-			//XXX转交了许佳迪申请的“办公用品”报销金额200.00元，请你审批，
-			put("221",new MessageTemplate("%sendUserName%同意并转交了%expUserName%的报销申请“%expName%”，共计%expAmount%元给你，请你审批。",0));
+			put("22",new MessageTemplate("你申请的报销“%expName%”共计%expAmount%元，等待财务拨款",1));
+			//郭志彬申请报销“办公费用”共计1200元，毛双凤同意并转交给你，请你审批。
+			put("221",new MessageTemplate("%expUserName%申请报销“%expName%”，共计%expAmount%元，%sendUserName%同意并转交给你，请你审批。",0));
 			/***********费用部分***********/
 			put("222",new MessageTemplate("%sendUserName%申请费用“%expName%”，共计%expAmount%元，请你审批。",0));//ok
-			//?共计?元的报销申请不予批准---XXX拒绝了你申请的“办公用品”报销金额200.00元
-			put("223",new MessageTemplate("%sendUserName%拒绝了你申请的“%expName%”费用，金额%expAmount%元，退回原因：%reason%。",1));//ok
-			//你申请“?”共计?元已审批通过 -- XXX同意你“办公用品”的报销金额为2000元，
-			put("224",new MessageTemplate("%sendUserName%同意你“%expName%”的费用，金额为%expAmount%元。",1));//报销单审批完成后发给报销人送消息
+			//你申请的费用“办公费用”，共计1200元已被退回，退回原因：没有发票。
+			put("223",new MessageTemplate("你申请的费用“%expName%”，共计%expAmount%元，已被退回，退回原因：%reason%。",1));//ok
+			//您申请的报销“办公费用”共计1200元已完成审批，等待财务拨款。
+			put("224",new MessageTemplate("你申请的费用“%expName%”，共计%expAmount%元，等待财务拨款",1));//报销单审批完成后发给报销人送消息
 			//毛双凤同意并转交了郭志彬的费用申请“差旅费用”共计1200元，给您，请您审批。
-			put("225",new MessageTemplate("%sendUserName%同意并转交了%expUserName%的费用申请“%expName%”，共计%expAmount%元给你，请你审批。",0));
+			put("225",new MessageTemplate("%expUserName%申请费用“%expName%”，共计%expAmount%元，%sendUserName%同意并转交了给你，请你审批。",0));
 			/***********请假部分***********/
 			put("226",new MessageTemplate("%sendUserName% 提交了请假申请，请假类型：%leaveTypeName%，请假时间：%startTime1% - %endTime1%，请你审批。",0));//ok
-			put("227",new MessageTemplate("%sendUserName% 拒绝了你的请假申请，请假类型“%leaveTypeName%”，请假时间：%startTime1% - %endTime1%，退回原因：%reason%。",1));//ok
+			put("227",new MessageTemplate("你提交的请假申请，请假类型“%leaveTypeName%”，请假时间：%startTime1% - %endTime1%，已被退回，退回原因：%reason%。",1));//ok
 			//您提交的请假申请，请假类型：事假，请假时间：2017/12/26 09:00-2017/12/27 18:00，已完成审批。
 			put("228",new MessageTemplate("你提交的请假申请，请假类型：%leaveTypeName%，请假时间：%startTime1% - %endTime1%，已完成审批。",1));
-			put("229",new MessageTemplate("%sendUserName%同意并转交了%expUserName%的请假申请，请假类型：%leaveTypeName%，请假时间：%startTime1% - %endTime1%给你，请你审批。",0));
+			put("229",new MessageTemplate("%expUserName%提交了请假申请，请假类型：%leaveTypeName%，请假时间：%startTime1% - %endTime1%，%sendUserName%同意并转交了给你，请你审批。",0));
 			/***********出差部分***********/
 			put("230",new MessageTemplate("%sendUserName% 提交了出差申请，出差地：%address%，出差时间：%startTime1% - %endTime1%，请你审批。",0));
-			put("231",new MessageTemplate("%sendUserName% 拒绝了你的出差申请，出差地：%address%，出差时间：%startTime1% - %endTime1%，退回原因：%reason%。",1));//ok
+			put("231",new MessageTemplate("你提交的出差申请，出差地：%address%，出差时间：%startTime1% - %endTime1%，已被退回，退回原因：%reason%。",1));//ok
 			put("232",new MessageTemplate("你提交的出差申请，出差地：%address%，出差时间：%startTime1% - %endTime1%，已完成审批。",1));
-			put("233",new MessageTemplate("%sendUserName%同意并转交了%expUserName%的出差申请，出差地：%address%，出差时间：%startTime1% - %endTime1%，%sendUserName%给你，请你审批。",0));
+			put("233",new MessageTemplate("%expUserName%提交了出差申请，出差地：%address%，出差时间：%startTime1% - %endTime1%，%sendUserName%同意并转交了给你，请你审批。",0));
 
 			put("236",new MessageTemplate("%expUserName% 提交的报销申请，“%expName%”，共计%expAmount%元，财务已拨款，请知晓。",1));//ok
 			put("237",new MessageTemplate("%expUserName% 提交的费用申请，“%expName%”，共计%expAmount%元，财务已拨款，请知晓。",1));//ok
@@ -468,8 +476,8 @@ public interface SystemParameters {
 			put("239",new MessageTemplate("%expUserName% 提交的出差申请，出差地：%address%，出差时间：%startTime1% - %endTime1%，已完成审批，请知晓",1));
 
 			//财务拨款（报销，费用）
-			put("234",new MessageTemplate("你申请的报销“%expName%”共计%expAmount%元，财务已拨款。",1));
-			put("235",new MessageTemplate("你申请的费用“%expName%”共计%expAmount%元，财务已拨款。",1));
+			put("234",new MessageTemplate("你申请的报销“%expName%”，共计%expAmount%元，财务已拨款。",1));
+			put("235",new MessageTemplate("你申请的费用“%expName%”，共计%expAmount%元，财务已拨款。",1));
 			/******************项目费用******************/
 			//技术审查费
 			//? - 技术审查费 - ?” 金额：?万，需要你确认付款 ----->XXX发起了“卯丁科技大厦一期：技术审查费节点”的技术审查费30万元，请确认付款金额，
@@ -542,11 +550,11 @@ public interface SystemParameters {
 			put(String.format("%d",MESSAGE_TYPE_PUBLISH_TASK_ORG_MANAGER),new MessageTemplate("%sendUserName% 创建了“%projectName%”项目，该项目的经营负责人是：%projectManagerName%，设计负责人是：%designerName%，你可根据具体情况进行调整。",1));
 
 			//会议，日程消息模板
-			put(String.format("%d",MESSAGE_TYPE_701),new MessageTemplate("%sendUserName% 已为你安排日程，日程内容“%scheduleContent%”，日程时间：%startTime1% - %endTime1%，点击查看详情。",1));
-			put(String.format("%d",MESSAGE_TYPE_702),new MessageTemplate("%sendUserName% 已修改安排日程，日程内容“%scheduleContent%”，日程时间：%startTime1% - %endTime1%，点击查看详情。",1));
+			put(String.format("%d",MESSAGE_TYPE_701),new MessageTemplate("%sendUserName% 已为你安排日程，日程内容“%scheduleContent%”，日程时间：%startTime1% - %endTime1%，该日程提醒将会在开始前%reminderTime%分钟通过卯丁APP给您发送。详情请到“日程”中查看。",1));
+			put(String.format("%d",MESSAGE_TYPE_702),new MessageTemplate("%sendUserName% 已修改安排日程，日程内容“%scheduleContent%”，日程时间：%startTime1% - %endTime1%，该日程提醒将会在开始前%reminderTime%分钟通过卯丁APP给您发送。详情请到“日程”中查看。",1));
 			put(String.format("%d",MESSAGE_TYPE_703),new MessageTemplate("%sendUserName% 已取消安排日程，日程内容“%scheduleContent%”，日程时间：%startTime1% - %endTime1%，请知晓。",1));
-			put(String.format("%d",MESSAGE_TYPE_704),new MessageTemplate("%sendUserName% 已为你安排会议，会议内容“%scheduleContent%”，会议时间：%startTime1% - %endTime1%， 如同意参加，点击详情回复是否参会。",1));
-			put(String.format("%d",MESSAGE_TYPE_705),new MessageTemplate("%sendUserName% 已修改安排会议，会议内容“%scheduleContent%”，会议时间：%startTime1% - %endTime1%， 如同意参加，点击详情回复是否参会。",1));
+			put(String.format("%d",MESSAGE_TYPE_704),new MessageTemplate("%sendUserName% 已为你安排会议，会议内容“%scheduleContent%”，会议时间：%startTime1% - %endTime1%，如同意参加，该会议提醒将会在开始前%reminderTime%分钟通过卯丁APP给您发送。 点击详情回复是否参会。",1));
+			put(String.format("%d",MESSAGE_TYPE_705),new MessageTemplate("%sendUserName% 已修改安排会议，会议内容“%scheduleContent%”，会议时间：%startTime1% - %endTime1%，如同意参加，该会议提醒将会在开始前%reminderTime%分钟通过卯丁APP给您发送。 点击详情回复是否参会。",1));
 			put(String.format("%d",MESSAGE_TYPE_706),new MessageTemplate("%sendUserName% 已取消安排会议，会议内容“%scheduleContent%”，会议时间：%startTime1% - %endTime1%，请知晓。",1));
 			put(String.format("%d",MESSAGE_TYPE_707),new MessageTemplate("%sendUserName% 已确定参加会议“%scheduleContent%”，点击查看详情。",1));
 			put(String.format("%d",MESSAGE_TYPE_708),new MessageTemplate("%sendUserName% 已确定不参加会议“%scheduleContent%”，不参加原因“%reason%”，点击查看详情。",1));
@@ -562,6 +570,8 @@ public interface SystemParameters {
 
 		}
 	};
+
+
 
 	/*****************消息类型******************/
 	//发起款项类通知消息
@@ -614,6 +624,19 @@ public interface SystemParameters {
 	int MESSAGE_TYPE_18 = 18;//1.合同回款财务人员到账操作
 	int MESSAGE_TYPE_19 = 19;//1.乙方经营负责人
 	int MESSAGE_TYPE_20 = 20;//1.乙方经营负责人
+
+	int MESSAGE_TYPE_100 = 100;//财务发票确认- 合同回款
+	int MESSAGE_TYPE_101 = 101;//财务发票确认- 技术审查费
+	int MESSAGE_TYPE_102 = 102;//财务发票确认- 合作设计费
+	int MESSAGE_TYPE_103 = 103;//财务发票确认- 其他费用
+
+	int MESSAGE_TYPE_110 = 110;//技术审查费收款-财务
+	int MESSAGE_TYPE_111 = 111;//技术审查费付款-财务 - 无申请
+	int MESSAGE_TYPE_112 = 112;//技术审查费付款-财务 - 有申请
+	int MESSAGE_TYPE_113 = 113;//合作设计费收款-财务
+	int MESSAGE_TYPE_114 = 114;//合作设计费付款-财务 - 无申请
+	int MESSAGE_TYPE_115 = 115;//合作设计费付款-财务 - 有申请
+	int MESSAGE_TYPE_116 = 116;//其他费用付款  -财务 - 有申请
 
 	int MESSAGE_TYPE_21 = 21;//流程审批完成，给负责人发送消息
 	int MESSAGE_TYPE_22 = 22;//同意报销,给报销人推送消息

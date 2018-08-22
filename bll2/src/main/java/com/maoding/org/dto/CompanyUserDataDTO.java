@@ -40,7 +40,23 @@ public class CompanyUserDataDTO extends FilePathDTO {
      */
     private String cellphone;
 
+    /**
+     * 组织名称
+     */
     private String companyName;
+
+    /**
+     * 邮箱
+     */
+    private String email;
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
     public String getId() {
         return id;
@@ -51,7 +67,9 @@ public class CompanyUserDataDTO extends FilePathDTO {
     }
 
     public String getCompanyUserId() {
-        companyUserId = id;
+        if(companyUserId==null){
+            companyUserId = id;
+        }
         return companyUserId;
     }
 

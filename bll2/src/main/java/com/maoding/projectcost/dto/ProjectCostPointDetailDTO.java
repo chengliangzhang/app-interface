@@ -1,6 +1,7 @@
 package com.maoding.projectcost.dto;
 
 import com.maoding.core.base.dto.BaseDTO;
+import com.maoding.invoice.dto.InvoiceEditDTO;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ import java.util.List;
  * 作    者：MaoSF
  * 日    期：2017年4月25日-下午4:11:50
  */
-public class ProjectCostPointDetailDTO extends BaseDTO{
+public class ProjectCostPointDetailDTO extends InvoiceEditDTO {
 
     private String projectId;
 
@@ -22,9 +23,36 @@ public class ProjectCostPointDetailDTO extends BaseDTO{
 
     private BigDecimal fee;
 
+    /**
+     * 描述
+     */
+    private String pointDetailDescription;
+
     private String field1;
 
     private String field2;
+
+    private String invoice;
+    /**
+     * 1:开发票，0/其他：不开发票
+     */
+    private String isInvoice;
+
+    /**
+     * 费用状态
+     */
+    private Integer feeStatus;
+    /**
+     * 1:收款，2：付款
+     */
+    private Integer payType;
+
+    private String auditPerson;
+
+    /**
+     * 费用申请流程结束后关联的申请单id
+     */
+    private String mainId;
 
     private List<ProjectCostPaymentDetailDTO> paymentDetailList = new ArrayList<>();
 
@@ -68,11 +96,67 @@ public class ProjectCostPointDetailDTO extends BaseDTO{
         this.field2 = field2 == null ? null : field2.trim();
     }
 
+    public String getIsInvoice() {
+        return isInvoice;
+    }
+
+    public void setIsInvoice(String isInvoice) {
+        this.isInvoice = isInvoice;
+    }
+
+    public Integer getPayType() {
+        return payType;
+    }
+
+    public void setPayType(Integer payType) {
+        this.payType = payType;
+    }
+
+    public String getAuditPerson() {
+        return auditPerson;
+    }
+
+    public void setAuditPerson(String auditPerson) {
+        this.auditPerson = auditPerson;
+    }
+
+    public String getInvoice() {
+        return invoice;
+    }
+
+    public void setInvoice(String invoice) {
+        this.invoice = invoice;
+    }
+
+    public Integer getFeeStatus() {
+        return feeStatus;
+    }
+
+    public void setFeeStatus(Integer feeStatus) {
+        this.feeStatus = feeStatus;
+    }
+
+    public String getPointDetailDescription() {
+        return pointDetailDescription;
+    }
+
+    public void setPointDetailDescription(String pointDetailDescription) {
+        this.pointDetailDescription = pointDetailDescription;
+    }
+
     public List<ProjectCostPaymentDetailDTO> getPaymentDetailList() {
         return paymentDetailList;
     }
 
     public void setPaymentDetailList(List<ProjectCostPaymentDetailDTO> paymentDetailList) {
         this.paymentDetailList = paymentDetailList;
+    }
+
+    public String getMainId() {
+        return mainId;
+    }
+
+    public void setMainId(String mainId) {
+        this.mainId = mainId;
     }
 }

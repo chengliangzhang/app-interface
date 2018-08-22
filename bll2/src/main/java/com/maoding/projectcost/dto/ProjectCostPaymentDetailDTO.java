@@ -3,6 +3,8 @@ package com.maoding.projectcost.dto;
 import com.maoding.core.base.dto.BaseDTO;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 深圳市设计同道技术有限公司
@@ -54,6 +56,13 @@ public class ProjectCostPaymentDetailDTO extends BaseDTO {
      * 当前操作人
      */
     private String currentCompanyUserId;
+
+    Integer operateFlag;//1：收款，2：付款,3:经营负责人确认付款
+
+    /**
+     * 当前操作人名
+     */
+    private String userName;
 
     private String myTaskId;
 
@@ -137,5 +146,21 @@ public class ProjectCostPaymentDetailDTO extends BaseDTO {
 
     public void setTaskType(int taskType) {
         this.taskType = taskType;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public Integer getOperateFlag() {
+        return operateFlag;
+    }
+
+    public void setOperateFlag(Integer operateFlag) {
+        this.operateFlag = operateFlag;
     }
 }
