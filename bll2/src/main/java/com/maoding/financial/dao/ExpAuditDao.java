@@ -39,6 +39,7 @@ public interface ExpAuditDao  extends BaseDao<ExpAuditEntity> {
     */
     List<ExpAuditEntity> selectByMainId(String mainId);
 
+    ExpAuditEntity getLastAuditByMainId(String mainId);
     /**
      * 方法描述：根据报销主表Id更新审批状态
      * 作   者：LY
@@ -86,10 +87,6 @@ public interface ExpAuditDao  extends BaseDao<ExpAuditEntity> {
      */
     ExpAuditEntity selectLastRecallAudit(String mainId);
 
-    /**
-     * 获取最新的审批记录
-     */
-    ExpAuditEntity selectLastAudit(String mainId);
 
     List<ExpAuditEntity> getMyAudit(Map<String, Object> mapParam);
 }

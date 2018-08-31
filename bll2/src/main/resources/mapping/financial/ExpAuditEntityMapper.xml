@@ -132,8 +132,8 @@
     select
     <include refid="Base_Column_List" />
     from maoding_web_exp_audit
-    where main_id = #{mainId,jdbcType=VARCHAR} -- and is_new = 'Y'
-    order by create_date desc
+    where main_id = #{mainId,jdbcType=VARCHAR}
+    order by create_date
   </select>
 
   <select id="selectAuditPersonByMainId" parameterType="java.lang.String" resultType="com.maoding.financial.dto.ExpAuditDTO">

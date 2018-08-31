@@ -48,6 +48,11 @@ public class ProjectCooperatorCostDTO {
     private BigDecimal planFee;
 
     /** 计划收款使用的数据 ******/
+
+    /**
+     * 收：详情费用统计，用于计算应收
+     */
+    private BigDecimal detailPaidFee;
     /**
      * 未收
      */
@@ -60,7 +65,7 @@ public class ProjectCooperatorCostDTO {
     /** 计划付款使用的数据 ******/
 
     /**
-     * 付：详情费用统计
+     * 付：详情费用统计，用于计算应付
      */
     private BigDecimal detailPayFee;
 
@@ -130,11 +135,11 @@ public class ProjectCooperatorCostDTO {
     }
 
     public BigDecimal getNotPaidFee() {
-        if(detailFee!=null){
+        if(detailPaidFee!=null){
             if(sumPaidFee==null){
                 sumPaidFee = new BigDecimal("0");
             }
-            notPaidFee = detailFee.subtract(sumPaidFee);
+            notPaidFee = detailPaidFee.subtract(sumPaidFee);
         }
         return notPaidFee;
     }
@@ -173,5 +178,13 @@ public class ProjectCooperatorCostDTO {
 
     public void setDetailPayFee(BigDecimal detailPayFee) {
         this.detailPayFee = detailPayFee;
+    }
+
+    public BigDecimal getDetailPaidFee() {
+        return detailPaidFee;
+    }
+
+    public void setDetailPaidFee(BigDecimal detailPaidFee) {
+        this.detailPaidFee = detailPaidFee;
     }
 }

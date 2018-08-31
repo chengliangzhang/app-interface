@@ -20,6 +20,7 @@ import com.maoding.process.dto.TaskDTO;
 import com.maoding.process.service.ProcessService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 
@@ -88,7 +89,6 @@ public class ExpAuditServiceImpl extends GenericService<ExpAuditEntity> implemen
     public ExpAuditEntity saveExpAudit(String mainId, String auditPerson, String submitAuditId, String accountId,String parentId) throws Exception {
         ExpAuditEntity auditEntity = new ExpAuditEntity();
         //插入新审批人审批记录
-        auditEntity = new ExpAuditEntity();
         auditEntity.setId(StringUtil.buildUUID());
         auditEntity.setIsNew("Y");
         auditEntity.setMainId(mainId);
@@ -108,33 +108,21 @@ public class ExpAuditServiceImpl extends GenericService<ExpAuditEntity> implemen
         Integer versionNum = dto.getVersionNum();
         CompanyUserEntity u =  this.companyUserDao.getCompanyUserByUserIdAndCompanyId(dto.getAccountId(),dto.getAppOrgId());
         String companyUserId = u.getId();
-        String operateRecordId = null;
         int i = 0;
         ExpMainEntity entity = this.expMainDao.selectById(id);
-        if(dto.isSaveAuditMain()){//如果是新增审批主记录
-            operateRecordId = id;
-        }else {
-            //修改状态
-            entity.setId(id);
-            if (versionNum != null) {
-                entity.setVersionNum(versionNum);
-            }
-            entity.setApproveStatus("2".equals(approveStatus)?approveStatus:"5");
-            i = expMainDao.updateById(entity);
+        ExpAuditEntity audit = expAuditDao.getLastAuditByMainId(id);
+        if (entity == null || audit == null) {
+            return 0;
         }
+        //修改主记录状态
+        entity.setId(id);
+        if (versionNum != null) {
+            entity.setVersionNum(versionNum);
+        }
+        entity.setApproveStatus("2".equals(approveStatus)?approveStatus:"5");
+        i = expMainDao.updateById(entity);
 
         //根据报销单id查询最新审批记录id
-        ExpAuditEntity audit = expAuditDao.selectLastAudit(id);
-        if (audit!=null) {
-            operateRecordId = audit.getId();
-        }
-
-        //把当前自己的审批记录改为同意/退回并且is_new为N
-        ExpAuditEntity auditEntity = new ExpAuditEntity();
-        auditEntity.setMainId(id);
-        auditEntity.setApproveStatus(approveStatus);
-        expAuditDao.transAuditPer(auditEntity);
-
         TaskDTO task = new TaskDTO();
         BaseDTO.copyFields(task,dto);
         task.setCurrentCompanyUserId(companyUserId);
@@ -142,11 +130,16 @@ public class ExpAuditServiceImpl extends GenericService<ExpAuditEntity> implemen
         task.setApproveStatus(approveStatus);
         task.setBusinessKey(id);
         task.setId(audit.getId());
-        this.processService.completeTask2(task);
-
+        boolean isContinueAudit = this.processService.completeTask2(task);
+        //修改当前审批记录的状态及审批意见
+        audit.setAuditMessage(dto.getAuditMessage());
+        audit.setApproveStatus(approveStatus);
+        if(isContinueAudit){
+            audit.setIsNew("N");
+        }
+        expAuditDao.updateById(audit);
         //保存抄送人
-        expMainService.saveCopy(dto.getCcCompanyUserList(),companyUserId,id,operateRecordId);
-
+        expMainService.saveCopy(dto.getCcCompanyUserList(),companyUserId,id,audit.getId());
         //表示完全审核通过，则提示抄送人
         if("1".equals(dto.getApproveStatus())){
             this.sendMessageForCopy(id,entity.getType(),dto.getCurrentCompanyId(),dto.getAccountId());
@@ -162,10 +155,15 @@ public class ExpAuditServiceImpl extends GenericService<ExpAuditEntity> implemen
         String accountId = dto.getAccountId();
         String auditPerson = dto.getAuditPerson();
         ExpMainEntity entity = this.expMainDao.selectById(id);
+        List<ExpAuditEntity> lastAudit = this.expAuditDao.selectByMainId(id);
+        String approveStatus = "3";//同意并转发
+        if(CollectionUtils.isEmpty(lastAudit)){
+            approveStatus = "0";//提交
+        }
         //插入新审批人审批记录
         ExpAuditEntity audit = this.saveExpAudit(id,auditPerson,companyUserId,accountId,dto.getParentAuditId());
         //推送消息
-        expMainService.sendMessageForAudit(id,currentCompanyId,auditPerson,entity.getType(),accountId,audit.getId(),dto.getApproveStatus());
+        expMainService.sendMessageForAudit(id,currentCompanyId,auditPerson,entity.getType(),accountId,audit.getId(),approveStatus);
         return audit.getId();
     }
 

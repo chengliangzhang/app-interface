@@ -441,6 +441,12 @@
             and copy.company_user_id = #{ccCompanyUserId}
             and (exp_main.approve_status = 6 and 3> exp_main.type or exp_main.approve_status = 1  and exp_main.type >2 )
         </if>
+        <if test="type=='8'.toString()">
+            and exp_main.approve_status = 2
+        </if>
+        <if test="type=='9'.toString()">
+            and exp_main.approve_status = 3
+        </if>
         <if test="keyword!=null">
             AND  (leave_detail.address  LIKE '%' #{keyword} '%' or ((exp_main.type = 1 or exp_main.type=2) and exp_main.exp_no  LIKE '%' #{keyword} '%'))
         </if>

@@ -16,6 +16,7 @@ public class QueryAuditDTO extends QueryDTO{
 
     private String userIds;
 
+    /**（1：报销数据，2：费用申请数据，3：请假数据，4：出差数据，5：项目费用申请数据），如果是查询多个：比如报销+费用申请，传递的参数为 "1,2",用逗号隔开 **/
     private String expTypes;
 
     private String expType;

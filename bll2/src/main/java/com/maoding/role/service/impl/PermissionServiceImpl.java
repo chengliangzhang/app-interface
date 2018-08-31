@@ -171,7 +171,8 @@ public class PermissionServiceImpl  extends GenericService<PermissionEntity> imp
 
     @Override
     public boolean isFinancialManagerReceiveForOther(String companyId,String userId) {
-        return isContentPermission(companyId,userId, PermissionConst.OTHER_RECEIVE);
+        //return isContentPermission(companyId,userId, PermissionConst.OTHER_RECEIVE);
+        return isFinancialReceive(companyId,userId);
     }
 
     @Override

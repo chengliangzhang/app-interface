@@ -44,6 +44,8 @@ public class ProjectCostPointDetailInfoDTO extends ProjectCooperatorCostDTO{
      */
     private Integer feeStatus;
 
+    private String auditStatus;
+
     public String getId() {
         return id;
     }
@@ -99,5 +101,13 @@ public class ProjectCostPointDetailInfoDTO extends ProjectCooperatorCostDTO{
 
     public void setFeeStatus(Integer feeStatus) {
         this.feeStatus = feeStatus;
+    }
+
+    public String getAuditStatus() {
+        return auditStatus;
+    }
+
+    public void setAuditStatus(String auditStatus) {
+        this.auditStatus = auditStatus;
     }
 }

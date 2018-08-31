@@ -48,6 +48,14 @@ public class ExpAuditDaoImpl extends GenericDao<ExpAuditEntity> implements ExpAu
         return this.sqlSession.selectList("ExpAuditEntityMapper.selectByMainId", mainId);
     }
 
+    @Override
+    public ExpAuditEntity getLastAuditByMainId(String mainId) {
+        List<ExpAuditEntity> list = this.selectByMainId(mainId);
+        if(!CollectionUtils.isEmpty(list)){
+            return list.get(list.size()-1);
+        }
+        return null;
+    }
     /**
      * 方法描述：根据报销主表Id更新审批状态
      * 作   者：LY
@@ -108,14 +116,6 @@ public class ExpAuditDaoImpl extends GenericDao<ExpAuditEntity> implements ExpAu
         return sqlSession.selectOne("ExpAuditEntityMapper.selectLastRecallAudit", mainId);
     }
 
-    @Override
-    public ExpAuditEntity selectLastAudit(String mainId) {
-        List<ExpAuditEntity> list = this.selectByMainId(mainId);
-        if(!CollectionUtils.isEmpty(list)){
-            return list.get(0);
-        }
-        return null;
-    }
 
     @Override
     public List<ExpAuditEntity> getMyAudit(Map<String, Object> mapParam) {

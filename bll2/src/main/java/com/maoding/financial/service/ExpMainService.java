@@ -83,7 +83,7 @@ public interface ExpMainService extends BaseService<ExpMainEntity>{
      * 方法描述：同意报销并转移审批人
      * 作   者：LY
      * 日   期：2016/8/1 15:08
-     * @param  id--报销单id auditPerson--新审批人  userId用户Id
+     * @param  dto：id--报销单id auditPerson--新审批人  userId用户Id
      */
     int agreeAndTransAuditPerExpMain(SaveExpMainDTO dto) throws Exception;
 
@@ -194,7 +194,6 @@ public interface ExpMainService extends BaseService<ExpMainEntity>{
     AuditStaticDataDTO getAuditStaticData(QueryAuditDTO query) throws Exception;
 
     void saveCopy(List<String> ccCompanyUserList,String sendCompanyUserId,String targetId,String operateRecordId) throws Exception;
-
 
     /**
      * 方法描述：项目费用申请

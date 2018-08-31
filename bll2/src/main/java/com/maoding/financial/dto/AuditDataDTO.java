@@ -74,6 +74,22 @@ public class AuditDataDTO {
      */
     private String approveStatusName;
 
+    //项目费用申请
+    /**
+     * 收款组织
+     */
+    private String toCompanyName;
+
+    /**
+     * 项目名称
+     */
+    private String projectName;
+
+    /**
+     * 费用类型
+     */
+    private String projectFeeTypeName;
+
     public String getCompanyUserId() {
         return companyUserId;
     }
@@ -246,5 +262,29 @@ public class AuditDataDTO {
 
     public void setLeaveTypeName(String leaveTypeName) {
         this.leaveTypeName = leaveTypeName;
+    }
+
+    public String getToCompanyName() {
+        return toCompanyName;
+    }
+
+    public void setToCompanyName(String toCompanyName) {
+        this.toCompanyName = toCompanyName;
+    }
+
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
+    }
+
+    public String getProjectFeeTypeName() {
+        return projectFeeTypeName;
+    }
+
+    public void setProjectFeeTypeName(String projectFeeTypeName) {
+        this.projectFeeTypeName = projectFeeTypeName;
     }
 }

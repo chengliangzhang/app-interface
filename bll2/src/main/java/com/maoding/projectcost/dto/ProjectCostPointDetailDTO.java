@@ -47,6 +47,9 @@ public class ProjectCostPointDetailDTO extends InvoiceEditDTO {
      */
     private Integer payType;
 
+    /**
+     * 付款申请（自由流程，选择审批人）
+     */
     private String auditPerson;
 
     /**

@@ -61,6 +61,19 @@ public class CompanyDataDTO {
 
     private String typeId;
 
+    /**
+     * 纳税识别号
+     */
+    private String taxNumber;
+
+    public String getTaxNumber() {
+        return taxNumber;
+    }
+
+    public void setTaxNumber(String taxNumber) {
+        this.taxNumber = taxNumber;
+    }
+
     public String getId() {
         return id;
     }

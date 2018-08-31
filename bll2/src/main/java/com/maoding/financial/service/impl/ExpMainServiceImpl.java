@@ -2,6 +2,7 @@ package com.maoding.financial.service.impl;
 
 import com.maoding.attach.dto.FileDataDTO;
 import com.maoding.commonModule.dto.*;
+import com.maoding.commonModule.entity.RelationRecordEntity;
 import com.maoding.commonModule.service.CopyRecordService;
 import com.maoding.commonModule.service.RelationRecordService;
 import com.maoding.companybill.dto.SaveCompanyBillDTO;
@@ -37,6 +38,11 @@ import com.maoding.project.constDefine.EnterpriseServer;
 import com.maoding.project.dto.ProjectDTO;
 import com.maoding.project.service.ProjectService;
 import com.maoding.project.service.ProjectSkyDriverService;
+import com.maoding.projectcost.dao.ProjectCostDao;
+import com.maoding.projectcost.dto.ProjectCostDataDTO;
+import com.maoding.projectcost.entity.ProjectCostEntity;
+import com.maoding.projectcost.entity.ProjectCostPointDetailEntity;
+import com.maoding.projectcost.service.ProjectCostService;
 import com.maoding.task.dto.ApproveCount;
 import com.maoding.task.dto.HomeDTO;
 import com.maoding.user.service.UserAttachService;
@@ -101,6 +107,8 @@ public class ExpMainServiceImpl extends GenericService<ExpMainEntity> implements
     private ExpAuditService expAuditService;
     @Autowired
     private ProcessService processService;
+    @Autowired
+    private ProjectCostService projectCostService;
 
     /**
      * 方法描述：我的报销列表
@@ -260,21 +268,17 @@ public class ExpMainServiceImpl extends GenericService<ExpMainEntity> implements
 
             //todo 一下内容待处理
             if(type==5 && "0".equals(approveStatus)){//提交
-                messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_19);
+                messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_243);
             }
             if(type==5 && "1".equals(approveStatus)){//同意
-                messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_22);
+                messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_244);
             }
             if(type==5 && "2".equals(approveStatus)){//拒绝
-                messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_20);
+                messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_245);
             }
             if(type==5 && "3".equals(approveStatus)){//同意并转交
-                messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_221);
+                messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_246);
             }
-            if(type==5 && "6".equals(approveStatus)){//拨款
-                messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_234);
-            }
-
 
             //抄送
             if(type==1 && "7".equals(approveStatus)){//
@@ -377,7 +381,7 @@ public class ExpMainServiceImpl extends GenericService<ExpMainEntity> implements
         String currentCompanyId = dto.getAppOrgId();
         String currentUserId = dto.getAccountId();
         //查询最新的这条记录
-        ExpAuditEntity audit= this.expAuditDao.selectLastAudit(dto.getId());
+        ExpAuditEntity audit= this.expAuditDao.getLastAuditByMainId(dto.getId());
         if(audit==null || !audit.getAuditPerson().equals(companyUserId)){
             return 0;
         }
@@ -438,7 +442,7 @@ public class ExpMainServiceImpl extends GenericService<ExpMainEntity> implements
 
         //根据报销单id查询最新审批记录id
         String parentId = null;
-        ExpAuditEntity audit = expAuditDao.selectLastAudit(id);
+        ExpAuditEntity audit = expAuditDao.getLastAuditByMainId(id);
         if (audit!=null) {
             parentId = audit.getId();
         }
@@ -476,67 +480,6 @@ public class ExpMainServiceImpl extends GenericService<ExpMainEntity> implements
         //修改状态
         entity.setApproveStatus("5");
         return expMainDao.updateById(entity);
-    }
-
-
-
-
-    /**
-     * 方法描述：同意报销并转移审批人
-     * 作   者：LY
-     * 日   期：2016/8/1 15:08
-     */
-    public int audit(SaveExpMainDTO dto) throws Exception {
-        String id = dto.getId();
-        String versionNum = dto.getVersionNum().toString();
-        String companyUserId = dto.getCompanyUserId();
-        String currentCompanyId = dto.getAppOrgId();
-        String accountId = dto.getAccountId();
-        String auditPerson = dto.getAuditPerson();
-
-        String operateRecordId = null;
-        int i = 0;
-        ExpMainEntity entity = this.expMainDao.selectById(id);
-        if(dto.isSaveAuditMain()){//如果是新增审批主记录
-            operateRecordId = id;
-        }else {
-            //修改状态
-            entity.setId(id);
-            entity.setVersionNum(Integer.parseInt(versionNum));
-            entity.setApproveStatus("5");
-            i = expMainDao.updateById(entity);
-        }
-
-        String parentId = null;
-        if("3".equals(dto.getApproveStatus())){
-            //根据报销单id查询最新审批记录id
-            ExpAuditEntity audit = expAuditDao.selectLastAudit(id);
-            if (audit!=null) {
-                parentId = audit.getId();
-                operateRecordId = audit.getId();
-            }
-        }
-
-        //把当前自己的审批记录改为同意并且is_new为N
-        ExpAuditEntity auditEntity = new ExpAuditEntity();
-        auditEntity.setMainId(id);
-        auditEntity.setApproveStatus("1");
-        expAuditDao.transAuditPer(auditEntity);
-
-        //插入新审批人审批记录
-        this.expAuditService.saveExpAudit(id,auditPerson,companyUserId,accountId,parentId);
-
-        //保存抄送人
-        this.saveCopy(dto.getCcCompanyUserList(),companyUserId,id,operateRecordId);
-
-        //推送消息
-        this.sendMessageForAudit(id,currentCompanyId,auditPerson,entity.getType(),accountId,auditEntity.getId(),dto.getApproveStatus());//同意并转交
-
-        //表示完全审核通过，则提示抄送人
-        if("1".equals(dto.getApproveStatus())){
-           this.sendMessageForCopy(id,entity.getType(),dto.getCurrentCompanyId(),dto.getAccountId());
-        }
-        return i ;
     }
 
 
@@ -603,7 +546,7 @@ public class ExpMainServiceImpl extends GenericService<ExpMainEntity> implements
             return map;
         }
         //获取最后一个审批人信息（ 和currentAuditPerson重复，只是为了保持兼容，暂时保留）
-        ExpAuditEntity auditEntity = expAuditDao.selectLastAudit(id);
+        ExpAuditEntity auditEntity = expAuditDao.getLastAuditByMainId(id);
         CompanyUserDetailDTO companyUser = null;
         if(auditEntity!=null){
             companyUser = companyUserService.selectCompanyUserById(auditEntity.getAuditPerson());
@@ -994,8 +937,7 @@ public class ExpMainServiceImpl extends GenericService<ExpMainEntity> implements
             //推送消息
             this.sendMessageForAudit(entity.getId(),companyId, dto.getAuditPerson(),entity.getType(),userId,auditEntity.getId(),"0");//提交
         }else {
-            List<ExpAuditEntity> auditEntities = expAuditDao.selectByMainId(id);
-            ExpAuditEntity expAuditEntity = auditEntities.get(0);
+            ExpAuditEntity expAuditEntity = expAuditDao.getLastAuditByMainId(id);
             String oldAuditPerson = expAuditEntity.getAuditPerson();
             if (!dto.getAuditPerson().equals(oldAuditPerson)) {//如果修改的时候，改变了社会人。则发送任务
                 //忽略以前发给其他人的任务
@@ -1202,18 +1144,21 @@ public class ExpMainServiceImpl extends GenericService<ExpMainEntity> implements
     }
 
     /**
-     * type: (type=1:我提交的，type=2：待审核的,type=3:我已经审核的 type=4:我提交并审批完成的,type=5:我提交的正处于审核中的,type=6:我提交未审核的,7:抄送列表)
+     * type: (type=1:我提交的，type=2：待审核的,type=3:我已经审核的 type=4:我提交并审批完成的,type=5:我提交的正处于审核中的,type=6:我提交未审核的,7:抄送列表，8：我提交并已退回，9：我提交并已撤销)
+     *
+     * expTypes（1：报销数据，2：费用申请数据，3：请假数据，4：出差数据，5：项目费用申请数据），如果是查询多个：比如报销+费用申请，传递的参数为 "1,2",用逗号隔开
      */
     @Override
     public List<AuditDataDTO> getAuditDataDTO(QueryAuditDTO query) throws Exception {
         String type = query.getType();
         query.setCompanyId(query.getAppOrgId());
+        query.setIgnoreRecall("1");//type=4的，也不包含已经退回的
         CompanyUserEntity user = this.companyUserDao.getCompanyUserByUserIdAndCompanyId(query.getAccountId(),query.getAppOrgId());
         if(user==null){
             return new ArrayList<>();
         }
 
-        if(StringUtil.isNullOrEmpty(type) || "1".equals(type)  || "4".equals(type)  || "5".equals(type) || "6".equals(type)){
+        if(isMySubmitAudit(type)){
             query.setCompanyUserId(user.getId());
         }
         if ("2".equals(type) || "3".equals(type)){
@@ -1223,7 +1168,7 @@ public class ExpMainServiceImpl extends GenericService<ExpMainEntity> implements
             query.setCcCompanyUserId(user.getId());
         }
         List<AuditDataDTO> list = expMainDao.getAuditData(query);
-        if ("1".equals(type) || "4".equals(type)  || "5".equals(type) || "6".equals(type)){
+        if (isMySubmitAudit(type)){
             for(AuditDataDTO dto:list){
                 if(1==dto.getType() || 2==dto.getType()){
                     List<ExpDetailEntity> detailList = expDetailDao.selectByMainId(dto.getId());
@@ -1231,7 +1176,26 @@ public class ExpMainServiceImpl extends GenericService<ExpMainEntity> implements
                 }
             }
         }
+        for(AuditDataDTO audit:list){
+            if(audit.getType()==5){
+                ProjectCostDataDTO cost = projectCostService.getProjectCostByMainId(audit.getId());
+                if(cost!=null){
+                    audit.setToCompanyName(cost.getRelationCompanyName());
+                    audit.setProjectName(cost.getProjectName());
+                    audit.setProjectFeeTypeName(cost.getTypeName());
+                    audit.setAmount(cost.getDetailFee());
+                }
+            }
+        }
         return list;
+    }
+
+    private boolean isMySubmitAudit(String  type){
+        if(StringUtil.isNullOrEmpty(type) || "1".equals(type)  || "4".equals(type)
+                || "5".equals(type) || "6".equals(type) || "8".equals(type) || "9".equals(type)){
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -1323,11 +1287,6 @@ public class ExpMainServiceImpl extends GenericService<ExpMainEntity> implements
                 }
             }
         }
-        //主表Id
-        String id = entity.getId();
-        //保存报销明细表
-        this.saveExpDetail(dto ,id);
-
         return new AjaxMessage().setCode("0").setInfo("保存成功").setData(dto);
     }
 
@@ -1394,7 +1353,7 @@ public class ExpMainServiceImpl extends GenericService<ExpMainEntity> implements
         entity.setCompanyId(companyId);
         entity.initEntity();
         expMainDao.insert(entity);
-
+        this.saveExpDetail(dto,entity.getId());
         String targetType = ProcessTypeConst.PROCESS_TYPE_PROJECT_PAY_APPLY;
 //        if(entity.getType()==1){
 //            targetType = ProcessTypeConst.PROCESS_TYPE_EXPENSE;

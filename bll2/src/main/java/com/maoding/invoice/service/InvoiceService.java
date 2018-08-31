@@ -14,4 +14,9 @@ public interface InvoiceService {
      * 获取发票信息
      */
     InvoiceInfoDTO getInvoice(String invoiceId);
+
+    /**
+     * 获取收款方名
+     */
+    String getInvoiceReceiveCompanyName(String invoiceId);
 }

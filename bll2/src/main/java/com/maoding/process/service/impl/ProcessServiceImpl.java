@@ -10,6 +10,7 @@ import com.maoding.core.base.service.NewBaseService;
 import com.maoding.core.constant.ProcessTypeConst;
 import com.maoding.core.constant.ProjectCostConst;
 import com.maoding.core.util.StringUtil;
+import com.maoding.financial.dto.AuditBaseDTO;
 import com.maoding.financial.dto.AuditDTO;
 import com.maoding.financial.dto.AuditEditDTO;
 import com.maoding.financial.dto.SaveExpMainDTO;
@@ -110,7 +111,8 @@ public class ProcessServiceImpl extends NewBaseService implements ProcessService
      * 如果审核通过，并且已经结束流程，则把审批的主记录设置为审批通过状态
      * 如果没有审批通过，则把当前记录设置为退回状态
      */
-    private void saveAudit(String businessKey,BaseDTO dto,boolean isPass) throws Exception{
+    private boolean saveAudit(String businessKey, AuditBaseDTO dto, boolean isPass) throws Exception{
+        boolean isContinueAudit = false;
         List<FlowTaskDTO> taskList = null;
         if(isPass){
             taskList = workflowService.listWorkTask(businessKey);
@@ -123,10 +125,12 @@ public class ProcessServiceImpl extends NewBaseService implements ProcessService
                 saveExpMain.setAppOrgId(dto.getAppOrgId());
                 saveExpMain.setAccountId(dto.getAccountId());
                 saveExpMain.setId(businessKey);
+                saveExpMain.setAuditMessage(dto.getAuditMessage());
                 String auditId = this.expAuditService.saveAudit(saveExpMain);
                 Map<String,Object> map = new HashMap<>();
                 map.put(auditIdKey,auditId);
                 workflowService.setTaskVariables(task.getId(),map);
+                isContinueAudit = true;
             }
         }
 
@@ -143,6 +147,7 @@ public class ProcessServiceImpl extends NewBaseService implements ProcessService
                 projectCostPointDetailDTO.setFeeStatus(ProjectCostConst.FEE_STATUS_APPROVE);
                 projectCostService.completeProjectFeeApply(projectCostPointDetailDTO);
             }
+            this.expMainService.sendMessageForAudit(businessKey,dto.getCurrentCompanyId(),exp.getCompanyUserId(),exp.getType(),dto.getAccountId(),null,ProjectCostConst.FEE_STATUS_APPROVE+"");
         }
         if(!isPass){
             ExpMainEntity exp = this.expMainService.selectById(businessKey);
@@ -156,7 +161,9 @@ public class ProcessServiceImpl extends NewBaseService implements ProcessService
                 projectCostPointDetailDTO.setFeeStatus(ProjectCostConst.FEE_STATUS_NOT_APPROVE);
                 projectCostService.completeProjectFeeApply(projectCostPointDetailDTO);
             }
+            this.expMainService.sendMessageForAudit(businessKey,dto.getCurrentCompanyId(),exp.getCompanyUserId(),exp.getType(),dto.getAccountId(),null,ProjectCostConst.FEE_STATUS_NOT_APPROVE+"");
         }
+        return isContinueAudit;
     }
 
     /**
@@ -214,9 +221,7 @@ public class ProcessServiceImpl extends NewBaseService implements ProcessService
      * 完成任务
      */
     @Override
-    public void completeTask2(TaskDTO dto) throws Exception {
-        //  claimTask(dto);
-
+    public boolean completeTask2(TaskDTO dto) throws Exception {
         List<FlowTaskDTO> list = workflowService.listWorkTaskVariableValueEquals(auditIdKey,dto.getId());
         for(FlowTaskDTO task:list){
             //查询当前流程是否是自由流程
@@ -239,15 +244,16 @@ public class ProcessServiceImpl extends NewBaseService implements ProcessService
             }
             workflowService.completeWorkTask(workAction);
             //保存我的任务（当前任务完成，如果下一个节点不是结束节点，系统会自动为下一个节点产生一个任务，系统需要保存一条相应的审核记录中）
-            this.saveAudit(dto.getBusinessKey(),dto,ProcessTypeConst.PASS.equals(workAction.getIsPass()));
+            return this.saveAudit(dto.getBusinessKey(),dto,ProcessTypeConst.PASS.equals(dto.getApproveStatus()));
         }
+        return false;
     }
 
     /**
      *
      * @param dto:mainId:审批主记录的id
      * @param dto:targetType 审批类型
-     * @return 返回到前端的标识，1：代表是自由流程，需要前端传递审批人 0：代表不是自由流程，不需要前端传递审批人
+     * @return 返回到前端的标识，1：代表是自由流程，需要前端传递审批人 0：代表不是自由流程，不需要前端传递审批人,2:无流程
      */
     @Override
     public  Map<String,Object>  getCurrentProcess(AuditEditDTO dto) {
@@ -258,8 +264,16 @@ public class ProcessServiceImpl extends NewBaseService implements ProcessService
         result.put("processType",ProcessTypeConst.TYPE_FREE);
         if(StringUtil.isNullOrEmpty(dto.getMainId())){
             ProcessTypeEntity processType = this.processTypeDao.getCurrentProcessType(dto.getAppOrgId(),dto.getAuditType());
-            if(!(processType==null || ProcessTypeConst.TYPE_FREE == processType.getType())){
-                processDefineId = workflowService.getProcessDefineIdByProcessKey(this.getProcessKey(dto.getAuditType(),dto.getAppOrgId()));
+            //如果是费用申请，特殊情况，如果是无流程的情况下。是不需要审批的，processFlag = 2 告诉前端不需要传递人员
+            if(ProcessTypeConst.PROCESS_TYPE_PROJECT_PAY_APPLY.equals(dto.getAuditType())
+                    && (processType==null || processType.getType()== ProcessTypeConst.TYPE_NOT_PROCESS)){
+                result.put("processFlag","2");//返回到前端的标识，2:无流程
+                result.put("processType",ProcessTypeConst.TYPE_NOT_PROCESS);
+            }
+            if(!"2".equals((String)result.get("processFlag"))){
+                if(!(processType==null || ProcessTypeConst.TYPE_FREE == processType.getType())){
+                    processDefineId = workflowService.getProcessDefineIdByProcessKey(this.getProcessKey(dto.getAuditType(),dto.getAppOrgId()),dto.getAppOrgId());
+                }
             }
         }else {
             ProcessInstanceRelationEntity instanceRelation = processInstanceRelationDao.getProcessInstanceRelation(dto.getMainId());
@@ -323,8 +337,8 @@ public class ProcessServiceImpl extends NewBaseService implements ProcessService
 
    private boolean isCurrentBrunchProcess(UserTaskNodeDTO t,String value){
        double v = Double.parseDouble(value);
-       double max = StringUtil.isNullOrEmpty(t.getMax())?-1:Double.parseDouble(t.getMax());
-       double min = StringUtil.isNullOrEmpty(t.getMin())?0:Double.parseDouble(t.getMin());
+       double max = (StringUtil.isNullOrEmpty(t.getMax()) || "null".equals(t.getMax()))?-1:Double.parseDouble(t.getMax());
+       double min = (StringUtil.isNullOrEmpty(t.getMin()) || "null".equals(t.getMin()))?0:Double.parseDouble(t.getMin());
        if (max == -1) {
            //这里处理最大的值的情况下
            if (v >= min) {
@@ -347,7 +361,7 @@ public class ProcessServiceImpl extends NewBaseService implements ProcessService
             if(processType==null || ProcessTypeConst.TYPE_FREE == processType.getType()){
                 return userList;
             }else {
-                processDefineId = workflowService.getProcessDefineIdByProcessKey(this.getProcessKey(dto.getAuditType(),dto.getAppOrgId()));
+                processDefineId = workflowService.getProcessDefineIdByProcessKey(this.getProcessKey(dto.getAuditType(),dto.getAppOrgId()),dto.getAppOrgId());
             }
         }else {
             ProcessInstanceRelationEntity instanceRelation = processInstanceRelationDao.getProcessInstanceRelation(dto.getMainId());

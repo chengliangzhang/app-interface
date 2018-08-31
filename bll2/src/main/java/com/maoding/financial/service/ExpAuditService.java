@@ -26,5 +26,8 @@ public interface ExpAuditService extends BaseService<ExpAuditEntity>{
 
     int completeAudit(SaveExpMainDTO dto) throws Exception;
 
+    /**
+     * 用于保存流程中同意后，给下一个人推送审批任务
+     */
     String saveAudit(SaveExpMainDTO dto) throws Exception;
 }

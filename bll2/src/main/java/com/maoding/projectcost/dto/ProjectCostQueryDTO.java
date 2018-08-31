@@ -34,6 +34,20 @@ public class ProjectCostQueryDTO extends BaseDTO {
      */
     private Integer payType;
 
+    /**
+     * 从任务方进入，附带了taskId，用于获取数据的companyId
+     */
+    private String taskId;
+
+    /**
+     * 申请单据id（exp_main 中的id）
+     */
+    private String mainId;
+
+    /**
+     * 任务16-17的targetId
+     */
+    private String paymentDetailId;
 
     public String getProjectId() {
         return projectId;
@@ -81,5 +95,29 @@ public class ProjectCostQueryDTO extends BaseDTO {
 
     public void setPointDetailId(String pointDetailId) {
         this.pointDetailId = pointDetailId;
+    }
+
+    public String getTaskId() {
+        return taskId;
+    }
+
+    public void setTaskId(String taskId) {
+        this.taskId = taskId;
+    }
+
+    public String getPaymentDetailId() {
+        return paymentDetailId;
+    }
+
+    public void setPaymentDetailId(String paymentDetailId) {
+        this.paymentDetailId = paymentDetailId;
+    }
+
+    public String getMainId() {
+        return mainId;
+    }
+
+    public void setMainId(String mainId) {
+        this.mainId = mainId;
     }
 }

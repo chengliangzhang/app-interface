@@ -116,6 +116,7 @@
   <select id="getProjectAmountFeeByCostId" resultType="com.maoding.projectcost.dto.ProjectCooperatorCostDTO" parameterType="com.maoding.projectcost.dto.ProjectCostQueryDTO">
     SELECT
     sum(ifnull(if(c.fee_status != 2,c.fee,0),0)) as detailFee,
+    sum(ifnull(if(c.fee_status != 2 and c.paid_fee_status = 1,c.fee,0),0)) as detailPaidFee,
     sum(ifnull(if(c.fee_status = 1,c.fee,0),0)) as detailPayFee,
     sum(ifnull(d.paid_fee,0)) as sumPaidFee,
     sum(ifnull(d.pay_fee,0)) as sumPayFee
@@ -138,6 +139,7 @@
     b.fee,
     count(DISTINCT c.id) as pointDetailCount,
     sum(ifnull(if(c.fee_status != 2,c.fee,0),0)) as detailFee,
+    sum(ifnull(if(c.fee_status != 2 and c.paid_fee_status = 1,c.fee,0),0)) as detailPaidFee,
     sum(ifnull(if(c.fee_status = 1,c.fee,0),0)) as detailPayFee,
     sum(ifnull(d.paid_fee,0)) as sumPaidFee,
     sum(ifnull(d.pay_fee,0)) as sumPayFee
@@ -167,6 +169,7 @@
     f.user_name as userName,
     count(DISTINCT c.id) as pointDetailCount,
     sum(ifnull(if(c.fee_status != 2,c.fee,0),0)) as detailFee,
+    sum(ifnull(if(c.fee_status != 2 and c.paid_fee_status = 1,c.fee,0),0)) as detailPaidFee,
     sum(ifnull(if(c.fee_status = 1,c.fee,0),0)) as detailPayFee,
     sum(ifnull(d.paid_fee,0)) as sumPaidFee,
     sum(ifnull(d.pay_fee,0)) as sumPayFee
@@ -195,6 +198,7 @@
     DATE_FORMAT(c.create_date,'%Y-%m-%d')  as pointDetailDate,
     f.user_name as userName,
     sum(ifnull(if(c.fee_status != 2,c.fee,0),0)) as detailFee,
+    sum(ifnull(if(c.fee_status != 2 and c.paid_fee_status = 1,c.fee,0),0)) as detailPaidFee,
     sum(ifnull(if(c.fee_status = 1,c.fee,0),0)) as detailPayFee,
     sum(ifnull(d.paid_fee,0)) as sumPaidFee,
     sum(ifnull(d.pay_fee,0)) as sumPayFee

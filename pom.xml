@@ -12,13 +12,14 @@
         <module>interface</module>
         <module>core</module>
         <module>bll2</module>
+        <module>activiti</module>
     </modules>
 
     <repositories>
         <repository>
-            <id>nexus</id>
-            <name>maven-public</name>
-            <url>http://192.168.1.253:8081/repository/maven-public</url>
+            <id>maoding-nexus</id>
+            <name>maoding-nexus</name>
+            <url>http://192.168.1.253:8081/repository/maven-public/</url>
             <layout>default</layout>
             <releases>
                 <enabled>true</enabled>
@@ -27,16 +28,24 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
-        <repository>
-            <id>spring-releases</id>
-            <url>https://repo.spring.io/jcenter-cache</url>
-        </repository>
+        <!--<repository>-->
+        <!--<id>wuweiqiang-nexus</id>-->
+        <!--<name>wuweiqiang-nexus</name>-->
+        <!--<url>http://192.168.17.168:8081/repository/maven-public/</url>-->
+        <!--<layout>default</layout>-->
+        <!--<releases>-->
+        <!--<enabled>true</enabled>-->
+        <!--</releases>-->
+        <!--<snapshots>-->
+        <!--<enabled>true</enabled>-->
+        <!--</snapshots>-->
+        <!--</repository>-->
     </repositories>
     <pluginRepositories>
         <pluginRepository>
-            <id>nexus</id>
-            <name>maven-public</name>
-            <url>http://192.168.1.253:8081/repository/maven-public</url>
+            <id>maoding-plugins</id>
+            <name>maoding-plugins</name>
+            <url>http://192.168.1.253:8081/repository/maven-public/</url>
             <layout>default</layout>
             <releases>
                 <enabled>true</enabled>
@@ -45,14 +54,22 @@
                 <enabled>true</enabled>
             </snapshots>
         </pluginRepository>
-        <pluginRepository>
-            <id>spring-releases</id>
-            <url>https://repo.spring.io/jcenter-cache</url>
-        </pluginRepository>
+        <!--<pluginRepository>-->
+        <!--<id>wuweiqiang-plugins</id>-->
+        <!--<name>wuweiqiang-plugins</name>-->
+        <!--<url>http://192.168.17.168:8081/repository/maven-public/</url>-->
+        <!--<layout>default</layout>-->
+        <!--<releases>-->
+        <!--<enabled>true</enabled>-->
+        <!--</releases>-->
+        <!--<snapshots>-->
+        <!--<enabled>true</enabled>-->
+        <!--</snapshots>-->
+        <!--</pluginRepository>-->
     </pluginRepositories>
 
     <properties>
-        <java.home>C:\Program Files\Java\jdk1.8.0_71</java.home>
+        <java.home>C:\Program Files\Java\jdk1.8.0_45</java.home>
         <java.version>1.8</java.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -149,6 +166,13 @@
         <poi.version>3.15-beta2</poi.version>
         <protobuf.version>2.5.0</protobuf.version>
         <imageio.version>3.3</imageio.version>
+
+        <activiti.version>5.22.0</activiti.version>
+        <hibernate.javax.persistence.version>1.0.1.Final</hibernate.javax.persistence.version>
+
+        <!-- kryo -->
+        <kryo.version>2.24.0</kryo.version>
+
     </properties>
 
     <dependencyManagement>
@@ -677,6 +701,94 @@
             </dependency>
 
 
+            <dependency>
+                <groupId>org.hibernate.javax.persistence</groupId>
+                <artifactId>hibernate-jpa-2.0-api</artifactId>
+                <version>${hibernate.javax.persistence.version}</version>
+            </dependency>
+
+
+            <!-- activiti -->
+            <dependency>
+                <groupId>org.activiti</groupId>
+                <artifactId>activiti-engine</artifactId>
+                <version>${activiti.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.activiti</groupId>
+                <artifactId>activiti-spring</artifactId>
+                <version>${activiti.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.activiti</groupId>
+                <artifactId>activiti-json-converter</artifactId>
+                <version>${activiti.version}</version>
+            </dependency>
+
+            <!--<dependency>-->
+                <!--<groupId>org.activiti</groupId>-->
+                <!--<artifactId>activiti-explorer</artifactId>-->
+                <!--<version>${activiti.version}</version>-->
+                <!--<exclusions>-->
+                    <!--<exclusion>-->
+                        <!--<artifactId>vaadin</artifactId>-->
+                        <!--<groupId>com.vaadin</groupId>-->
+                    <!--</exclusion>-->
+                    <!--<exclusion>-->
+                        <!--<artifactId>dcharts-widget</artifactId>-->
+                        <!--<groupId>org.vaadin.addons</groupId>-->
+                    <!--</exclusion>-->
+                    <!--<exclusion>-->
+                        <!--<artifactId>activiti-simple-workflow</artifactId>-->
+                        <!--<groupId>org.activiti</groupId>-->
+                    <!--</exclusion>-->
+                <!--</exclusions>-->
+            <!--</dependency>-->
+            <dependency>
+                <groupId>org.activiti</groupId>
+                <artifactId>activiti-modeler</artifactId>
+                <version>${activiti.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.activiti</groupId>
+                <artifactId>activiti-rest</artifactId>
+                <version>${activiti.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-log4j12</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.activiti</groupId>
+                <artifactId>activiti-diagram-rest</artifactId>
+                <version>${activiti.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.activiti</groupId>
+                <artifactId>activiti-cxf</artifactId>
+                <version>${activiti.version}</version>
+            </dependency>
+            <!-- UUID -->
+            <dependency>
+                <groupId>com.fasterxml.uuid</groupId>
+                <artifactId>java-uuid-generator</artifactId>
+                <version>3.1.3</version>
+            </dependency>
+
+            <!-- kryo -->
+            <dependency>
+                <groupId>com.esotericsoftware.kryo</groupId>
+                <artifactId>kryo</artifactId>
+                <version>${kryo.version}</version>
+            </dependency>
 
         </dependencies>
     </dependencyManagement>

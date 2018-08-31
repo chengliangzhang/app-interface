@@ -43,9 +43,20 @@ public class InvoiceServiceImpl extends NewBaseService implements InvoiceService
     public InvoiceInfoDTO getInvoice(String invoiceId) {
         InvoiceInfoDTO invoiceInfo = new InvoiceInfoDTO();
         InvoiceEntity invoice = invoiceDao.selectById(invoiceId);
-        BeanUtils.copyProperties(invoice,invoiceInfo);
-        invoiceInfo.setRelationCompanyName(this.getRelationCompanyName(invoice.getRelationCompanyId(),invoice.getRelationCompanyName()));
+        if(invoice!=null){
+            BeanUtils.copyProperties(invoice,invoiceInfo);
+            invoiceInfo.setRelationCompanyName(this.getRelationCompanyName(invoice.getRelationCompanyId(),invoice.getRelationCompanyName()));
+        }
         return invoiceInfo;
+    }
+
+    @Override
+    public String getInvoiceReceiveCompanyName(String invoiceId) {
+        InvoiceInfoDTO invoiceInfo = this.getInvoice(invoiceId);
+        if(invoiceInfo!=null){
+            return invoiceInfo.getRelationCompanyName();
+        }
+        return null;
     }
 
     /**

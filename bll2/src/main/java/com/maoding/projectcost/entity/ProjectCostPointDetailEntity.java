@@ -58,6 +58,11 @@ public class ProjectCostPointDetailEntity extends BaseEntity{
      */
     private String relationCompanyId;
 
+    /**
+     * 发票的状态（0：发票待确认，1：已经确认，该状态为应收的状态），用于收款方的状态描述
+     */
+    private Integer paidFeeStatus;
+
     public String getProjectId() {
         return projectId;
     }
@@ -128,5 +133,13 @@ public class ProjectCostPointDetailEntity extends BaseEntity{
 
     public void setRelationCompanyId(String relationCompanyId) {
         this.relationCompanyId = relationCompanyId;
+    }
+
+    public Integer getPaidFeeStatus() {
+        return paidFeeStatus;
+    }
+
+    public void setPaidFeeStatus(Integer paidFeeStatus) {
+        this.paidFeeStatus = paidFeeStatus;
     }
 }

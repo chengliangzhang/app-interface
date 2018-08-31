@@ -227,7 +227,7 @@
 
     <select id="getCompanyUserByUserId" resultType="com.maoding.org.dto.CompanyUserAppDTO"
             parameterType="java.util.Map">
-		SELECT a.id,a.user_id as userId,a.user_name as userName,a.email,b.oss_file_path as fileFullPath,
+		SELECT a.id,a.company_id as companyId,a.user_id as userId,a.user_name as userName,a.email,b.oss_file_path as fileFullPath,
 		c.cellphone,c.user_name as accountName,d.aliasName as companyName
 		from  maoding_web_company_user a
 		LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) b on a.user_id = b.user_id AND b.attach_type=5
@@ -239,7 +239,8 @@
 
     <select id="getCompanyUserDataById" resultType="com.maoding.org.dto.CompanyUserAppDTO"
             parameterType="java.util.Map">
-        SELECT a.id,a.user_id as userId,a.user_name as userName,a.email,b.oss_file_path as fileFullPath,
+        SELECT a.id,a.company_id as companyId,a.user_id as userId,a.user_name as userName,a.email,
+        b.oss_file_path as fileFullPath,
         c.cellphone,c.user_name as accountName,d.aliasName as companyName
         from  maoding_web_company_user a
         LEFT JOIN (<include refid="UserAttachEntityMapper.getHeadImg" /> ) b on a.user_id = b.user_id AND b.attach_type=5

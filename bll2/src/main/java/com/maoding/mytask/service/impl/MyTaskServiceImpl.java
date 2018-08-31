@@ -10,6 +10,7 @@ import com.maoding.core.bean.AjaxMessage;
 import com.maoding.core.bean.ResponseBean;
 import com.maoding.core.constant.CompanyBillType;
 import com.maoding.core.constant.PermissionConst;
+import com.maoding.core.constant.ProjectCostConst;
 import com.maoding.core.constant.SystemParameters;
 import com.maoding.core.util.*;
 import com.maoding.deliver.dao.DeliverDao;
@@ -21,6 +22,8 @@ import com.maoding.financial.dao.ExpMainDao;
 import com.maoding.financial.dto.ExpMainDTO;
 import com.maoding.financial.service.ExpMainService;
 import com.maoding.invoice.dto.InvoiceEditDTO;
+import com.maoding.invoice.dto.InvoiceInfoDTO;
+import com.maoding.invoice.service.InvoiceService;
 import com.maoding.message.entity.MessageEntity;
 import com.maoding.message.service.MessageService;
 import com.maoding.mytask.dao.MyTaskDao;
@@ -44,6 +47,7 @@ import com.maoding.project.entity.ProjectProcessNodeEntity;
 import com.maoding.project.entity.ProjectSkyDriveEntity;
 import com.maoding.project.service.ProjectProcessService;
 import com.maoding.project.service.ProjectSkyDriverService;
+import com.maoding.projectcost.dao.ProjectCostDao;
 import com.maoding.projectcost.dao.ProjectCostPaymentDetailDao;
 import com.maoding.projectcost.dao.ProjectCostPointDao;
 import com.maoding.projectcost.dao.ProjectCostPointDetailDao;
@@ -158,6 +162,12 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
 
     @Autowired
     private CompanyUserService companyUserService;
+
+    @Autowired
+    private InvoiceService invoiceService;
+
+    @Autowired
+    private ProjectCostDao projectCostDao;
 
     private String sperate = "<br/>";
 
@@ -1536,10 +1546,11 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
         if (null != myTask && (myTask.getTaskType() == SystemParameters.OTHER_FEE_FOR_PAY
                 || myTask.getTaskType()==SystemParameters.TECHNICAL_REVIEW_FEE_FOR_PAY_2
                 || myTask.getTaskType()==SystemParameters.COOPERATIVE_DESIGN_FEE_FOR_PAY_2)) {//其他费用－付款
-            detailDTO.setPayDate(paidDate);
+            detailDTO.setDateStr(paidDate);
+            //detailDTO.setPaidDate(paidDate);
             detailDTO.setOperateFlag(CompanyBillType.DIRECTION_PAYER);
         } else {
-            detailDTO.setPaidDate(paidDate);
+            detailDTO.setDateStr(paidDate);
             detailDTO.setOperateFlag(CompanyBillType.DIRECTION_PAYEE);
         }
         detailDTO.setCurrentCompanyUserId(handler.getId());
@@ -1583,11 +1594,11 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
         detailDTO.setCurrentCompanyUserId(handler.getId());
         if (myTask.getTaskType() == 16 || myTask.getTaskType() == 18) {
             detailDTO.setPayDate(paidDate);
-            detailDTO.setOperateFlag(CompanyBillType.DIRECTION_PAYEE);
+            detailDTO.setOperateFlag(CompanyBillType.DIRECTION_PAYER);//付款
         }
         if (myTask.getTaskType() == 17 || myTask.getTaskType() == 19) {
             detailDTO.setPaidDate(paidDate);
-            detailDTO.setOperateFlag(CompanyBillType.DIRECTION_PAYER);//付款
+            detailDTO.setOperateFlag(CompanyBillType.DIRECTION_PAYEE);
         }
         detailDTO.setProjectId(myTask.getProjectId());
         detailDTO.setCurrentCompanyId(myTask.getCompanyId());
@@ -1885,6 +1896,11 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
             case 19:
             case 20:
             case 21:
+            case 29:
+            case 30:
+            case 31:
+            case 32:
+            case 33:
                 return "财务";
             case 15:
             case 22:
@@ -1965,6 +1981,22 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
                 break;
             case 21:
                 messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_32);
+                break;
+            case 29:
+                messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_100);
+                break;
+            case 30:
+                //查询是否有申请
+                messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_111);
+                break;
+            case 31:
+                messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_110);
+                break;
+            case 32:
+                messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_114);
+                break;
+            case 33:
+                messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_113);
                 break;
             case 100:
                 messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_901);
@@ -2473,10 +2505,19 @@ public class MyTaskServiceImpl extends GenericService<MyTaskEntity> implements M
                 return dto;
 
             case 29: //财务发票确认;
-                dto.setTaskTitle("发票确认·" + projectEntity.getProjectName());
-                dto.setTaskMemo(this.projectCostPointDao.getPointNameByDetailId(entity.getTargetId()));
-              //  dto.setTaskContent(StringUtil.toNumberStr6(paymentFee.getFee().doubleValue()));
-                dto.setProjectName(projectEntity.getProjectName());
+                ProjectCostPointDetailEntity pointDetail = projectCostPointDetailDao.selectById(entity.getTargetId());
+                if(pointDetail!=null){
+                    ProjectCostEntity cost = this.projectCostDao.getProjectCostByPointId(pointDetail.getPointId());
+                    dto.setTaskTitle(ProjectCostConst.COST_TYPE_MAP.get(cost.getType())+"·"+ projectEntity.getProjectName());
+                    dto.setTaskContent(StringUtil.toNumberStr6(pointDetail.getFee().doubleValue()));
+                    InvoiceInfoDTO invoiceInfo = invoiceService.getInvoice(pointDetail.getInvoice());
+                    if(invoiceInfo==null || StringUtil.isNullOrEmpty(invoiceInfo.getInvoiceContent())){
+                        dto.setTaskMemo("开票内容：无"); //收款单位 <br/> 开票内容
+                    }else {
+                        dto.setTaskMemo("开票内容："+invoiceInfo.getInvoiceContent()); //收款单位 <br/> 开票内容
+                    }
+                    dto.setProjectName(projectEntity.getProjectName());
+                }
                 return dto;
             case 100:
                 if(entity.getDeadline()!=null){

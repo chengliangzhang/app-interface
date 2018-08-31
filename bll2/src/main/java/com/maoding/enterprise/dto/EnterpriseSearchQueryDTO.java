@@ -1,8 +1,6 @@
 package com.maoding.enterprise.dto;
 
 
-import com.maoding.core.base.dto.QueryDTO;
-
 public class EnterpriseSearchQueryDTO {
 
     private String enterpriseId;

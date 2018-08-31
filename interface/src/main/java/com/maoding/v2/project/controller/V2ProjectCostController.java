@@ -347,6 +347,20 @@ public class V2ProjectCostController extends BaseWSController {
     public ResponseBean getProjectCostPaymentDetailByPointDetailIdForPay(@RequestBody ProjectCostQueryDTO queryDTO) throws Exception {
         return ResponseBean.responseSuccess().setData(this.projectCostService.getProjectCostPaymentDetailByPointDetailIdForPay(queryDTO));
     }
+ /**
+     * 方法描述：发起付款计划节点信息
+     * 参数：projectId= 项目id，pointId:节点id，costId：收付款计划id
+     * 作者：MaoSF
+     * 日期：2017/3/7
+     */
+    @RequestMapping(value = {"/getProjectCostPaymentDetailByMainIdForPay"}, method = RequestMethod.POST)
+    @ResponseBody
+    @AuthorityCheckable
+    public ResponseBean getProjectCostPaymentDetailByMainIdForPay(@RequestBody ProjectCostQueryDTO queryDTO) throws Exception {
+        return ResponseBean.responseSuccess().setData(this.projectCostService.getProjectCostPaymentDetailByMainIdForPay(queryDTO));
+    }
+
+
 
     /**
      * 方法描述：单个计划，到账，付款 汇总

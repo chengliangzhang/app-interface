@@ -6,13 +6,16 @@ import com.maoding.circle.dto.MaodingCircleCommentDataDTO;
 import com.maoding.circle.dto.MaodingCircleReadDTO;
 import com.maoding.circle.dto.QueryCircleDTO;
 import com.maoding.circle.service.MaodingCircleService;
+import com.maoding.commonModule.dao.RelationRecordDao;
 import com.maoding.commonModule.dto.QueryCopyRecordDTO;
 import com.maoding.commonModule.entity.CopyRecordEntity;
+import com.maoding.commonModule.entity.RelationRecordEntity;
 import com.maoding.commonModule.service.CopyRecordService;
 import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.core.base.service.GenericService;
 import com.maoding.core.bean.ResponseBean;
 import com.maoding.core.constant.MsgType;
+import com.maoding.core.constant.ProjectCostConst;
 import com.maoding.core.constant.SystemParameters;
 import com.maoding.core.util.BeanUtilsEx;
 import com.maoding.core.util.DateUtils;
@@ -27,6 +30,7 @@ import com.maoding.financial.entity.ExpAuditEntity;
 import com.maoding.financial.entity.ExpMainEntity;
 import com.maoding.financial.entity.LeaveDetailEntity;
 import com.maoding.hxIm.dto.ImSendMessageDTO;
+import com.maoding.invoice.service.InvoiceService;
 import com.maoding.message.dao.MessageDao;
 import com.maoding.message.dto.*;
 import com.maoding.message.entity.MessageEntity;
@@ -46,9 +50,11 @@ import com.maoding.project.entity.ProjectEntity;
 import com.maoding.project.entity.ProjectProcessNodeEntity;
 import com.maoding.project.entity.ProjectSkyDriveEntity;
 import com.maoding.project.service.ProjectSkyDriverService;
+import com.maoding.projectcost.dao.ProjectCostDao;
 import com.maoding.projectcost.dao.ProjectCostPaymentDetailDao;
 import com.maoding.projectcost.dao.ProjectCostPointDao;
 import com.maoding.projectcost.dao.ProjectCostPointDetailDao;
+import com.maoding.projectcost.entity.ProjectCostEntity;
 import com.maoding.projectcost.entity.ProjectCostPaymentDetailEntity;
 import com.maoding.projectcost.entity.ProjectCostPointDetailEntity;
 import com.maoding.projectcost.entity.ProjectCostPointEntity;
@@ -131,6 +137,9 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
     private LeaveDetailDao leaveDetailDao;
 
     @Autowired
+    private InvoiceService invoiceService;
+
+    @Autowired
     private ExpAuditDao expAuditDao;
 
     @Autowired
@@ -156,6 +165,12 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
 
     @Autowired
     private CopyRecordService copyRecordService;
+
+    @Autowired
+    private RelationRecordDao relationRecordDao;
+
+    @Autowired
+    private ProjectCostDao projectCostDao;
 
     @Value("${server.url}")
     protected String serverUrl;
@@ -351,6 +366,24 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
                 para.put("expName", expMainDTO.getExpName());
                 para.put("expAmount", getExpAmount(expMainDTO));
                 break;
+            case SystemParameters.MESSAGE_TYPE_243: //"hi，?转交了?申请的“?”报销金额?元，请你审批，谢谢！"
+            case SystemParameters.MESSAGE_TYPE_244:
+            case SystemParameters.MESSAGE_TYPE_245:
+            case SystemParameters.MESSAGE_TYPE_246:
+                ProjectCostPointDetailEntity pointDetail = this.getPointDetailByMainId(targetId);
+                para.put("expUserName", getExpUserName(targetId));
+                para.put("projectName", getProjectName(pointDetail.getProjectId()));
+                para.put("feeDescription",getCostPointName(pointDetail.getPointId()));
+                para.put("expName", getExpName(pointDetail));
+                para.put("fee", getFee(pointDetail));
+                //查询审批原因
+                if(messageEntity.getMessageType()==SystemParameters.MESSAGE_TYPE_245 ){
+                    ExpAuditEntity recallAudit = this.expAuditDao.selectLastRecallAudit(messageEntity.getTargetId());
+                    if(recallAudit!=null){
+                        para.put("reason",recallAudit.getAuditMessage());
+                    }
+                }
+                break;
             case SystemParameters.MESSAGE_TYPE_11: //"hi，?发起了“?：?”的技术审查费?万元，请确认付款金额，谢谢！"
             case SystemParameters.MESSAGE_TYPE_12: //"“? - 技术审查费 - ?” 金额：?万，已确认付款"
             case SystemParameters.MESSAGE_TYPE_13: //"“? - 技术审查费 - ?” 金额：?万，已确认到账"
@@ -360,10 +393,30 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
             case SystemParameters.MESSAGE_TYPE_17: //"hi，?发起了“?：?”的合同回款?万元，请你跟进并确认实际到帐金额和日期，谢谢！"
             case SystemParameters.MESSAGE_TYPE_31: //"hi，?发起了“?：?”的其他支出?万元，请你跟进并确认实际付款金额和日期，谢谢！"
             case SystemParameters.MESSAGE_TYPE_32: //"hi，?发起了“?：?”的其他收入?万元，请你跟进并确认实际到帐金额和日期，谢谢！"
+            case SystemParameters.MESSAGE_TYPE_100:
+            case SystemParameters.MESSAGE_TYPE_101:
+            case SystemParameters.MESSAGE_TYPE_102:
+            case SystemParameters.MESSAGE_TYPE_103:
+            case SystemParameters.MESSAGE_TYPE_110:
+            case SystemParameters.MESSAGE_TYPE_111:
+            case SystemParameters.MESSAGE_TYPE_112:
+            case SystemParameters.MESSAGE_TYPE_113:
+            case SystemParameters.MESSAGE_TYPE_114:
+            case SystemParameters.MESSAGE_TYPE_115:
+            case SystemParameters.MESSAGE_TYPE_116:
+            case SystemParameters.MESSAGE_TYPE_307:
                 ProjectCostPointDetailEntity detail6 = projectCostPointDetailDao.selectById(targetId);
                 para.put("projectName", getProjectName(projectId));
                 para.put("feeDescription",getFeeDescription(detail6));
                 para.put("fee",  getFee(detail6));
+                if(messageEntity.getMessageType()>=100 && messageEntity.getMessageType()<104){
+                    para.put("toCompanyName", this.invoiceService.getInvoiceReceiveCompanyName(detail6.getInvoice()));
+                    //因为传递进来的统一是100，所以再次重新处理一下messageType
+                    setMessageType(detail6,messageEntity);
+                }
+                if(messageEntity.getMessageType()>SystemParameters.MESSAGE_TYPE_103 && messageEntity.getMessageType()<=SystemParameters.MESSAGE_TYPE_116){
+                    para.put("auditPersonName", this.getLastAuditPersonName(targetId,messageEntity));//最后审核人
+                }
                 break;
             case SystemParameters.MESSAGE_TYPE_18: //"hi，?确认了“?：?”的实际到金额为?万元，到账日期为?，谢谢！"
             case SystemParameters.MESSAGE_TYPE_23: //"hi，?确认了“?：?”的技术审查费付款金额为?万元，请你跟进并确认实际付款日期，谢谢！"
@@ -829,7 +882,22 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
     private String getPaymentFee(ProjectCostPaymentDetailEntity entity) {
         return StringUtil.getRealData(entity.getFee());
     }
-
+    private void setMessageType(ProjectCostPointDetailEntity entity,MessageEntity messageEntity) {
+        ProjectCostEntity cost = projectCostDao.getProjectCostByPointId(entity.getPointId());
+        Integer costType = Integer.parseInt(cost.getType());
+        if(costType==1){
+            messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_100);
+        }
+        if(costType==2){
+            messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_101);
+        }
+        if(costType==3){
+            messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_102);
+        }
+        if(costType==5){
+            messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_103);
+        }
+    }
     private String getPaymentDate(ProjectCostPaymentDetailEntity entity, int messageType) {
         if (messageType == SystemParameters.MESSAGE_TYPE_27 || messageType == SystemParameters.MESSAGE_TYPE_29
                 || messageType == SystemParameters.MESSAGE_TYPE_33) {
@@ -854,6 +922,14 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
         return entity.getExpName();
     }
 
+    private String getExpName(ProjectCostPointDetailEntity entity) {
+        if (entity == null) return "";
+        ProjectCostEntity cost = this.projectCostDao.getProjectCostByPointId(entity.getPointId());
+        if(cost!=null){
+            return ProjectCostConst.COST_TYPE_MAP.get(cost.getType()+"");
+        }
+        return "";
+    }
     private String getExpAmount(ExpMainDTO entity) {
         return StringUtil.getRealData(entity.getExpSumAmount());
     }
@@ -889,6 +965,39 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
             return dto.getCompanyUserName();
         }
         return "";
+    }
+
+    /***
+     * 在此处重新处理一下messageEntity.getMessageType()，因为在myTask 中传递进入的，都是以无申请的类型传递的
+     * 为了避免查询重复，所有再查询，如果有付款申请，则重新赋予messageType的值
+     */
+    private String getLastAuditPersonName(String targetId,MessageEntity messageEntity){
+        ExpMainDTO expMain = this.expMainDao.getExpMainByRelationId(targetId);
+        if(expMain!=null){
+            if(messageEntity.getMessageType()==SystemParameters.MESSAGE_TYPE_111){
+                messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_112);
+            }
+            if(messageEntity.getMessageType()==SystemParameters.MESSAGE_TYPE_114){
+                messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_115);
+            }
+            if(messageEntity.getMessageType()==SystemParameters.MESSAGE_TYPE_31){
+                messageEntity.setMessageType(SystemParameters.MESSAGE_TYPE_116);
+            }
+            ExpAuditEntity audit = expAuditDao.getLastAuditByMainId(expMain.getId());
+            if(audit!=null){
+                return this.companyUserDao.getUserName(audit.getAuditPerson());
+            }
+        }
+        return null;
+    }
+
+    private ProjectCostPointDetailEntity getPointDetailByMainId(String mainId){
+        ProjectCostPointDetailEntity pointDetail = new ProjectCostPointDetailEntity();
+        RelationRecordEntity relationRecord = this.relationRecordDao.getRelationRecodeByTargetId(mainId);
+        if(relationRecord!=null){
+            pointDetail = this.projectCostPointDetailDao.selectById(relationRecord.getRelationId());
+        }
+        return pointDetail;
     }
 
     public String getLeaveTypeName(String leaveType) {
@@ -1146,6 +1255,7 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
                     map.put("taskType",SystemParameters.COOPERATIVE_DESIGN_FEE_FOR_PAID);
                     break;
                 case 31: //"hi，?发起了“?：?”的其他支出?万元，请你跟进并确认实际付款金额和日期，谢谢！"
+                case SystemParameters.MESSAGE_TYPE_116:
                     /**其他支出付款界面 任务*/
                     map.put("taskType",SystemParameters.OTHER_FEE_FOR_PAY);
                     break;
@@ -1173,6 +1283,34 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
                         updateMessageStatus(m);
                     }
                     return copy;
+                case SystemParameters.MESSAGE_TYPE_100:
+                case SystemParameters.MESSAGE_TYPE_101:
+                case SystemParameters.MESSAGE_TYPE_102:
+                case SystemParameters.MESSAGE_TYPE_103:
+                    map.put("taskType",SystemParameters.INVOICE_FINN_IN_FOR_PAID);
+                    break;
+                case SystemParameters.MESSAGE_TYPE_110:
+                    map.put("taskType",SystemParameters.TECHNICAL_REVIEW_FEE_FOR_PAID_2);
+                    break;
+                case SystemParameters.MESSAGE_TYPE_113:
+                    map.put("taskType",SystemParameters.COOPERATIVE_DESIGN_FEE_FOR_PAID_2);
+                    break;
+                case SystemParameters.MESSAGE_TYPE_111:
+                case SystemParameters.MESSAGE_TYPE_112:
+                    map.put("taskType",SystemParameters.TECHNICAL_REVIEW_FEE_FOR_PAY_2);
+                    break;
+                case SystemParameters.MESSAGE_TYPE_114:
+                case SystemParameters.MESSAGE_TYPE_115:
+                    map.put("taskType",SystemParameters.COOPERATIVE_DESIGN_FEE_FOR_PAY_2);
+                    break;
+                case SystemParameters.MESSAGE_TYPE_243:
+                case SystemParameters.MESSAGE_TYPE_244:
+                case SystemParameters.MESSAGE_TYPE_245:
+                case SystemParameters.MESSAGE_TYPE_246:
+                    MyTaskEntity projectFeeAudit = new MyTaskEntity();
+                    projectFeeAudit.setId(m.getTargetId());
+                    this.setStatus(m,projectFeeAudit);
+                    return projectFeeAudit;//此处无需处理，因为targetId 就是审批单的id，让前端直接调用getProjectCostPaymentDetailByMainIdForPay 接口
                 case 19:
                 case 221:
                 case 22:
@@ -1187,13 +1325,7 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
                     if(StringUtil.isNullOrEmpty(m.getParam1())){
                         audit.setStatus("1");
                     }else {
-                        ExpAuditEntity auditEntity = expAuditDao.selectById(m.getParam1());
-                        if(auditEntity==null){
-                            audit.setStatus("1");
-                            updateMessageStatus(m);
-                        }else {
-                            audit.setStatus("0".equals(auditEntity.getApproveStatus())?"0":"1");
-                        }
+                        this.setStatus(m,audit);
                     }
                     return audit;
                 case SystemParameters.MESSAGE_TYPE_DELIVER_CONFIRM:
@@ -1224,6 +1356,15 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
         messageDao.updateById(m);
     }
 
+    private void setStatus(MessageEntity m,MyTaskEntity audit){
+        ExpAuditEntity auditEntity = expAuditDao.selectById(m.getParam1());
+        if(auditEntity==null){
+            audit.setStatus("1");
+            updateMessageStatus(m);
+        }else {
+            audit.setStatus("0".equals(auditEntity.getApproveStatus())?"0":"1");
+        }
+    }
     /**
      * 模板转换
      */
@@ -1237,7 +1378,7 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
                 dto.setMessageTitle("");
             }
             dto.setMessageContent(getMessageContent(dto.getMessageContent(),dto.getMessageType(),dto.getId(),dto));
-            dto.setIsNotice(SystemParameters.message2.get(Integer.toString(dto.getMessageType())).getType());
+            dto.setIsNotice(SystemParameters.messageForApp.get(Integer.toString(dto.getMessageType())).getType());
             MessageDTO messageDTO =  handleMessageStateForMyTask(dto);
             if(messageDTO!=null){
                 resultList.add(messageDTO);
@@ -1270,7 +1411,7 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
             messageDTO.setProjectName(dto.getProjectName());
         }
         //生成content
-        String msg = SystemParameters.message2.get(Integer.toString(messageType)).getContent()
+        String msg = SystemParameters.messageForApp.get(Integer.toString(messageType)).getContent()
                 .replaceAll("%scheduleContent%",getValue(dto.getScheduleContent()))
                 .replaceAll("%reminderTime%",getValue(dto.getReminderTime()))
 
@@ -1305,6 +1446,10 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
                 .replaceAll("%leaveTypeName%",getValue(dto.getLeaveTypeName()))
                 .replaceAll("%responseName%", getValue(dto.getResponseName()))
                 .replaceAll("%deliverName%", getValue(dto.getDeliverName()))
+
+                .replaceAll("%toCompanyName%", getValue(dto.getToCompanyName()))
+                .replaceAll("%auditPersonName%", getValue(dto.getAuditPersonName()))
+
                 ;
 
         return msg;

@@ -143,8 +143,7 @@ public class LeaveServiceImpl implements LeaveService {
             //this.myTaskService.saveMyTask(entity.getId(), myTaskType, companyId, dto.getAuditPerson(),true,userId,companyId);
             expMainService.sendMessageForAudit(entity.getId(),companyId, dto.getAuditPerson(),entity.getType(),dto.getAccountId(),auditEntity.getId(),"0");//提交
         }else {
-            List<ExpAuditEntity> auditEntities = expAuditDao.selectByMainId(id);
-            ExpAuditEntity expAuditEntity = auditEntities.get(0);
+            ExpAuditEntity expAuditEntity = expAuditDao.getLastAuditByMainId(id);
             String oldAuditPerson = expAuditEntity.getAuditPerson();
             if (!dto.getAuditPerson().equals(oldAuditPerson)) {//如果修改的时候，改变了社会人。则发送任务
                 //忽略以前发给其他人的任务

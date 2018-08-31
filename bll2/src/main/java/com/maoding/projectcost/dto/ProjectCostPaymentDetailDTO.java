@@ -68,6 +68,13 @@ public class ProjectCostPaymentDetailDTO extends BaseDTO {
 
     private int taskType;//对应的任务类型
 
+    private int highLine;//1:高亮，0：不高亮，为了兼容老数据
+
+    /**
+     * 用于接收我的任务中传递过来的日期
+     */
+    private String dateStr;
+
     public String getProjectId() {
         return projectId;
     }
@@ -162,5 +169,21 @@ public class ProjectCostPaymentDetailDTO extends BaseDTO {
 
     public void setOperateFlag(Integer operateFlag) {
         this.operateFlag = operateFlag;
+    }
+
+    public String getDateStr() {
+        return dateStr;
+    }
+
+    public void setDateStr(String dateStr) {
+        this.dateStr = dateStr;
+    }
+
+    public int getHighLine() {
+        return highLine;
+    }
+
+    public void setHighLine(int highLine) {
+        this.highLine = highLine;
     }
 }
