@@ -205,6 +205,8 @@ public class LeaveServiceImpl implements LeaveService {
                 entity.set4Base(null, userId, null, new Date());
                 //版本控制
                 int result = expMainDao.updateById(entity);
+                //保存报销明细表
+                this.saveLeaveDetail(dto,entity.getId());
                 if (result == 0) {
                     return ResponseBean.responseError("保存失败");
                 }
@@ -217,8 +219,7 @@ public class LeaveServiceImpl implements LeaveService {
             projectSkyDriverService.deleteSysDrive(dto.getDeleteAttachList(),dto.getAccountId(),id);
         }
         //    Integer myTaskType = this.getMyTaskType(entity);
-        //保存报销明细表
-        this.saveLeaveDetail(dto,id);
+
 
         //处理抄送
         SaveCopyRecordDTO copyDTO = new SaveCopyRecordDTO();
@@ -313,7 +314,7 @@ public class LeaveServiceImpl implements LeaveService {
         entity.set4Base(userId, userId, new Date(), new Date());
         entity.setCompanyId(companyId);
         expMainDao.insert(entity);
-
+        this.saveLeaveDetail(dto,entity.getId());
         // 启动流程
         String targetType = null;
         if(entity.getType()==3){

@@ -309,7 +309,7 @@ public class MessageServiceImpl extends GenericService<MessageEntity> implements
             case SystemParameters.MESSAGE_TYPE_237:
                 ExpMainDTO dto4 = expMainDao.getExpMainDetail(targetId);
                 para.put("expUserName", getExpUserName(targetId));
-                para.put("expName", getExpName(targetId));
+                para.put("expName", dto4.getExpName());
                 para.put("expAmount", getExpAmount(dto4));
                 //查询审批原因
                 if(messageEntity.getMessageType()==SystemParameters.MESSAGE_TYPE_20 || messageEntity.getMessageType()==SystemParameters.MESSAGE_TYPE_223){

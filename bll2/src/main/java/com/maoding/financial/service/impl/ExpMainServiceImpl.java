@@ -1023,6 +1023,8 @@ public class ExpMainServiceImpl extends GenericService<ExpMainEntity> implements
                 //版本控制
                 entity.setExpDate(DateUtils.getDate());
                 result = expMainDao.updateById(entity);
+                //保存报销明细表
+                this.saveExpDetail(dto,entity.getId(),userId,currentCompanyUser.getId());
                 if (result == 0) {
                     return new AjaxMessage().setCode("0").setInfo("保存失败").setData(dto);
                 }
@@ -1034,8 +1036,6 @@ public class ExpMainServiceImpl extends GenericService<ExpMainEntity> implements
         if(!CollectionUtils.isEmpty(dto.getDeleteAttachList())){
             projectSkyDriverService.deleteSysDrive(dto.getDeleteAttachList(),dto.getAccountId(),id);
         }
-        //保存报销明细表
-        this.saveExpDetail(dto,id,userId,currentCompanyUser.getId());
         //处理审核记录
         Integer myTaskType = this.getMyTaskType(entity);
         //处理抄送
@@ -1108,7 +1108,8 @@ public class ExpMainServiceImpl extends GenericService<ExpMainEntity> implements
         entity.set4Base(userId, userId, new Date(), new Date());
         entity.setCompanyId(companyId);
         expMainDao.insert(entity);
-
+        //保存明细
+        this.saveExpDetail(dto,entity.getId(),userId,dto.getCurrentCompanyUserId());
         String targetType = null;
         if(entity.getType()==1){
             targetType = ProcessTypeConst.PROCESS_TYPE_EXPENSE;
@@ -1117,7 +1118,6 @@ public class ExpMainServiceImpl extends GenericService<ExpMainEntity> implements
         }
         // 启动流程
         ActivitiDTO activitiDTO = new ActivitiDTO(entity.getId(),entity.getCompanyUserId(),companyId,userId,dto.getExpSumAmount(),targetType);
-
         activitiDTO.getParam().put("approveUser",dto.getAuditPerson());
         this.processService.startProcessInstance(activitiDTO);
         return entity;

@@ -277,47 +277,23 @@
     </sql>
     <!-- 报销汇总  end-->
 
-    <select id="selectExpMainDetail" resultMap="BaseResultMap" parameterType="java.lang.String">
-                SELECT
-            a.* ,(
-                SELECT
-                    SUM(aa.exp_amount)
-                FROM
-                    maoding_web_exp_detail aa
-                WHERE
-                    aa.main_id = a.id
-            ) AS exp_sum_amount,
-            IFNULL(
-                (
-                    SELECT
-                        c.company_name
-                    FROM
-                        maoding_web_company c
-                    WHERE
-                        c.id = a.depart_id
-                ),
-                (
-                    SELECT
-                        d.depart_name
-                    FROM
-                        maoding_web_depart d
-                    WHERE
-                        d.id = a.depart_id
-                )
-            ) AS depart_name,
+    <select id="selectExpMainDetail" resultType="com.maoding.financial.dto.ExpMainDTO" parameterType="java.lang.String">
+        SELECT
+        a.*,
+        SUM(b.exp_amount) AS exp_sum_amount,
+        IFNULL(
             (
-                SELECT
-                  GROUP_CONCAT(e.exp_name SEPARATOR '、')
-                FROM
-                    maoding_web_exp_detail e
-                WHERE
-                    e.main_id = a.id
-            ) AS exp_name
-
-        FROM
-            maoding_web_exp_main a
-        WHERE
-            a.id = #{id,jdbcType=VARCHAR}
+                SELECT  c.company_name FROM  maoding_web_company c WHERE  c.id = a.depart_id
+            ),
+            (
+                SELECT d.depart_name  FROM maoding_web_depart d  WHERE d.id = a.depart_id
+            )
+        ) AS depart_name,
+        GROUP_CONCAT(b.exp_name SEPARATOR '、') AS exp_name
+        FROM maoding_web_exp_main a
+        INNER JOIN maoding_web_exp_detail b on a.id = b.main_id
+        WHERE a.id =  #{id,jdbcType=VARCHAR}
+        group by a.id
     </select>
 
     <select id="getByMainIdForMyTask" parameterType="java.lang.String" resultMap="BaseResultMapForSummary">
