@@ -4,6 +4,7 @@ import com.maoding.core.bean.ResponseBean;
 import com.maoding.core.constant.SystemParameters;
 import com.maoding.financial.dto.SaveLeaveDTO;
 import com.maoding.financial.service.LeaveService;
+import com.maoding.system.annotation.AuthorityCheckable;
 import com.maoding.system.controller.BaseWSController;
 import com.maoding.system.service.DataDictionaryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,7 @@ public class LeaveController extends BaseWSController{
      * 日    期 : 2017/05/23
      */
     @RequestMapping("/getLeaveType")
+    @AuthorityCheckable
     @ResponseBody
     public ResponseBean getLeaveType() throws Exception {
         return ResponseBean.responseSuccess().addData("leaveTypeList", this.dataDictionaryService.getSubDataByCode(SystemParameters.LEAVE));
@@ -41,6 +43,7 @@ public class LeaveController extends BaseWSController{
      * 日    期 : 2017/05/23
      */
     @RequestMapping("/saveLeave")
+    @AuthorityCheckable
     @ResponseBody
     public ResponseBean saveLeave(@RequestBody SaveLeaveDTO dto) throws Exception {
         return leaveService.saveLeave(dto);
@@ -52,6 +55,7 @@ public class LeaveController extends BaseWSController{
      * 日    期 : 2017/05/23
      */
     @RequestMapping("/getLeaveDetail")
+    @AuthorityCheckable
     @ResponseBody
     public ResponseBean getLeaveDetail(@RequestBody SaveLeaveDTO dto) throws Exception {
         return ResponseBean.responseSuccess().addData("leaveDetail",leaveService.getLeaveDetail(dto.getId()));
