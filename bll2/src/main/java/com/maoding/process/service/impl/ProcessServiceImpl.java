@@ -9,6 +9,7 @@ import com.maoding.core.base.dto.BaseDTO;
 import com.maoding.core.base.service.NewBaseService;
 import com.maoding.core.constant.ProcessTypeConst;
 import com.maoding.core.constant.ProjectCostConst;
+import com.maoding.core.util.BeanUtils;
 import com.maoding.core.util.StringUtil;
 import com.maoding.financial.dto.AuditBaseDTO;
 import com.maoding.financial.dto.AuditDTO;
@@ -142,7 +143,7 @@ public class ProcessServiceImpl extends NewBaseService implements ProcessService
             this.expMainService.updateById(exp);
             if(exp.getType()==5){
                 //推送任务
-                ProjectCostPointDetailDTO projectCostPointDetailDTO = new ProjectCostPointDetailDTO();
+                ProjectCostPointDetailDTO projectCostPointDetailDTO = BeanUtils.createFrom(dto,ProjectCostPointDetailDTO.class);
                 projectCostPointDetailDTO.setMainId(businessKey);
                 projectCostPointDetailDTO.setFeeStatus(ProjectCostConst.FEE_STATUS_APPROVE);
                 projectCostService.completeProjectFeeApply(projectCostPointDetailDTO);
@@ -156,7 +157,7 @@ public class ProcessServiceImpl extends NewBaseService implements ProcessService
             this.expMainService.updateById(exp);
             if(exp.getType()==5){
                 //推送任务
-                ProjectCostPointDetailDTO projectCostPointDetailDTO = new ProjectCostPointDetailDTO();
+                ProjectCostPointDetailDTO projectCostPointDetailDTO = BeanUtils.createFrom(dto,ProjectCostPointDetailDTO.class);
                 projectCostPointDetailDTO.setMainId(businessKey);
                 projectCostPointDetailDTO.setFeeStatus(ProjectCostConst.FEE_STATUS_NOT_APPROVE);
                 projectCostService.completeProjectFeeApply(projectCostPointDetailDTO);
